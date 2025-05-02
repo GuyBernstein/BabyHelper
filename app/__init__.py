@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from .main.model.baby import router as baby_router
 from .main.controller import baby_controller
+from app.main.model.baby import router as baby_router
 
 def create_app():
     app = FastAPI(
