@@ -1,20 +1,37 @@
 from datetime import datetime
-
+from typing import Optional
+from pydantic import BaseModel
 from fastapi import APIRouter
 from sqlalchemy import Column, Integer, String, DateTime, Float
 
-# Import the Base and get_db function
 from app.main import Base
 
-# Keep your existing router
+class BabyBase(BaseModel):
+    fullname: str
+    birthdate: Optional[datetime] = None
+    weight: Optional[float] = None
+    height: Optional[float] = None
+
+class BabyCreate(BabyBase):
+    pass
+
+class BabyUpdate(BabyBase):
+    pass
+
+class BabyResponse(BabyBase):
+    id: int
+    created_at: datetime
+    picture: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
 router = APIRouter(
     prefix="/baby",
     tags=["baby"],
-    responses={404: {"description": "Not found"}},
+    responses={404: {"description": "Not found"}}
 )
 
-
-# Add your Baby model
 class Baby(Base):
     __tablename__ = "baby"
 
@@ -25,9 +42,6 @@ class Baby(Base):
     weight = Column(Float, nullable=True)
     height = Column(Float, nullable=True)
     picture = Column(String(300), nullable=True)
-
-    # Add relationship to measurements if needed
-    # measurements = relationship("Measurement", back_populates="baby")
 
     def __repr__(self):
         return f"<Baby '{self.fullname}'>"
