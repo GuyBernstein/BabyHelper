@@ -1,10 +1,12 @@
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel
+from typing import Optional, List, Annotated
+from pydantic import BaseModel, Field
 from fastapi import APIRouter
-from sqlalchemy import Column, Integer, String, DateTime, Float
+from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey
+from sqlalchemy.orm import relationship
 
 from app.main import Base
+
 
 class BabyBase(BaseModel):
     fullname: str
@@ -12,25 +14,45 @@ class BabyBase(BaseModel):
     weight: Optional[float] = None
     height: Optional[float] = None
 
+
 class BabyCreate(BabyBase):
     pass
 
+
 class BabyUpdate(BabyBase):
     pass
+
+
+class ParentInfo(BaseModel):
+    id: int
+    name: Optional[str] = None
+    email: str
+    picture: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
 
 class BabyResponse(BabyBase):
     id: int
     created_at: datetime
     picture: Optional[str] = None
+    parent_id: int
+    parent: Optional[ParentInfo] = None
+    coparents: Annotated[List[ParentInfo], Field(default_factory=list)]
 
-    class Config:
-        from_attributes = True
+
+    model_config = {
+        "from_attributes": True
+    }
+
 
 router = APIRouter(
     prefix="/baby",
     tags=["baby"],
     responses={404: {"description": "Not found"}}
 )
+
 
 class Baby(Base):
     __tablename__ = "baby"
@@ -42,6 +64,14 @@ class Baby(Base):
     weight = Column(Float, nullable=True)
     height = Column(Float, nullable=True)
     picture = Column(String(300), nullable=True)
+
+    # Foreign keys
+    parent_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+
+    # Relationships
+    parent = relationship("User", back_populates="babies")
+    coparents = relationship("User", secondary="baby_coparent", back_populates="coparented_babies")
+    invitations = relationship("CoParentInvitation", back_populates="baby")
 
     def __repr__(self):
         return f"<Baby '{self.fullname}'>"

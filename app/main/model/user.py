@@ -1,10 +1,15 @@
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, EmailStr
+from typing import Optional, List
+from typing import Annotated
+
 from fastapi import APIRouter
+from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from sqlalchemy.orm import relationship
 
 from app.main import Base
+from app.main.model.baby import BabyResponse
+
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -27,6 +32,15 @@ class UserResponse(UserBase):
     class Config:
         from_attributes = True
 
+
+class UserWithBabiesResponse(UserResponse):
+    babies: Annotated[List["BabyResponse"], Field(default_factory=list)]
+    coparented_babies: Annotated[List["BabyResponse"], Field(default_factory=list)]
+
+    model_config = {
+        "from_attributes": True
+    }
+
 router = APIRouter(
     prefix="/users",
     tags=["users"],
@@ -44,6 +58,13 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
     google_id = Column(String(255), unique=True, nullable=True, index=True)
+
+    # Relationships
+    babies = relationship("Baby", back_populates="parent")
+    coparented_babies = relationship("Baby", secondary="baby_coparent", back_populates="coparents")
+    sent_invitations = relationship("CoParentInvitation", foreign_keys="CoParentInvitation.inviter_id", back_populates="inviter")
+    received_invitations = relationship("CoParentInvitation", foreign_keys="CoParentInvitation.invitee_id", back_populates="invitee")
+    notifications = relationship("Notification", back_populates="user")
 
     def __repr__(self):
         return f"<User '{self.email}'>"

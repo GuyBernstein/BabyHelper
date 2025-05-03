@@ -1,6 +1,10 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+
+from .main.controller.auth_controller import router as auth_router
+from .main.controller.coparent_controller import router as coparent_router
+from .main.controller.notification_controller import router as notification_router
 from .main.model.baby import router as baby_router
 from .main.model.user import router as user_router
 from .main.controller.auth_controller import router as auth_router
@@ -10,7 +14,7 @@ def create_app():
     app = FastAPI(
         title='BABIES APP',
         version='1.0',
-        description='FastAPI web service for babies and measurements with Google OAuth authentication'
+        description='FastAPI web service for babies and measurements with Google OAuth authentication and co-parenting features'
     )
 
     # Add CORS middleware
@@ -26,6 +30,8 @@ def create_app():
     app.include_router(baby_router)
     app.include_router(user_router)
     app.include_router(auth_router)
+    app.include_router(coparent_router)
+    app.include_router(notification_router)
 
     @app.get("/", response_class=HTMLResponse)
     async def root():
@@ -55,6 +61,14 @@ def create_app():
                     <p>
                         <a href="/docs" target="_blank">Go to Swagger UI</a>
                     </p>
+
+                    <h2>Co-Parenting Features</h2>
+                    <ul>
+                        <li>Add babies to your profile as the primary parent</li>
+                        <li>Invite other users to be co-parents for your babies</li>
+                        <li>Accept or reject co-parent invitations</li>
+                        <li>View and manage notifications</li>
+                    </ul>
                 </div>
             </body>
         </html>
