@@ -1,10 +1,10 @@
 import json
-import os
-from typing import Dict, Optional, Any
-from google.oauth2 import id_token
-from google.auth.transport import requests
+from typing import Dict
+
 from fastapi import HTTPException, status, Depends, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from google.auth.transport import requests
+from google.oauth2 import id_token
 from sqlalchemy.orm import Session
 
 from app.main import get_db
@@ -21,7 +21,7 @@ CLIENT_SECRET = client_config['client_secret']
 BASE_URI = "http://127.0.0.1:8000"  # Use 127.0.0.1 instead of localhost for consistency
 REDIRECT_URI = f"{BASE_URI}/auth/callback"
 
-# Setup security for JWT bearer token
+# Setup security for bearer token
 security = HTTPBearer()
 
 
@@ -50,25 +50,49 @@ async def get_current_user(
         db: Session = Depends(get_db)
 ) -> User:
     """Dependency to get the current authenticated user from token"""
-    token = credentials.credentials
+    try:
+        token = credentials.credentials
 
-    # Verify the token and get user info
-    idinfo = verify_google_token(token)
+        # Verify the token and get user info
+        idinfo = verify_google_token(token)
 
-    # Get or create user based on Google ID
-    user = get_user_by_google_id(db, idinfo['sub'])
+        # Get or create user based on Google ID
+        user = get_user_by_google_id(db, idinfo['sub'])
 
-    if not user:
-        # Create new user from Google data
-        user_data = {
-            'email': idinfo['email'],
-            'name': idinfo.get('name'),
-            'picture': idinfo.get('picture'),
-            'google_id': idinfo['sub']
-        }
-        user = create_user(db, user_data)
+        if not user:
+            # Create new user from Google data
+            user_data = {
+                'email': idinfo['email'],
+                'name': idinfo.get('name'),
+                'picture': idinfo.get('picture'),
+                'google_id': idinfo['sub']
+            }
+            user = create_user(db, user_data)
 
-    if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive user")
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account is inactive. Please contact an administrator."
+            )
 
-    return user
+        return user
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Authentication failed: {str(e)}",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+async def is_admin_user(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """Dependency to check if the current user is an admin"""
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required"
+        )
+    return current_user

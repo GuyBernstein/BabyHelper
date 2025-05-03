@@ -10,6 +10,8 @@ class UserBase(BaseModel):
     email: EmailStr
     name: Optional[str] = None
     picture: Optional[str] = None
+    is_active: Optional[bool] = True
+    is_admin: Optional[bool] = False
 
 class UserCreate(UserBase):
     pass
@@ -20,7 +22,6 @@ class UserUpdate(UserBase):
 class UserResponse(UserBase):
     id: int
     created_at: datetime
-    is_active: bool
     google_id: Optional[str] = None
 
     class Config:
@@ -41,6 +42,7 @@ class User(Base):
     name = Column(String(255), nullable=True)
     picture = Column(String(500), nullable=True)
     is_active = Column(Boolean, default=True)
+    is_admin = Column(Boolean, default=False)
     google_id = Column(String(255), unique=True, nullable=True, index=True)
 
     def __repr__(self):
