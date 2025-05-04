@@ -11,7 +11,7 @@ from app.main.service.notification_service import (
     mark_notification_read,
     mark_all_notifications_read
 )
-from app.main.util.oauth import get_current_user
+from app.main.service.oauth_service import get_current_user
 
 router = APIRouter(
     prefix="/notifications",

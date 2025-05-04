@@ -10,6 +10,13 @@ from .main.model.user import router as user_router
 from .main.controller.auth_controller import router as auth_router
 from .main.controller import baby_controller
 
+from .main.model.feeding import router as feeding_router
+from .main.model.sleep import router as sleep_router
+from .main.model.diaper import router as diaper_router
+from .main.model.health import router as health_router
+from .main.controller import feeding_controller, sleep_controller, diaper_controller, health_controller
+
+
 def create_app():
     app = FastAPI(
         title='BABIES APP',
@@ -32,6 +39,10 @@ def create_app():
     app.include_router(auth_router)
     app.include_router(coparent_router)
     app.include_router(notification_router)
+    app.include_router(feeding_router)
+    app.include_router(sleep_router)
+    app.include_router(diaper_router)
+    app.include_router(health_router)
 
     @app.get("/", response_class=HTMLResponse)
     async def root():
@@ -68,6 +79,14 @@ def create_app():
                         <li>Invite other users to be co-parents for your babies</li>
                         <li>Accept or reject co-parent invitations</li>
                         <li>View and manage notifications</li>
+                    </ul>
+
+                    <h2>Tracking Features</h2>
+                    <ul>
+                        <li>Feeding: Track breastfeeding, bottle feeding, and solid foods</li>
+                        <li>Sleep: Record sleep patterns and quality</li>
+                        <li>Diaper: Monitor diaper changes and content</li>
+                        <li>Health: Track temperature, symptoms, and medications</li>
                     </ul>
                 </div>
             </body>

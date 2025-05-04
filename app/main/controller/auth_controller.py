@@ -1,15 +1,13 @@
-import json
-from typing import Dict, Any, List
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from fastapi.responses import RedirectResponse, HTMLResponse
+from typing import Dict, List
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 import requests
 
 from app.main import get_db
 from app.main.model.user import UserResponse, User
 from app.main.service.user_service import create_user, get_all_users, update_user_status
-from app.main.util.oauth import CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, get_current_user, verify_google_token, \
-    is_admin_user
+from app.main.service.oauth_service import CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, get_current_user, verify_google_token
 
 router = APIRouter(
     prefix="/auth",

@@ -18,7 +18,7 @@ with open('client_secret.json', 'r') as f:
 CLIENT_ID = client_config['client_id']
 CLIENT_SECRET = client_config['client_secret']
 # Use the first redirect URI from the config, but ensure it points to our callback route
-BASE_URI = "http://127.0.0.1:8000"  # Use 127.0.0.1 instead of localhost for consistency
+BASE_URI = "http://127.0.0.1:8000"
 REDIRECT_URI = f"{BASE_URI}/auth/callback"
 
 # Setup security for bearer token

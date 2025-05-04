@@ -13,7 +13,7 @@ from app.main.service.baby_service import (
     update_baby,
     delete_baby
 )
-from app.main.util.oauth import get_current_user
+from app.main.service.oauth_service import get_current_user
 
 
 @router.get("/", response_model=List[BabyResponse])

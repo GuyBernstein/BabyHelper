@@ -41,7 +41,6 @@ class BabyResponse(BabyBase):
     parent: Optional[ParentInfo] = None
     coparents: Annotated[List[ParentInfo], Field(default_factory=list)]
 
-
     model_config = {
         "from_attributes": True
     }
@@ -72,6 +71,12 @@ class Baby(Base):
     parent = relationship("User", back_populates="babies")
     coparents = relationship("User", secondary="baby_coparent", back_populates="coparented_babies")
     invitations = relationship("CoParentInvitation", back_populates="baby")
+
+    # relationships for tracking categories
+    feedings = relationship("Feeding", back_populates="baby", cascade="all, delete-orphan")
+    sleeps = relationship("Sleep", back_populates="baby", cascade="all, delete-orphan")
+    diapers = relationship("Diaper", back_populates="baby", cascade="all, delete-orphan")
+    health_records = relationship("Health", back_populates="baby", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Baby '{self.fullname}'>"

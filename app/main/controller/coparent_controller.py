@@ -12,7 +12,7 @@ from app.main.service.coparent_service import (
     respond_to_invitation,
     remove_coparent
 )
-from app.main.util.oauth import get_current_user
+from app.main.service.oauth_service import get_current_user
 
 router = APIRouter(
     prefix="/coparent",
