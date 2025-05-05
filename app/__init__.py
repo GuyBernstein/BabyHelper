@@ -8,8 +8,11 @@ from .main.controller.notification_controller import router as notification_rout
 from .main.model.baby import router as baby_router
 from .main.model.user import router as user_router
 from .main.controller.auth_controller import router as auth_router
-from .main.controller import doctor_visit_controller
-from .main.controller import baby_controller, feeding_controller, sleep_controller, diaper_controller, health_controller
+
+from .main.controller import (
+    baby_controller, feeding_controller, sleep_controller, diaper_controller, health_controller,
+    doctor_visit_controller, growth_controller
+)
 
 from .main.model.feeding import router as feeding_router
 from .main.model.sleep import router as sleep_router
