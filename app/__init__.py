@@ -8,15 +8,16 @@ from .main.controller.notification_controller import router as notification_rout
 from .main.model.baby import router as baby_router
 from .main.model.user import router as user_router
 from .main.controller.auth_controller import router as auth_router
-from .main.controller import baby_controller
+from .main.controller import doctor_visit_controller
+from .main.controller import baby_controller, feeding_controller, sleep_controller, diaper_controller, health_controller
 
 from .main.model.feeding import router as feeding_router
 from .main.model.sleep import router as sleep_router
 from .main.model.diaper import router as diaper_router
 from .main.model.health import router as health_router
-from .main.controller import feeding_controller, sleep_controller, diaper_controller, health_controller
 from .main.model.growth import router as growth_router
 from .main.model.milestone import router as milestone_router
+from .main.model.doctor_visit import router as doctor_visit_router
 
 def create_app():
     app = FastAPI(
@@ -46,6 +47,8 @@ def create_app():
     app.include_router(health_router)
     app.include_router(growth_router)
     app.include_router(milestone_router)
+    app.include_router(doctor_visit_router)
+
 
     @app.get("/", response_class=HTMLResponse)
     async def root():
