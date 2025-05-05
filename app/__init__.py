@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 
 from .main.controller import (
     baby_controller, feeding_controller, sleep_controller, diaper_controller, health_controller,
-    doctor_visit_controller, growth_controller, medication_controller
+    doctor_visit_controller, growth_controller, medication_controller, milestone_controller, pumping_controller
 )
 
 from .main.controller.auth_controller import router as auth_router
@@ -22,6 +22,7 @@ from .main.model.growth import router as growth_router
 from .main.model.milestone import router as milestone_router
 from .main.model.doctor_visit import router as doctor_visit_router
 from .main.model.medication import router as medication_router
+from .main.model.pumping import router as pumping_router
 
 def create_app():
     app = FastAPI(
@@ -53,6 +54,7 @@ def create_app():
     app.include_router(milestone_router)
     app.include_router(doctor_visit_router)
     app.include_router(medication_router)
+    app.include_router(pumping_router)
 
 
     @app.get("/", response_class=HTMLResponse)

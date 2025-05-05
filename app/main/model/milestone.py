@@ -1,50 +1,48 @@
 from datetime import datetime
+from typing import Optional, List
 from enum import Enum
-from typing import Optional
-
+from pydantic import BaseModel, Field
 from fastapi import APIRouter
-from pydantic import BaseModel
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Text
 from sqlalchemy.orm import relationship
 
 from app.main import Base
 
 
 class MilestoneCategory(str, Enum):
-    MOTOR = "motor"  # crawling, walking, etc.
-    COGNITIVE = "cognitive"  # recognizing objects, problem-solving
-    LANGUAGE = "language"  # first words, sentences
-    SOCIAL = "social"  # smiling, playing with others
-    EMOTIONAL = "emotional"  # expressing emotions
-    SELF_CARE = "self_care"  # feeding, toilet training
+    MOTOR = "motor"
+    COGNITIVE = "cognitive"
+    SOCIAL = "social"
+    LANGUAGE = "language"
+    EMOTIONAL = "emotional"
+    OTHER = "other"
+
 
 class MilestoneBase(BaseModel):
     title: str
     category: MilestoneCategory
+    achieved_date: datetime
     description: Optional[str] = None
-    typical_age_months: Optional[int] = None
-    achieved_date: Optional[datetime] = None
     notes: Optional[str] = None
+    photo_url: Optional[str] = None
+
 
 class MilestoneCreate(MilestoneBase):
     baby_id: int
 
-class MilestoneUpdate(BaseModel):
-    title: Optional[str] = None
-    category: Optional[MilestoneCategory] = None
-    description: Optional[str] = None
-    typical_age_months: Optional[int] = None
-    achieved_date: Optional[datetime] = None
-    notes: Optional[str] = None
+
+class MilestoneUpdate(MilestoneBase):
+    pass
+
 
 class MilestoneResponse(MilestoneBase):
     id: int
     created_at: datetime
     baby_id: int
-    is_achieved: bool
 
     class Config:
         from_attributes = True
+
 
 router = APIRouter(
     prefix="/milestone",
@@ -52,18 +50,18 @@ router = APIRouter(
     responses={404: {"description": "Not found"}}
 )
 
+
 class Milestone(Base):
     __tablename__ = "milestone"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     title = Column(String(100), nullable=False)
-    category = Column(SQLEnum(MilestoneCategory), nullable=False)
+    category = Column(String(50), nullable=False)
+    achieved_date = Column(DateTime, nullable=False)
     description = Column(String(500), nullable=True)
-    typical_age_months = Column(Integer, nullable=True)
-    achieved_date = Column(DateTime, nullable=True)
-    notes = Column(String(500), nullable=True)
-    is_achieved = Column(Boolean, default=False)
+    notes = Column(Text, nullable=True)
+    photo_url = Column(String(255), nullable=True)
 
     # Foreign keys
     baby_id = Column(Integer, ForeignKey('baby.id'), nullable=False)

@@ -63,7 +63,6 @@ class Baby(Base):
     weight = Column(Float, nullable=True)
     height = Column(Float, nullable=True)
     picture = Column(String(300), nullable=True)
-    head_circumference = Column(Float, nullable=True)
 
     # Foreign keys
     parent_id = Column(Integer, ForeignKey('users.id'), nullable=False)
@@ -78,11 +77,10 @@ class Baby(Base):
     sleeps = relationship("Sleep", back_populates="baby", cascade="all, delete-orphan")
     diapers = relationship("Diaper", back_populates="baby", cascade="all, delete-orphan")
     health_records = relationship("Health", back_populates="baby", cascade="all, delete-orphan")
-    growth_records = relationship("Growth", back_populates="baby", cascade="all, delete-orphan")
-    milestones = relationship("Milestone", back_populates="baby", cascade="all, delete-orphan")
-    medications = relationship("Medication", back_populates="baby", cascade="all, delete-orphan")
     doctor_visits = relationship("DoctorVisit", back_populates="baby", cascade="all, delete-orphan")
-    pumping_sessions = relationship("Pumping", back_populates="baby", cascade="all, delete-orphan")
+    growth_records = relationship("Growth", back_populates="baby", cascade="all, delete-orphan")
+    medications = relationship("Medication", back_populates="baby", cascade="all, delete-orphan")
+    milestones = relationship("Milestone", back_populates="baby", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Baby '{self.fullname}'>"

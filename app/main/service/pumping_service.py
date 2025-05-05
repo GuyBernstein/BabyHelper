@@ -1,20 +1,13 @@
-from collections import defaultdict
-from datetime import datetime, timedelta
-from typing import Dict, Union, Any
+from datetime import datetime
+from typing import Dict, List, Union, Any, Optional
 
 from sqlalchemy.orm import Session
 
 from app.main.model.pumping import Pumping
-from app.main.service.baby_service import get_baby_if_authorized
 
 
-def create_pumping_session(db: Session, data: Dict[str, Any], current_user_id: int) -> Union[Pumping, Dict[str, str]]:
-    """Create a new pumping session record"""
-    # Check if user is authorized to add pumping sessions for this baby
-    baby = get_baby_if_authorized(db, data['baby_id'], current_user_id)
-    if isinstance(baby, dict):  # Error response
-        return baby
-
+def create_pumping(db: Session, data: Dict[str, Any], current_user_id: int) -> Union[Pumping, Dict[str, str]]:
+    """Create a new pumping session record for a user"""
     # Calculate duration if both start and end times are provided
     duration = data.get('duration')
     if data.get('end_time') and not duration:
@@ -22,86 +15,148 @@ def create_pumping_session(db: Session, data: Dict[str, Any], current_user_id: i
         delta = data['end_time'] - data['start_time']
         duration = int(delta.total_seconds() / 60)
 
-    # Create new pumping session
-    new_session = Pumping(
+    # Calculate total amount if left and right amounts are provided
+    total_amount = data.get('total_amount')
+    if data.get('left_amount') is not None and data.get('right_amount') is not None and total_amount is None:
+        total_amount = data.get('left_amount', 0) + data.get('right_amount', 0)
+
+    # Create new pumping record
+    new_pumping = Pumping(
         created_at=datetime.utcnow(),
         start_time=data['start_time'],
         end_time=data.get('end_time'),
         duration=duration,
-        volume_left=data.get('volume_left'),
-        volume_right=data.get('volume_right'),
+        left_amount=data.get('left_amount'),
+        right_amount=data.get('right_amount'),
+        total_amount=total_amount,
         notes=data.get('notes'),
-        baby_id=data['baby_id']
+        user_id=current_user_id
     )
 
-    db.add(new_session)
+    db.add(new_pumping)
     db.commit()
-    db.refresh(new_session)
-    return new_session
+    db.refresh(new_pumping)
+    return new_pumping
 
 
-def get_pumping_summary(db: Session, baby_id: int, current_user_id: int, days: int = 7) -> Union[
-    Dict[str, Any], Dict[str, str]]:
-    """Get pumping statistics for a period of days"""
-    # Check if user is authorized to view this baby's data
-    baby = get_baby_if_authorized(db, baby_id, current_user_id)
-    if isinstance(baby, dict):  # Error response
-        return baby
+def get_pumpings_for_user(db: Session, user_id: int,
+                          skip: int = 0, limit: int = 100, start_date: Optional[datetime] = None,
+                          end_date: Optional[datetime] = None) -> List[Pumping]:
+    """Get pumping session records for a user with optional date filtering"""
+    # Query pumping sessions
+    query = db.query(Pumping).filter(Pumping.user_id == user_id)
 
-    # Calculate the start date
-    start_date = datetime.utcnow() - timedelta(days=days)
+    # Apply date filters if provided
+    if start_date:
+        query = query.filter(Pumping.start_time >= start_date)
+    if end_date:
+        query = query.filter(Pumping.start_time <= end_date)
 
-    # Get all pumping sessions in the period
-    sessions = db.query(Pumping).filter(
-        Pumping.baby_id == baby_id,
-        Pumping.start_time >= start_date
-    ).order_by(Pumping.start_time).all()
+    # Order by time descending (newest first)
+    query = query.order_by(Pumping.start_time.desc())
 
-    # Initialize data structures
-    daily_volume = defaultdict(float)
-    side_totals = {'left': 0, 'right': 0}
-    total_duration = 0
+    # Apply pagination
+    pumpings = query.offset(skip).limit(limit).all()
 
-    # Analyze data
-    for session in sessions:
-        date_str = session.start_time.strftime('%Y-%m-%d')
+    return pumpings
 
-        # Sum volumes
-        left_vol = session.volume_left or 0
-        right_vol = session.volume_right or 0
-        session_total = left_vol + right_vol
 
-        daily_volume[date_str] += session_total
-        side_totals['left'] += left_vol
-        side_totals['right'] += right_vol
+def get_pumping(db: Session, pumping_id: int, current_user_id: int) -> Union[Pumping, Dict[str, str]]:
+    """Get a specific pumping session record by ID"""
+    # Get the pumping record
+    pumping = db.query(Pumping).filter(Pumping.id == pumping_id).first()
 
-        # Add duration
-        if session.duration:
-            total_duration += session.duration
+    if not pumping:
+        return {
+            'status': 'fail',
+            'message': 'Pumping session record not found',
+        }
 
-    # Calculate averages
-    num_days = len(daily_volume) or 1  # Avoid division by zero
-    avg_daily_volume = sum(daily_volume.values()) / num_days
-    avg_session_volume = sum(daily_volume.values()) / len(sessions) if sessions else 0
+    # Check if user owns this pumping record
+    if pumping.user_id != current_user_id:
+        return {
+            'status': 'fail',
+            'message': 'Not authorized to access this pumping record',
+        }
 
-    # Prepare the response
-    summary = {
-        'total_sessions': len(sessions),
-        'total_volume_ml': sum(daily_volume.values()),
-        'avg_daily_volume_ml': round(avg_daily_volume, 1),
-        'avg_session_volume_ml': round(avg_session_volume, 1),
-        'side_comparison': {
-            'left_ml': side_totals['left'],
-            'right_ml': side_totals['right'],
-            'difference_ml': abs(side_totals['left'] - side_totals['right']),
-            'dominant_side': 'left' if side_totals['left'] > side_totals['right'] else 'right'
-        },
-        'total_duration_minutes': total_duration,
-        'avg_duration_minutes': round(total_duration / len(sessions), 1) if sessions else 0,
-        'daily_volumes': [{'date': k, 'volume_ml': v} for k, v in sorted(daily_volume.items())]
-    }
+    return pumping
 
-    return {
-        'status': 'success',
-        'summary': summary
-    }
+
+def update_pumping(db: Session, pumping_id: int, data: Dict[str, Any], current_user_id: int) -> Union[
+    Pumping, Dict[str, str]]:
+    """Update a pumping session record"""
+    # Get the pumping record
+    pumping = db.query(Pumping).filter(Pumping.id == pumping_id).first()
+
+    if not pumping:
+        return {
+            'status': 'fail',
+            'message': 'Pumping session record not found',
+        }
+
+    # Check if user owns this pumping record
+    if pumping.user_id != current_user_id:
+        return {
+            'status': 'fail',
+            'message': 'Not authorized to access this pumping record',
+        }
+
+    # Calculate duration if end_time is updated
+    start_time = data.get('start_time', pumping.start_time)
+    end_time = data.get('end_time')
+    duration = data.get('duration')
+
+    if end_time and not duration:
+        # Calculate duration in minutes
+        delta = end_time - start_time
+        duration = int(delta.total_seconds() / 60)
+
+    # Calculate total amount if left and right amounts are updated
+    left_amount = data.get('left_amount')
+    right_amount = data.get('right_amount')
+    total_amount = data.get('total_amount')
+
+    if left_amount is not None and right_amount is not None and total_amount is None:
+        total_amount = left_amount + right_amount
+
+    # Update pumping record
+    pumping.start_time = start_time
+    if end_time:
+        pumping.end_time = end_time
+    if duration:
+        pumping.duration = duration
+    if left_amount is not None:
+        pumping.left_amount = left_amount
+    if right_amount is not None:
+        pumping.right_amount = right_amount
+    if total_amount is not None:
+        pumping.total_amount = total_amount
+    pumping.notes = data.get('notes', pumping.notes)
+
+    db.commit()
+    db.refresh(pumping)
+    return pumping
+
+
+def delete_pumping(db: Session, pumping_id: int, current_user_id: int) -> Union[Dict[str, str], None]:
+    """Delete a pumping session record"""
+    # Get the pumping record
+    pumping = db.query(Pumping).filter(Pumping.id == pumping_id).first()
+
+    if not pumping:
+        return {
+            'status': 'fail',
+            'message': 'Pumping session record not found',
+        }
+
+    # Check if user owns this pumping record
+    if pumping.user_id != current_user_id:
+        return {
+            'status': 'fail',
+            'message': 'Not authorized to access this pumping record',
+        }
+
+    # Delete the pumping record
+    db.delete(pumping)
+    db.commit()
+    return {'status': 'DELETED'}

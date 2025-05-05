@@ -61,10 +61,13 @@ class User(Base):
 
     # Relationships
     babies = relationship("Baby", back_populates="parent")
+    pumping_sessions = relationship("Pumping", back_populates="user", cascade="all, delete-orphan")
     coparented_babies = relationship("Baby", secondary="baby_coparent", back_populates="coparents")
     sent_invitations = relationship("CoParentInvitation", foreign_keys="CoParentInvitation.inviter_id", back_populates="inviter")
     received_invitations = relationship("CoParentInvitation", foreign_keys="CoParentInvitation.invitee_id", back_populates="invitee")
     notifications = relationship("Notification", back_populates="user")
+
+
 
     def __repr__(self):
         return f"<User '{self.email}'>"
