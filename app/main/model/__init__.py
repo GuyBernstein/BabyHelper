@@ -7,3 +7,4 @@ from app.main.model.diaper import Diaper
 from app.main.model.parent_child_schema import CoParentInvitation, Notification
 from app.main.model.doctor_visit import DoctorVisit
 from app.main.model.medication import Medication
+from app.main.model.pumping import Pumping
