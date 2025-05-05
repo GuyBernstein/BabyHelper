@@ -5,6 +5,7 @@ import uuid
 from sqlalchemy.orm import Session
 
 from app.main.model.photo import Photo, PhotoType
+from app.main.model.milestone import Milestone
 from app.main.service.baby_service import get_baby_if_authorized
 from app.main.service.aws_service import upload_file, create_presigned_url
 
@@ -53,6 +54,20 @@ async def upload_baby_photo(db: Session, data: Dict[str, Any], file, current_use
     if isinstance(baby, dict):  # Error response
         return baby
 
+    # If this is a milestone photo, verify the milestone exists and belongs to this baby
+    milestone = None
+    if data.get('milestone_id') and data['photo_type'] == PhotoType.MILESTONE:
+        milestone = db.query(Milestone).filter(
+            Milestone.id == data['milestone_id'],
+            Milestone.baby_id == data['baby_id']
+        ).first()
+
+        if not milestone:
+            return {
+                'status': 'fail',
+                'message': 'Milestone not found or does not belong to this baby'
+            }
+
     # Generate a unique filename
     file_extension = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
     filename = f"baby-{data['baby_id']}-{data['photo_type']}-{uuid.uuid4().hex}.{file_extension}"
@@ -70,12 +85,20 @@ async def upload_baby_photo(db: Session, data: Dict[str, Any], file, current_use
             description=data.get('description'),
             date_taken=data.get('date_taken', datetime.utcnow()),
             s3_key=s3_key,
-            baby_id=data['baby_id']
+            baby_id=data['baby_id'],
+            milestone_id=data.get('milestone_id')
         )
 
         db.add(new_photo)
         db.commit()
         db.refresh(new_photo)
+
+        # If associated with a milestone, update the milestone's photo_url
+        if milestone:
+            url = create_presigned_url(s3_key)
+            milestone.photo_url = url
+            db.commit()
+
         return new_photo
     else:
         return {
@@ -84,23 +107,24 @@ async def upload_baby_photo(db: Session, data: Dict[str, Any], file, current_use
         }
 
 
-def get_baby_photos(db: Session, baby_id: int, current_user_id: int, photo_type: Optional[PhotoType] = None) -> Union[List[Dict[str, Any]], Dict[str, str]]:
+def get_baby_photos(db: Session, baby_id: int, current_user_id: int, photo_type: Optional[PhotoType] = None) -> Union[
+    List[Dict[str, Any]], Dict[str, str]]:
     """Get all photos for a baby with optional filtering by type"""
     # Check if user is authorized to view this baby's data
     baby = get_baby_if_authorized(db, baby_id, current_user_id)
     if isinstance(baby, dict):  # Error response
         return baby
-    
+
     # Query photos
     query = db.query(Photo).filter(Photo.baby_id == baby_id)
-    
+
     # Filter by type if provided
     if photo_type:
         query = query.filter(Photo.photo_type == photo_type)
-    
+
     # Get all matching photos
     photos = query.all()
-    
+
     # Create response with presigned URLs
     result = []
     for photo in photos:
@@ -111,34 +135,132 @@ def get_baby_photos(db: Session, baby_id: int, current_user_id: int, photo_type:
             'description': photo.description,
             'date_taken': photo.date_taken,
             'baby_id': photo.baby_id,
+            'milestone_id': photo.milestone_id,
             'url': create_presigned_url(photo.s3_key)
         }
         result.append(photo_dict)
-    
+
     return result
+
+
+def get_photos_for_milestone(db: Session, milestone_id: int, current_user_id: int) -> Union[
+    List[Dict[str, Any]], Dict[str, str]]:
+    """Get all photos associated with a milestone"""
+    # First, get the milestone to check authorization
+    milestone = db.query(Milestone).filter(Milestone.id == milestone_id).first()
+
+    if not milestone:
+        return {
+            'status': 'fail',
+            'message': 'Milestone not found',
+        }
+
+    # Check if user is authorized to view this baby's data
+    baby = get_baby_if_authorized(db, milestone.baby_id, current_user_id)
+    if isinstance(baby, dict):  # Error response
+        return baby
+
+    # Query photos
+    photos = db.query(Photo).filter(Photo.milestone_id == milestone_id).all()
+
+    # Create response with presigned URLs
+    result = []
+    for photo in photos:
+        photo_dict = {
+            'id': photo.id,
+            'created_at': photo.created_at,
+            'photo_type': photo.photo_type,
+            'description': photo.description,
+            'date_taken': photo.date_taken,
+            'baby_id': photo.baby_id,
+            'milestone_id': photo.milestone_id,
+            'url': create_presigned_url(photo.s3_key)
+        }
+        result.append(photo_dict)
+
+    return result
+
+
+def link_photo_to_milestone(db: Session, photo_id: int, milestone_id: int, current_user_id: int) -> Dict[str, Any]:
+    """Link an existing photo to a milestone"""
+    # Get the photo
+    photo = db.query(Photo).filter(Photo.id == photo_id).first()
+    if not photo:
+        return {
+            'status': 'fail',
+            'message': 'Photo not found',
+        }
+
+    # Get the milestone
+    milestone = db.query(Milestone).filter(Milestone.id == milestone_id).first()
+    if not milestone:
+        return {
+            'status': 'fail',
+            'message': 'Milestone not found',
+        }
+
+    # Check if user is authorized to access both the baby for the photo and milestone
+    baby = get_baby_if_authorized(db, photo.baby_id, current_user_id)
+    if isinstance(baby, dict):  # Error response
+        return baby
+
+    milestone_baby = get_baby_if_authorized(db, milestone.baby_id, current_user_id)
+    if isinstance(milestone_baby, dict):  # Error response
+        return milestone_baby
+
+    # Check if photo and milestone belong to the same baby
+    if photo.baby_id != milestone.baby_id:
+        return {
+            'status': 'fail',
+            'message': 'Photo and milestone must belong to the same baby',
+        }
+
+    # Update the photo to link it to the milestone
+    photo.milestone_id = milestone_id
+
+    # If it's not already a milestone type photo, update it
+    if photo.photo_type != PhotoType.MILESTONE:
+        photo.photo_type = PhotoType.MILESTONE
+
+    # Generate a presigned URL and update the milestone's photo_url
+    url = create_presigned_url(photo.s3_key)
+    milestone.photo_url = url
+
+    db.commit()
+
+    return {
+        'status': 'success',
+        'message': 'Photo linked to milestone successfully',
+        'photo_url': url
+    }
 
 
 def delete_photo(db: Session, photo_id: int, current_user_id: int) -> Union[Dict[str, str], None]:
     """Delete a photo"""
     # Get the photo
     photo = db.query(Photo).filter(Photo.id == photo_id).first()
-    
+
     if not photo:
         return {
             'status': 'fail',
             'message': 'Photo not found',
         }
-    
+
     # Check if user is authorized to update this baby's data
     baby = get_baby_if_authorized(db, photo.baby_id, current_user_id)
     if isinstance(baby, dict):  # Error response
         return baby
-    
+
+    # If photo is linked to a milestone, update the milestone's photo_url to None
+    if photo.milestone_id:
+        milestone = db.query(Milestone).filter(Milestone.id == photo.milestone_id).first()
+        if milestone:
+            milestone.photo_url = None
+
     # Delete the photo record
     db.delete(photo)
     db.commit()
-    
+
     # Note: We're not deleting from S3 here
-    # In a production system, you might want to implement S3 object deletion or use lifecycle policies
-    
+
     return {'status': 'DELETED'}

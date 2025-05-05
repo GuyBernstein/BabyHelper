@@ -1,9 +1,10 @@
 from datetime import datetime
-from typing import Optional, List
 from enum import Enum
-from pydantic import BaseModel, Field
+from typing import Optional
+
 from fastapi import APIRouter
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Text
+from pydantic import BaseModel
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 
 from app.main import Base
@@ -24,7 +25,6 @@ class MilestoneBase(BaseModel):
     achieved_date: datetime
     description: Optional[str] = None
     notes: Optional[str] = None
-    photo_url: Optional[str] = None
 
 
 class MilestoneCreate(MilestoneBase):
@@ -61,13 +61,14 @@ class Milestone(Base):
     achieved_date = Column(DateTime, nullable=False)
     description = Column(String(500), nullable=True)
     notes = Column(Text, nullable=True)
-    photo_url = Column(String(255), nullable=True)
+    photo_url = Column(String(500), nullable=True)
 
     # Foreign keys
     baby_id = Column(Integer, ForeignKey('baby.id'), nullable=False)
 
     # Relationships
     baby = relationship("Baby", back_populates="milestones")
+    photos = relationship("Photo", back_populates="milestone", cascade="all, delete-orphan")  # New relationship
 
     def __repr__(self):
         return f"<Milestone '{self.title}' for baby {self.baby_id}>"

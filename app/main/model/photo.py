@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import Optional, List
 from enum import Enum
-from pydantic import BaseModel, Field
+from typing import Optional
+
 from fastapi import APIRouter
+from pydantic import BaseModel
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum as SQLEnum
 from sqlalchemy.orm import relationship
 
@@ -20,6 +21,7 @@ class PhotoBase(BaseModel):
     photo_type: PhotoType
     description: Optional[str] = None
     date_taken: Optional[datetime] = None
+    milestone_id: Optional[int] = None  # New field
 
 
 class PhotoCreate(PhotoBase):
@@ -35,6 +37,7 @@ class PhotoResponse(PhotoBase):
     created_at: datetime
     baby_id: int
     url: Optional[str] = None
+    milestone_id: Optional[int] = None
 
     class Config:
         from_attributes = True
@@ -56,12 +59,14 @@ class Photo(Base):
     description = Column(String(500), nullable=True)
     date_taken = Column(DateTime, nullable=True)
     s3_key = Column(String(500), nullable=False)
-    
+
     # Foreign keys
     baby_id = Column(Integer, ForeignKey('baby.id'), nullable=False)
-    
+    milestone_id = Column(Integer, ForeignKey('milestone.id'), nullable=True)
+
     # Relationships
     baby = relationship("Baby", back_populates="photos")
+    milestone = relationship("Milestone", back_populates="photos")
 
     def __repr__(self):
         return f"<Photo {self.photo_type} for baby {self.baby_id}>"
