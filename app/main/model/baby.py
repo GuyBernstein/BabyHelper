@@ -80,6 +80,8 @@ class Baby(Base):
     health_records = relationship("Health", back_populates="baby", cascade="all, delete-orphan")
     growth_records = relationship("Growth", back_populates="baby", cascade="all, delete-orphan")
     milestones = relationship("Milestone", back_populates="baby", cascade="all, delete-orphan")
+    medications = relationship("Medication", back_populates="baby", cascade="all, delete-orphan")
+    doctor_visits = relationship("DoctorVisit", back_populates="baby", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Baby '{self.fullname}'>"

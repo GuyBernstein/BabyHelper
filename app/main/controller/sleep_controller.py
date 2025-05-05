@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from fastapi import Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
@@ -12,7 +12,7 @@ from app.main.service.sleep_service import (
     get_sleeps_for_baby,
     get_sleep,
     update_sleep,
-    delete_sleep
+    delete_sleep, get_sleep_patterns
 )
 from app.main.service.oauth_service import get_current_user
 
@@ -115,3 +115,23 @@ async def delete_sleep_record(
         )
 
     return None
+
+# Add to app/main/controller/sleep_controller.py
+@router.get("/baby/{baby_id}/patterns", response_model=Dict[str, Any])
+async def get_baby_sleep_patterns(
+        baby_id: int,
+        days: int = Query(7, description="Number of days to analyze"),
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    """Get sleep patterns analysis for a baby"""
+    result = get_sleep_patterns(db, baby_id, current_user.id, days)
+
+    if isinstance(result, dict) and result.get('status') == 'fail':
+        status_code = status.HTTP_403_FORBIDDEN if result.get('message') == 'Not authorized to access this baby' else status.HTTP_404_NOT_FOUND
+        raise HTTPException(
+            status_code=status_code,
+            detail=result.get('message', 'Failed to analyze sleep patterns')
+        )
+
+    return result

@@ -1,9 +1,10 @@
 from datetime import datetime
-from typing import Optional, List
 from enum import Enum
-from pydantic import BaseModel, Field
+from typing import Optional
+
 from fastapi import APIRouter
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Enum as SQLEnum
+from pydantic import BaseModel
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum as SQLEnum
 from sqlalchemy.orm import relationship
 
 from app.main import Base

@@ -29,6 +29,8 @@ def create_sleep(db: Session, data: Dict[str, Any], current_user_id: int) -> Uni
         end_time=data.get('end_time'),
         duration=duration,
         quality=data.get('quality'),
+        location=data.get('location'),
+        training_method=data.get('training_method'),
         notes=data.get('notes'),
         baby_id=data['baby_id']
     )
@@ -119,6 +121,9 @@ def update_sleep(db: Session, sleep_id: int, data: Dict[str, Any], current_user_
         sleep.duration = duration
     sleep.quality = data.get('quality', sleep.quality)
     sleep.notes = data.get('notes', sleep.notes)
+    sleep.location = data.get('location', sleep.location)
+    sleep.training_method = data.get('training_method', sleep.training_method)
+
     
     db.commit()
     db.refresh(sleep)
