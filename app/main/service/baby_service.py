@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.main.model.baby import Baby
 from app.main.model.user import User
+from app.main.service.aws_service import create_presigned_url
 
 
 def save_new_baby(db: Session, data: Dict[str, Any], current_user_id: int) -> Union[Baby, Dict[str, str]]:
@@ -72,6 +73,11 @@ def get_all_babies_for_user(db: Session, user_id: int) -> List[Baby]:
         if baby not in all_babies:
             all_babies.append(baby)
 
+    # Add presigned URLs for pictures
+    for baby in all_babies:
+        if baby.picture:
+            baby.picture_url = create_presigned_url(baby.picture)
+
     return all_babies
 
 
@@ -87,11 +93,17 @@ def get_baby_if_authorized(db: Session, baby_id: int, user_id: int) -> Union[Bab
 
     # Check if user is the primary parent
     if baby.parent_id == user_id:
+        # Add presigned URL for picture if exists
+        if baby.picture:
+            baby.picture_url = create_presigned_url(baby.picture)
         return baby
 
     # Check if user is a co-parent
     for coparent in baby.coparents:
         if coparent.id == user_id:
+            # Add presigned URL for picture if exists
+            if baby.picture:
+                baby.picture_url = create_presigned_url(baby.picture)
             return baby
 
     # User is not authorized
@@ -99,7 +111,6 @@ def get_baby_if_authorized(db: Session, baby_id: int, user_id: int) -> Union[Bab
         'status': 'fail',
         'message': 'Not authorized to access this baby',
     }
-
 
 def get_a_baby(db: Session, id: int, current_user_id: int) -> Union[Baby, Dict[str, str]]:
     """Get a baby by ID if the user is authorized"""

@@ -37,6 +37,7 @@ class BabyResponse(BabyBase):
     id: int
     created_at: datetime
     picture: Optional[str] = None
+    picture_url: Optional[str] = None  # Field for presigned URL to the picture
     parent_id: int
     parent: Optional[ParentInfo] = None
     coparents: Annotated[List[ParentInfo], Field(default_factory=list)]
@@ -81,6 +82,7 @@ class Baby(Base):
     growth_records = relationship("Growth", back_populates="baby", cascade="all, delete-orphan")
     medications = relationship("Medication", back_populates="baby", cascade="all, delete-orphan")
     milestones = relationship("Milestone", back_populates="baby", cascade="all, delete-orphan")
+    photos = relationship("Photo", back_populates="baby", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Baby '{self.fullname}'>"
