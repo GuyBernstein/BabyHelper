@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 from app.main.model.feeding import Feeding
 from app.main.service.baby_service import get_baby_if_authorized
 
-
 def create_feeding(db: Session, data: Dict[str, Any], current_user_id: int) -> Union[Feeding, Dict[str, str]]:
     """Create a new feeding record for a baby"""
     # Check if user is authorized to add feedings for this baby
@@ -14,13 +13,21 @@ def create_feeding(db: Session, data: Dict[str, Any], current_user_id: int) -> U
     if isinstance(baby, dict):  # Error response
         return baby
 
+    # Calculate duration if both start and end times are provided
+    duration = data.get('duration')
+    if data.get('end_time') and not duration:
+        # Calculate duration in minutes
+        delta = data['end_time'] - data['start_time']
+        duration = int(delta.total_seconds() / 60)
+
     # Create new feeding record
     new_feeding = Feeding(
         created_at=datetime.utcnow(),
         start_time=data['start_time'],
+        end_time=data.get('end_time'),
         feeding_type=data['feeding_type'],
         amount=data.get('amount'),
-        duration=data.get('duration'),
+        duration=duration,
         notes=data.get('notes'),
         baby_id=data['baby_id']
     )

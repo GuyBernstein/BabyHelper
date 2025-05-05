@@ -15,7 +15,8 @@ from .main.model.sleep import router as sleep_router
 from .main.model.diaper import router as diaper_router
 from .main.model.health import router as health_router
 from .main.controller import feeding_controller, sleep_controller, diaper_controller, health_controller
-
+from .main.model.growth import router as growth_router
+from .main.model.milestone import router as milestone_router
 
 def create_app():
     app = FastAPI(
@@ -43,6 +44,8 @@ def create_app():
     app.include_router(sleep_router)
     app.include_router(diaper_router)
     app.include_router(health_router)
+    app.include_router(growth_router)
+    app.include_router(milestone_router)
 
     @app.get("/", response_class=HTMLResponse)
     async def root():

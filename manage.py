@@ -57,7 +57,17 @@ def init():
     with open("migrations/env.py", "r") as f:
         content = f.read()
 
-    import_str = "from app.main import Base\nfrom app.main.model.baby import Baby\n\ntarget_metadata = Base.metadata"
+    import_str = """from app.main import Base
+    from app.main.model.baby import Baby
+    from app.main.model.growth import Growth
+    from app.main.model.feeding import Feeding
+    from app.main.model.sleep import Sleep
+    from app.main.model.diaper import Diaper
+    from app.main.model.health import Health
+    from app.main.model.user import User
+    from app.main.model.parent_child_schema import CoParentInvitation, Notification
+
+    target_metadata = Base.metadata"""
     content = content.replace("target_metadata = None", import_str)
 
     with open("migrations/env.py", "w") as f:
