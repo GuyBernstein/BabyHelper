@@ -1,18 +1,26 @@
+import enum
 from datetime import datetime
 from typing import Optional, List, Annotated
-from pydantic import BaseModel, Field
+
 from fastapi import APIRouter
-from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey
+from pydantic import BaseModel, Field
+from sqlalchemy import Column, Integer, String, DateTime, Float, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 
 from app.main import Base
 
 
+class BabySex(str, enum.Enum):
+    MALE = "male"
+    FEMALE = "female"
+
+
 class BabyBase(BaseModel):
     fullname: str
     birthdate: Optional[datetime] = None
-    weight: Optional[float] = None
-    height: Optional[float] = None
+    weight: Optional[float] = None    # in kg
+    height: Optional[float] = None    # in cm
+    sex: Optional[BabySex] = None
 
 
 class BabyCreate(BabyBase):
@@ -64,6 +72,7 @@ class Baby(Base):
     weight = Column(Float, nullable=True)
     height = Column(Float, nullable=True)
     picture = Column(String(300), nullable=True)
+    sex = Column(Enum(BabySex), nullable=True)
 
     # Foreign keys
     parent_id = Column(Integer, ForeignKey('users.id'), nullable=False)

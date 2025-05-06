@@ -1,12 +1,23 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from fastapi import APIRouter
 from pydantic import BaseModel
-from sqlalchemy import Column, Integer, DateTime, Float, ForeignKey, Text
+from sqlalchemy import Column, Integer, DateTime, Float, ForeignKey, Text, JSON
 from sqlalchemy.orm import relationship
 
 from app.main import Base
+
+
+class PercentileInfo(BaseModel):
+    value: float
+    standard: float
+    percentage: float
+    percentile: float
+    percentile_range: str
+    z_score: Optional[float] = None
+    interpretation: Optional[str] = None
+    age_months: float
 
 
 class GrowthBase(BaseModel):
@@ -29,6 +40,9 @@ class GrowthResponse(GrowthBase):
     id: int
     created_at: datetime
     baby_id: int
+    # New fields for growth percentiles
+    percentiles: Optional[Dict[str, PercentileInfo]] = None
+    baby_age_months: Optional[float] = None
 
     class Config:
         from_attributes = True
@@ -51,6 +65,7 @@ class Growth(Base):
     height = Column(Float, nullable=True)  # in cm
     head_circumference = Column(Float, nullable=True)  # in cm
     notes = Column(Text, nullable=True)
+    percentile_data = Column(JSON, nullable=True)
 
     # Foreign keys
     baby_id = Column(Integer, ForeignKey('baby.id'), nullable=False)

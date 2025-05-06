@@ -25,7 +25,8 @@ def save_new_baby(db: Session, data: Dict[str, Any], current_user_id: int) -> Un
             weight=data.get('weight'),
             height=data.get('height'),
             picture=data.get('picture'),
-            parent_id=current_user_id
+            parent_id=current_user_id,
+            sex=data.get('sex')
         )
         db.add(new_baby)
         db.commit()
@@ -50,6 +51,7 @@ def update_baby(db: Session, id: int, data: Dict[str, Any], current_user_id: int
     baby.birthdate = data.get('birthdate')
     baby.weight = data.get('weight')
     baby.height = data.get('height')
+    baby.sex = data.get('sex')
     if data.get('picture'):
         baby.picture = data.get('picture')
 

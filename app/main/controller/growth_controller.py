@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from fastapi import Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
@@ -14,6 +14,8 @@ from app.main.service.growth_service import (
     update_growth,
     delete_growth
 )
+from app.main.service.baby_service import get_baby_if_authorized
+from app.main.service.growth_percentile_service import calculate_growth_percentile
 from app.main.service.oauth_service import get_current_user
 
 
@@ -27,7 +29,8 @@ async def create_growth_record(
     result = create_growth(db, growth.model_dump(), current_user.id)
 
     if isinstance(result, dict) and result.get('status') == 'fail':
-        status_code = status.HTTP_403_FORBIDDEN if result.get('message') == 'Not authorized to access this baby' else status.HTTP_400_BAD_REQUEST
+        status_code = status.HTTP_403_FORBIDDEN if result.get(
+            'message') == 'Not authorized to access this baby' else status.HTTP_400_BAD_REQUEST
         raise HTTPException(
             status_code=status_code,
             detail=result.get('message', 'Failed to create growth record')
@@ -50,7 +53,8 @@ async def get_growths_by_baby(
     result = get_growths_for_baby(db, baby_id, current_user.id, skip, limit, start_date, end_date)
 
     if isinstance(result, dict) and result.get('status') == 'fail':
-        status_code = status.HTTP_403_FORBIDDEN if result.get('message') == 'Not authorized to access this baby' else status.HTTP_404_NOT_FOUND
+        status_code = status.HTTP_403_FORBIDDEN if result.get(
+            'message') == 'Not authorized to access this baby' else status.HTTP_404_NOT_FOUND
         raise HTTPException(
             status_code=status_code,
             detail=result.get('message', 'Failed to retrieve growth records')
@@ -69,7 +73,8 @@ async def get_growth_record(
     result = get_growth(db, growth_id, current_user.id)
 
     if isinstance(result, dict) and result.get('status') == 'fail':
-        status_code = status.HTTP_403_FORBIDDEN if result.get('message') == 'Not authorized to access this baby' else status.HTTP_404_NOT_FOUND
+        status_code = status.HTTP_403_FORBIDDEN if result.get(
+            'message') == 'Not authorized to access this baby' else status.HTTP_404_NOT_FOUND
         raise HTTPException(
             status_code=status_code,
             detail=result.get('message', 'Failed to retrieve growth record')
@@ -89,7 +94,8 @@ async def update_growth_record(
     result = update_growth(db, growth_id, growth_data.model_dump(), current_user.id)
 
     if isinstance(result, dict) and result.get('status') == 'fail':
-        status_code = status.HTTP_403_FORBIDDEN if result.get('message') == 'Not authorized to access this baby' else status.HTTP_404_NOT_FOUND
+        status_code = status.HTTP_403_FORBIDDEN if result.get(
+            'message') == 'Not authorized to access this baby' else status.HTTP_404_NOT_FOUND
         raise HTTPException(
             status_code=status_code,
             detail=result.get('message', 'Failed to update growth record')
@@ -108,10 +114,74 @@ async def delete_growth_record(
     result = delete_growth(db, growth_id, current_user.id)
 
     if isinstance(result, dict) and result.get('status') == 'fail':
-        status_code = status.HTTP_403_FORBIDDEN if result.get('message') == 'Not authorized to access this baby' else status.HTTP_404_NOT_FOUND
+        status_code = status.HTTP_403_FORBIDDEN if result.get(
+            'message') == 'Not authorized to access this baby' else status.HTTP_404_NOT_FOUND
         raise HTTPException(
             status_code=status_code,
             detail=result.get('message', 'Failed to delete growth record')
         )
 
     return None
+
+
+@router.post("/calculate-percentiles", response_model=Dict[str, Any])
+async def calculate_percentiles(
+        baby_id: int,
+        weight: Optional[float] = Query(None, description="Weight in kg"),
+        height: Optional[float] = Query(None, description="Height in cm"),
+        head_circumference: Optional[float] = Query(None, description="Head circumference in cm"),
+        measurement_date: Optional[datetime] = Query(None, description="Measurement date (defaults to current date)"),
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    """
+    Calculate growth percentiles without saving a growth record
+    (requires authentication and parent/co-parent relationship)
+    """
+    # Check if user is authorized to access this baby's data
+    baby = get_baby_if_authorized(db, baby_id, current_user.id)
+    if isinstance(baby, dict):  # Error response
+        status_code = status.HTTP_403_FORBIDDEN if baby.get(
+            'message') == 'Not authorized to access this baby' else status.HTTP_404_NOT_FOUND
+        raise HTTPException(
+            status_code=status_code,
+            detail=baby.get('message', 'Baby not found')
+        )
+
+    # If no measurement date provided, use current date
+    if measurement_date is None:
+        measurement_date = datetime.utcnow()
+
+    # Prepare baby data for percentile calculation
+    baby_data = {
+        'birthdate': baby.birthdate,
+        'sex': baby.sex
+    }
+
+    # Prepare measurement data
+    measurement_data = {
+        'weight': weight,
+        'height': height,
+        'head_circumference': head_circumference
+    }
+
+    # Calculate growth percentiles
+    try:
+        result = calculate_growth_percentile(
+            baby_data=baby_data,
+            measurement_data=measurement_data,
+            measurement_date=measurement_date
+        )
+
+        if result['status'] == 'fail':
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result.get('message', 'Failed to calculate percentiles')
+            )
+
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error calculating percentiles: {str(e)}"
+        )

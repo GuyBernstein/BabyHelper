@@ -5,10 +5,11 @@ from sqlalchemy.orm import Session
 
 from app.main.model.growth import Growth
 from app.main.service.baby_service import get_baby_if_authorized
+from app.main.service.growth_percentile_service import calculate_growth_percentile
 
 
 def create_growth(db: Session, data: Dict[str, Any], current_user_id: int) -> Union[Growth, Dict[str, str]]:
-    """Create a new growth measurement record for a baby"""
+    """Create a new growth measurement record for a baby with percentile calculations"""
     # Check if user is authorized to add growth records for this baby
     baby = get_baby_if_authorized(db, data['baby_id'], current_user_id)
     if isinstance(baby, dict):  # Error response
@@ -24,6 +25,18 @@ def create_growth(db: Session, data: Dict[str, Any], current_user_id: int) -> Un
         notes=data.get('notes'),
         baby_id=data['baby_id']
     )
+
+    # Calculate percentiles based on WHO growth standards
+    percentile_data = _calculate_percentiles(
+        baby=baby,
+        measurement_date=data['measurement_date'],
+        weight=data.get('weight'),
+        height=data.get('height'),
+        head_circumference=data.get('head_circumference')
+    )
+
+    if percentile_data and percentile_data['status'] == 'success':
+        new_growth.percentile_data = percentile_data
 
     db.add(new_growth)
     db.commit()
@@ -79,7 +92,7 @@ def get_growth(db: Session, growth_id: int, current_user_id: int) -> Union[Growt
 
 def update_growth(db: Session, growth_id: int, data: Dict[str, Any], current_user_id: int) -> Union[
     Growth, Dict[str, str]]:
-    """Update a growth measurement record"""
+    """Update a growth measurement record with recalculated percentiles"""
     # Get the growth record
     growth = db.query(Growth).filter(Growth.id == growth_id).first()
 
@@ -100,6 +113,18 @@ def update_growth(db: Session, growth_id: int, data: Dict[str, Any], current_use
     growth.height = data.get('height', growth.height)
     growth.head_circumference = data.get('head_circumference', growth.head_circumference)
     growth.notes = data.get('notes', growth.notes)
+
+    # Recalculate percentiles based on WHO growth standards
+    percentile_data = _calculate_percentiles(
+        baby=baby,
+        measurement_date=growth.measurement_date,
+        weight=growth.weight,
+        height=growth.height,
+        head_circumference=growth.head_circumference
+    )
+
+    if percentile_data and percentile_data['status'] == 'success':
+        growth.percentile_data = percentile_data
 
     db.commit()
     db.refresh(growth)
@@ -126,3 +151,32 @@ def delete_growth(db: Session, growth_id: int, current_user_id: int) -> Union[Di
     db.delete(growth)
     db.commit()
     return {'status': 'DELETED'}
+
+
+def _calculate_percentiles(baby, measurement_date, weight, height, head_circumference):
+    """Calculate percentiles using the WHO growth percentile service"""
+    # Prepare baby data for percentile calculation
+    baby_data = {
+        'birthdate': baby.birthdate,
+        'sex': baby.sex
+    }
+
+    # Prepare measurement data
+    measurement_data = {
+        'weight': weight,
+        'height': height,
+        'head_circumference': head_circumference
+    }
+
+    # Calculate growth percentiles
+    try:
+        percentile_result = calculate_growth_percentile(
+            baby_data=baby_data,
+            measurement_data=measurement_data,
+            measurement_date=measurement_date
+        )
+        return percentile_result
+    except Exception as e:
+        # Log the error but don't fail the entire operation
+        print(f"Error calculating percentiles: {str(e)}")
+        return None
