@@ -26,6 +26,7 @@ async def create_growth_record(
         current_user: User = Depends(get_current_user)
 ):
     """Create a new growth measurement record (requires authentication and parent/co-parent relationship)"""
+    # First create the growth record
     result = create_growth(db, growth.model_dump(), current_user.id)
 
     if isinstance(result, dict) and result.get('status') == 'fail':
@@ -35,6 +36,55 @@ async def create_growth_record(
             status_code=status_code,
             detail=result.get('message', 'Failed to create growth record')
         )
+
+    # Get the baby data for percentile calculation
+    baby = get_baby_if_authorized(db, growth.baby_id, current_user.id)
+    if isinstance(baby, dict):  # Error response
+        return result  # Return the growth record without percentiles
+
+    # Prepare baby data for percentile calculation
+    baby_data = {
+        'birthdate': baby.birthdate,
+        'sex': baby.sex
+    }
+
+    # Prepare measurement data
+    measurement_data = {
+        'weight': growth.weight,
+        'height': growth.height,
+        'head_circumference': growth.head_circumference
+    }
+
+    # Calculate growth percentiles
+    try:
+        # Ensure measurement_date is timezone naive to match birthdate format
+        measurement_date = growth.measurement_date
+        if hasattr(measurement_date, 'tzinfo') and measurement_date.tzinfo is not None:
+            # Convert to naive datetime by removing timezone info
+            measurement_date = measurement_date.replace(tzinfo=None)
+
+        percentile_result = calculate_growth_percentile(
+            baby_data=baby_data,
+            measurement_data=measurement_data,
+            measurement_date=measurement_date
+        )
+
+        if percentile_result['status'] == 'success':
+            # Update the growth record with the percentile data
+            # We need to access the created record directly
+            growth_record = get_growth(db, result.id, current_user.id)
+            if not isinstance(growth_record, dict):  # Not an error response
+                # Update the percentile_data field with the calculated percentiles
+                growth_record.percentile_data = percentile_result.get('percentiles')
+                db.commit()
+
+                # Update the result to include the percentiles
+                result.percentiles = percentile_result.get('percentiles')
+                result.baby_age_months = percentile_result.get('baby_age_months')
+    except Exception as e:
+        # Log the error but don't fail the whole operation
+        print(f"Error calculating percentiles: {str(e)}")
+        # Growth record was still created, just without percentiles
 
     return result
 
@@ -60,6 +110,19 @@ async def get_growths_by_baby(
             detail=result.get('message', 'Failed to retrieve growth records')
         )
 
+    # Process each growth record to ensure percentiles and baby_age_months are set
+    # Handle both single record and list of records
+    if isinstance(result, list):
+        for record in result:
+            if hasattr(record, 'percentile_data') and record.percentile_data:
+                record.percentiles = record.percentile_data
+
+                # Extract baby_age_months from the first percentile entry if available
+                if record.percentiles and isinstance(record.percentiles, dict):
+                    first_percentile = next(iter(record.percentiles.values()), None)
+                    if first_percentile and isinstance(first_percentile, dict) and 'age_months' in first_percentile:
+                        record.baby_age_months = first_percentile['age_months']
+
     return result
 
 
@@ -80,6 +143,16 @@ async def get_growth_record(
             detail=result.get('message', 'Failed to retrieve growth record')
         )
 
+    # Map the percentile_data to percentiles in the response
+    if hasattr(result, 'percentile_data') and result.percentile_data:
+        result.percentiles = result.percentile_data
+
+        # Extract baby_age_months from the first percentile entry if available
+        if result.percentiles and isinstance(result.percentiles, dict):
+            first_percentile = next(iter(result.percentiles.values()), None)
+            if first_percentile and isinstance(first_percentile, dict) and 'age_months' in first_percentile:
+                result.baby_age_months = first_percentile['age_months']
+
     return result
 
 
@@ -91,6 +164,17 @@ async def update_growth_record(
         current_user: User = Depends(get_current_user)
 ):
     """Update a growth measurement record (requires authentication and parent/co-parent relationship)"""
+    # First, get the existing growth record to get the baby_id
+    existing_growth = get_growth(db, growth_id, current_user.id)
+    if isinstance(existing_growth, dict) and existing_growth.get('status') == 'fail':
+        status_code = status.HTTP_403_FORBIDDEN if existing_growth.get(
+            'message') == 'Not authorized to access this baby' else status.HTTP_404_NOT_FOUND
+        raise HTTPException(
+            status_code=status_code,
+            detail=existing_growth.get('message', 'Failed to retrieve growth record')
+        )
+
+    # Update the growth record
     result = update_growth(db, growth_id, growth_data.model_dump(), current_user.id)
 
     if isinstance(result, dict) and result.get('status') == 'fail':
@@ -100,6 +184,55 @@ async def update_growth_record(
             status_code=status_code,
             detail=result.get('message', 'Failed to update growth record')
         )
+
+    # Get the baby data for percentile calculation
+    baby_id = existing_growth.baby_id
+    baby = get_baby_if_authorized(db, baby_id, current_user.id)
+    if isinstance(baby, dict):  # Error response
+        return result  # Return the updated growth record without percentiles
+
+    # Prepare baby data for percentile calculation
+    baby_data = {
+        'birthdate': baby.birthdate,
+        'sex': baby.sex
+    }
+
+    # Prepare measurement data
+    measurement_data = {
+        'weight': growth_data.weight if growth_data.weight is not None else existing_growth.weight,
+        'height': growth_data.height if growth_data.height is not None else existing_growth.height,
+        'head_circumference': growth_data.head_circumference if growth_data.head_circumference is not None else existing_growth.head_circumference
+    }
+
+    # Calculate growth percentiles
+    try:
+        # Ensure measurement_date is timezone naive to match birthdate format
+        measurement_date = growth_data.measurement_date
+        if hasattr(measurement_date, 'tzinfo') and measurement_date.tzinfo is not None:
+            # Convert to naive datetime by removing timezone info
+            measurement_date = measurement_date.replace(tzinfo=None)
+
+        percentile_result = calculate_growth_percentile(
+            baby_data=baby_data,
+            measurement_data=measurement_data,
+            measurement_date=measurement_date
+        )
+
+        if percentile_result['status'] == 'success':
+            # Update the growth record with the percentile data
+            growth_record = get_growth(db, growth_id, current_user.id)
+            if not isinstance(growth_record, dict):  # Not an error response
+                # Update the percentile_data field with the calculated percentiles
+                growth_record.percentile_data = percentile_result.get('percentiles')
+                db.commit()
+
+                # Update the result to include the percentiles
+                result.percentiles = percentile_result.get('percentiles')
+                result.baby_age_months = percentile_result.get('baby_age_months')
+    except Exception as e:
+        # Log the error but don't fail the whole operation
+        print(f"Error calculating percentiles: {str(e)}")
+        # Growth record was still updated, just without percentiles
 
     return result
 
