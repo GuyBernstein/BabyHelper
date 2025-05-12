@@ -66,8 +66,7 @@ class User(Base):
     sent_invitations = relationship("CoParentInvitation", foreign_keys="CoParentInvitation.inviter_id", back_populates="inviter")
     received_invitations = relationship("CoParentInvitation", foreign_keys="CoParentInvitation.invitee_id", back_populates="invitee")
     notifications = relationship("Notification", back_populates="user")
-
-
+    dashboard_preference = relationship("DashboardPreference", back_populates="user", uselist=False)
 
     def __repr__(self):
         return f"<User '{self.email}'>"
