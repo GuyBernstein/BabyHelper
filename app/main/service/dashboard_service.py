@@ -6,17 +6,14 @@ from sqlalchemy.orm import Session
 
 from app.main.model.baby import Baby
 from app.main.model.dashboard import DashboardPreference, WidgetType, TimeFrame
-from app.main.model.feeding import Feeding
-from app.main.model.sleep import Sleep
 from app.main.model.diaper import Diaper
-from app.main.model.health import Health
-from app.main.model.growth import Growth
-from app.main.model.milestone import Milestone
 from app.main.model.doctor_visit import DoctorVisit
+from app.main.model.feeding import Feeding
+from app.main.model.health import Health
 from app.main.model.medication import Medication
-from app.main.model.photo import Photo
+from app.main.model.sleep import Sleep
 from app.main.model.user import User
-from app.main.service.baby_service import get_all_babies_for_user, get_baby_if_authorized
+from app.main.service.baby_service import get_all_babies_for_user
 
 
 def get_or_create_dashboard_preferences(db: Session, user_id: int) -> DashboardPreference:
@@ -367,16 +364,14 @@ def get_care_metrics(db: Session, baby_ids: List[int], timeframe: str,
     ).all()
 
     for feeding in feedings:
-        baby = db.query(Baby).filter(Baby.id == feeding.baby_id).first()
-        if baby:
-            caregiver_id = baby.parent_id  # Assume primary parent for now
-            metrics['total_activities'] += 1
-            metrics['by_activity_type']['feeding']['total'] += 1
+        caregiver_id = feeding.recorded_by
+        metrics['total_activities'] += 1
+        metrics['by_activity_type']['feeding']['total'] += 1
 
-            if caregiver_id in metrics['by_caregiver']:
-                metrics['by_caregiver'][caregiver_id]['total'] += 1
-                metrics['by_caregiver'][caregiver_id]['by_activity_type']['feeding'] += 1
-                metrics['by_activity_type']['feeding']['by_caregiver'][caregiver_id] += 1
+        if caregiver_id in metrics['by_caregiver']:
+            metrics['by_caregiver'][caregiver_id]['total'] += 1
+            metrics['by_caregiver'][caregiver_id]['by_activity_type']['feeding'] += 1
+            metrics['by_activity_type']['feeding']['by_caregiver'][caregiver_id] += 1
 
     # Count sleeps
     sleeps = db.query(Sleep).filter(

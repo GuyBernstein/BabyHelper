@@ -3,6 +3,7 @@ from typing import Dict, List, Union, Any, Optional
 
 from sqlalchemy.orm import Session
 
+from app.main.model import User
 from app.main.model.feeding import Feeding
 from app.main.service.baby_service import get_baby_if_authorized
 
@@ -29,7 +30,8 @@ def create_feeding(db: Session, data: Dict[str, Any], current_user_id: int) -> U
         amount=data.get('amount'),
         duration=duration,
         notes=data.get('notes'),
-        baby_id=data['baby_id']
+        baby_id=data['baby_id'],
+        recorded_by = current_user_id
     )
 
     db.add(new_feeding)
@@ -61,6 +63,12 @@ def get_feedings_for_baby(db: Session, baby_id: int, current_user_id: int,
     
     # Apply pagination
     feedings = query.offset(skip).limit(limit).all()
+
+    # Add caregiver information to each feeding record
+    for feeding in feedings:
+        caregiver = db.query(User).filter(User.id == feeding.recorded_by).first()
+        if caregiver:
+            feeding.caregiver_name = caregiver.name
     
     return feedings
 
@@ -80,6 +88,10 @@ def get_feeding(db: Session, feeding_id: int, current_user_id: int) -> Union[Fee
     baby = get_baby_if_authorized(db, feeding.baby_id, current_user_id)
     if isinstance(baby, dict):  # Error response
         return baby
+
+    caregiver = db.query(User).filter(User.id == feeding.recorded_by).first()
+    if caregiver:
+        feeding.caregiver_name = caregiver.name
     
     return feeding
 
