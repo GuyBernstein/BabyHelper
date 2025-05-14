@@ -380,16 +380,14 @@ def get_care_metrics(db: Session, baby_ids: List[int], timeframe: str,
     ).all()
 
     for sleep in sleeps:
-        baby = db.query(Baby).filter(Baby.id == sleep.baby_id).first()
-        if baby:
-            caregiver_id = baby.parent_id
-            metrics['total_activities'] += 1
-            metrics['by_activity_type']['sleep']['total'] += 1
+        caregiver_id = sleep.recorded_by
+        metrics['total_activities'] += 1
+        metrics['by_activity_type']['sleep']['total'] += 1
 
-            if caregiver_id in metrics['by_caregiver']:
-                metrics['by_caregiver'][caregiver_id]['total'] += 1
-                metrics['by_caregiver'][caregiver_id]['by_activity_type']['sleep'] += 1
-                metrics['by_activity_type']['sleep']['by_caregiver'][caregiver_id] += 1
+        if caregiver_id in metrics['by_caregiver']:
+            metrics['by_caregiver'][caregiver_id]['total'] += 1
+            metrics['by_caregiver'][caregiver_id]['by_activity_type']['sleep'] += 1
+            metrics['by_activity_type']['sleep']['by_caregiver'][caregiver_id] += 1
 
     # Count diapers
     diapers = db.query(Diaper).filter(

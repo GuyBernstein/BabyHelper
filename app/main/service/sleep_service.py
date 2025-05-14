@@ -1,9 +1,10 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Dict, List, Union, Any, Optional
+from typing import Dict, Union, Any, Optional, Type
 
 from sqlalchemy.orm import Session
 
+from app.main.model import User
 from app.main.model.sleep import Sleep
 from app.main.service.baby_service import get_baby_if_authorized
 
@@ -32,18 +33,23 @@ def create_sleep(db: Session, data: Dict[str, Any], current_user_id: int) -> Uni
         location=data.get('location'),
         training_method=data.get('training_method'),
         notes=data.get('notes'),
-        baby_id=data['baby_id']
+        baby_id=data['baby_id'],
+        recorded_by=current_user_id
     )
 
     db.add(new_sleep)
     db.commit()
     db.refresh(new_sleep)
+
+    caregiver = db.query(User).filter(User.id == new_sleep.recorded_by).first()
+    if caregiver:
+        new_sleep.caregiver_name = caregiver.name
     return new_sleep
 
 
 def get_sleeps_for_baby(db: Session, baby_id: int, current_user_id: int, 
                        skip: int = 0, limit: int = 100, start_date: Optional[datetime] = None, 
-                       end_date: Optional[datetime] = None) -> Union[List[Sleep], Dict[str, str]]:
+                       end_date: Optional[datetime] = None) -> Union[dict[str, str], list[Type[Sleep]]]:
     """Get sleep records for a baby with optional date filtering"""
     # Check if user is authorized to view this baby's data
     baby = get_baby_if_authorized(db, baby_id, current_user_id)
@@ -64,11 +70,17 @@ def get_sleeps_for_baby(db: Session, baby_id: int, current_user_id: int,
     
     # Apply pagination
     sleeps = query.offset(skip).limit(limit).all()
+
+    # Add caregiver information to each feeding record
+    for sleep in sleeps:
+        caregiver = db.query(User).filter(User.id == sleep.recorded_by).first()
+        if caregiver:
+            sleep.caregiver_name = caregiver.name
     
     return sleeps
 
 
-def get_sleep(db: Session, sleep_id: int, current_user_id: int) -> Union[Sleep, Dict[str, str]]:
+def get_sleep(db: Session, sleep_id: int, current_user_id: int) -> Union[dict[str, str], dict[str, str], Type[Sleep]]:
     """Get a specific sleep record by ID"""
     # Get the sleep record
     sleep = db.query(Sleep).filter(Sleep.id == sleep_id).first()
@@ -83,11 +95,16 @@ def get_sleep(db: Session, sleep_id: int, current_user_id: int) -> Union[Sleep, 
     baby = get_baby_if_authorized(db, sleep.baby_id, current_user_id)
     if isinstance(baby, dict):  # Error response
         return baby
+
+    caregiver = db.query(User).filter(User.id == sleep.recorded_by).first()
+    if caregiver:
+        sleep.caregiver_name = caregiver.name
     
     return sleep
 
 
-def update_sleep(db: Session, sleep_id: int, data: Dict[str, Any], current_user_id: int) -> Union[Sleep, Dict[str, str]]:
+def update_sleep(db: Session, sleep_id: int, data: Dict[str, Any], current_user_id: int) -> Union[
+    dict[str, str], dict[str, str], Type[Sleep]]:
     """Update a sleep record"""
     # Get the sleep record
     sleep = db.query(Sleep).filter(Sleep.id == sleep_id).first()

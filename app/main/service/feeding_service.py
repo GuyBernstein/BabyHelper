@@ -1,11 +1,12 @@
 from datetime import datetime
-from typing import Dict, List, Union, Any, Optional
+from typing import Dict, Union, Any, Optional, Type
 
 from sqlalchemy.orm import Session
 
 from app.main.model import User
 from app.main.model.feeding import Feeding
 from app.main.service.baby_service import get_baby_if_authorized
+
 
 def create_feeding(db: Session, data: Dict[str, Any], current_user_id: int) -> Union[Feeding, Dict[str, str]]:
     """Create a new feeding record for a baby"""
@@ -37,12 +38,16 @@ def create_feeding(db: Session, data: Dict[str, Any], current_user_id: int) -> U
     db.add(new_feeding)
     db.commit()
     db.refresh(new_feeding)
+
+    caregiver = db.query(User).filter(User.id == new_feeding.recorded_by).first()
+    if caregiver:
+        new_feeding.caregiver_name = caregiver.name
     return new_feeding
 
 
 def get_feedings_for_baby(db: Session, baby_id: int, current_user_id: int, 
                         skip: int = 0, limit: int = 100, start_date: Optional[datetime] = None, 
-                        end_date: Optional[datetime] = None) -> Union[List[Feeding], Dict[str, str]]:
+                        end_date: Optional[datetime] = None) -> Union[dict[str, str], list[Type[Feeding]]]:
     """Get feeding records for a baby with optional date filtering"""
     # Check if user is authorized to view this baby's data
     baby = get_baby_if_authorized(db, baby_id, current_user_id)
@@ -73,7 +78,8 @@ def get_feedings_for_baby(db: Session, baby_id: int, current_user_id: int,
     return feedings
 
 
-def get_feeding(db: Session, feeding_id: int, current_user_id: int) -> Union[Feeding, Dict[str, str]]:
+def get_feeding(db: Session, feeding_id: int, current_user_id: int) -> Union[
+    dict[str, str], dict[str, str], Type[Feeding]]:
     """Get a specific feeding record by ID"""
     # Get the feeding
     feeding = db.query(Feeding).filter(Feeding.id == feeding_id).first()
@@ -96,7 +102,8 @@ def get_feeding(db: Session, feeding_id: int, current_user_id: int) -> Union[Fee
     return feeding
 
 
-def update_feeding(db: Session, feeding_id: int, data: Dict[str, Any], current_user_id: int) -> Union[Feeding, Dict[str, str]]:
+def update_feeding(db: Session, feeding_id: int, data: Dict[str, Any], current_user_id: int) -> Union[
+    dict[str, str], dict[str, str], Type[Feeding]]:
     """Update a feeding record"""
     # Get the feeding
     feeding = db.query(Feeding).filter(Feeding.id == feeding_id).first()
