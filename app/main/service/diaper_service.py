@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import Dict, List, Union, Any, Optional
+from typing import Dict, Union, Any, Optional, Type
 
 from sqlalchemy.orm import Session
 
+from app.main.model import User
 from app.main.model.diaper import Diaper
 from app.main.service.baby_service import get_baby_if_authorized
 
@@ -22,18 +23,24 @@ def create_diaper(db: Session, data: Dict[str, Any], current_user_id: int) -> Un
         consistency=data.get('consistency'),
         color=data.get('color'),
         notes=data.get('notes'),
-        baby_id=data['baby_id']
+        baby_id=data['baby_id'],
+        recorded_by=current_user_id
     )
 
     db.add(new_diaper)
     db.commit()
     db.refresh(new_diaper)
+
+    caregiver = db.query(User).filter(User.id == new_diaper.recorded_by).first()
+    if caregiver:
+        new_diaper.caregiver_name = caregiver.name
+
     return new_diaper
 
 
 def get_diapers_for_baby(db: Session, baby_id: int, current_user_id: int, 
                         skip: int = 0, limit: int = 100, start_date: Optional[datetime] = None, 
-                        end_date: Optional[datetime] = None) -> Union[List[Diaper], Dict[str, str]]:
+                        end_date: Optional[datetime] = None) -> Union[dict[str, str], list[Type[Diaper]]]:
     """Get diaper records for a baby with optional date filtering"""
     # Check if user is authorized to view this baby's data
     baby = get_baby_if_authorized(db, baby_id, current_user_id)
@@ -54,11 +61,18 @@ def get_diapers_for_baby(db: Session, baby_id: int, current_user_id: int,
     
     # Apply pagination
     diapers = query.offset(skip).limit(limit).all()
-    
+
+    # Add caregiver information to each feeding record
+    for diaper in diapers:
+        caregiver = db.query(User).filter(User.id == diaper.recorded_by).first()
+        if caregiver:
+            diaper.caregiver_name = caregiver.name
+
     return diapers
 
 
-def get_diaper(db: Session, diaper_id: int, current_user_id: int) -> Union[Diaper, Dict[str, str]]:
+def get_diaper(db: Session, diaper_id: int, current_user_id: int) -> Union[
+    dict[str, str], dict[str, str], Type[Diaper]]:
     """Get a specific diaper record by ID"""
     # Get the diaper record
     diaper = db.query(Diaper).filter(Diaper.id == diaper_id).first()
@@ -73,11 +87,16 @@ def get_diaper(db: Session, diaper_id: int, current_user_id: int) -> Union[Diape
     baby = get_baby_if_authorized(db, diaper.baby_id, current_user_id)
     if isinstance(baby, dict):  # Error response
         return baby
+
+    caregiver = db.query(User).filter(User.id == diaper.recorded_by).first()
+    if caregiver:
+        diaper.caregiver_name = caregiver.name
     
     return diaper
 
 
-def update_diaper(db: Session, diaper_id: int, data: Dict[str, Any], current_user_id: int) -> Union[Diaper, Dict[str, str]]:
+def update_diaper(db: Session, diaper_id: int, data: Dict[str, Any], current_user_id: int) -> Union[
+    dict[str, str], dict[str, str], Type[Diaper]]:
     """Update a diaper record"""
     # Get the diaper record
     diaper = db.query(Diaper).filter(Diaper.id == diaper_id).first()
