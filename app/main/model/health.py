@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Annotated
 from enum import Enum
 from pydantic import BaseModel, Field
 from fastapi import APIRouter
@@ -33,11 +33,14 @@ class MedicationType(str, Enum):
 class HealthBase(BaseModel):
     time: datetime
     temperature: Optional[float] = None  # in Celsius
-    symptoms: Optional[List[SymptomType]] = Field(default_factory=list)
+    symptoms: Annotated[Optional[List[SymptomType]], Field(default_factory=list)]
     medication: Optional[MedicationType] = None
     medication_dose: Optional[float] = None  # in ml or mg
     notes: Optional[str] = None
 
+    model_config = {
+        "from_attributes": True
+    }
 
 class HealthCreate(HealthBase):
     baby_id: int
@@ -51,6 +54,8 @@ class HealthResponse(HealthBase):
     id: int
     created_at: datetime
     baby_id: int
+    recorded_by: int
+    caregiver_name: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -77,6 +82,8 @@ class Health(Base):
 
     # Foreign keys
     baby_id = Column(Integer, ForeignKey('baby.id'), nullable=False)
+    recorded_by = Column(Integer, ForeignKey('users.id'), nullable=False)
+
 
     # Relationships
     baby = relationship("Baby", back_populates="health_records")

@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import Dict, List, Union, Any, Optional
+from typing import Dict, List, Union, Any, Optional, Type
 
 from sqlalchemy.orm import Session
 
+from app.main.model import User
 from app.main.model.health import Health, SymptomType
 from app.main.service.baby_service import get_baby_if_authorized
 
@@ -15,9 +16,11 @@ def create_health_record(db: Session, data: Dict[str, Any], current_user_id: int
         return baby
 
     # Process symptoms list into comma-separated string
-    symptoms_str = None
+    symptoms_str: Optional[str] = None
     if data.get('symptoms'):
-        symptoms_str = ','.join([symptom for symptom in data['symptoms']])
+        # Use the value of the enum if it's an enum, otherwise use the string
+        string_symptoms = [symptom.value if hasattr(symptom, 'value') else str(symptom) for symptom in data['symptoms']]
+        symptoms_str = ','.join(string_symptoms) if string_symptoms else None
 
     # Create new health record
     new_health = Health(
@@ -28,12 +31,17 @@ def create_health_record(db: Session, data: Dict[str, Any], current_user_id: int
         medication=data.get('medication'),
         medication_dose=data.get('medication_dose'),
         notes=data.get('notes'),
-        baby_id=data['baby_id']
+        baby_id=data['baby_id'],
+        recorded_by=current_user_id
     )
 
     db.add(new_health)
     db.commit()
     db.refresh(new_health)
+
+    caregiver = db.query(User).filter(User.id == new_health.recorded_by).first()
+    if caregiver:
+        new_health.caregiver_name = caregiver.name
 
     # Convert symptoms string to list before returning
     _prepare_symptoms_for_response(new_health)
@@ -42,7 +50,7 @@ def create_health_record(db: Session, data: Dict[str, Any], current_user_id: int
 
 def get_health_records_for_baby(db: Session, baby_id: int, current_user_id: int,
                                 skip: int = 0, limit: int = 100, start_date: Optional[datetime] = None,
-                                end_date: Optional[datetime] = None) -> Union[List[Health], Dict[str, str]]:
+                                end_date: Optional[datetime] = None) -> Union[dict[str, str], list[Type[Health]]]:
     """Get health records for a baby with optional date filtering"""
     # Check if user is authorized to view this baby's data
     baby = get_baby_if_authorized(db, baby_id, current_user_id)
@@ -64,6 +72,12 @@ def get_health_records_for_baby(db: Session, baby_id: int, current_user_id: int,
     # Apply pagination
     health_records = query.offset(skip).limit(limit).all()
 
+    # Add caregiver information to each feeding record
+    for health_record in health_records:
+        caregiver = db.query(User).filter(User.id == health_record.recorded_by).first()
+        if caregiver:
+            health_record.caregiver_name = caregiver.name
+
     # Process symptoms string back to list for each record
     for record in health_records:
         _prepare_symptoms_for_response(record)
@@ -71,7 +85,8 @@ def get_health_records_for_baby(db: Session, baby_id: int, current_user_id: int,
     return health_records
 
 
-def get_health_record(db: Session, health_id: int, current_user_id: int) -> Union[Health, Dict[str, str]]:
+def get_health_record(db: Session, health_id: int, current_user_id: int) -> Union[
+    dict[str, str], dict[str, str], Type[Health]]:
     """Get a specific health record by ID"""
     # Get the health record
     health = db.query(Health).filter(Health.id == health_id).first()
@@ -87,13 +102,17 @@ def get_health_record(db: Session, health_id: int, current_user_id: int) -> Unio
     if isinstance(baby, dict):  # Error response
         return baby
 
+    caregiver = db.query(User).filter(User.id == health.recorded_by).first()
+    if caregiver:
+        health.caregiver_name = caregiver.name
+
     # Convert symptoms string to list before returning
     _prepare_symptoms_for_response(health)
     return health
 
 
 def update_health_record(db: Session, health_id: int, data: Dict[str, Any], current_user_id: int) -> Union[
-    Health, Dict[str, str]]:
+    dict[str, str], dict[str, str], Type[Health]]:
     """Update a health record"""
     # Get the health record
     health = db.query(Health).filter(Health.id == health_id).first()
@@ -111,7 +130,9 @@ def update_health_record(db: Session, health_id: int, data: Dict[str, Any], curr
 
     # Process symptoms list into comma-separated string if provided
     if 'symptoms' in data:
-        symptoms_str = ','.join([symptom for symptom in data['symptoms']]) if data['symptoms'] else None
+        # Use the value of the enum if it's an enum, otherwise use the string
+        string_symptoms = [symptom.value if hasattr(symptom, 'value') else str(symptom) for symptom in data['symptoms']]
+        symptoms_str = ','.join(string_symptoms) if string_symptoms else None
         health.symptoms = symptoms_str
 
     # Update health record

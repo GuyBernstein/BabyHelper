@@ -21,7 +21,7 @@ class PhotoBase(BaseModel):
     photo_type: PhotoType
     description: Optional[str] = None
     date_taken: Optional[datetime] = None
-    milestone_id: Optional[int] = None  # New field
+    milestone_id: Optional[int] = None
 
 
 class PhotoCreate(PhotoBase):

@@ -40,7 +40,6 @@ class GrowthResponse(GrowthBase):
     id: int
     created_at: datetime
     baby_id: int
-    # New fields for growth percentiles
     percentiles: Optional[Dict[str, PercentileInfo]] = None
     baby_age_months: Optional[float] = None
 

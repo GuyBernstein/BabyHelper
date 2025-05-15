@@ -405,6 +405,26 @@ def get_care_metrics(db: Session, baby_ids: List[int], timeframe: str,
             metrics['by_caregiver'][caregiver_id]['by_activity_type']['diaper'] += 1
             metrics['by_activity_type']['diaper']['by_caregiver'][caregiver_id] += 1
 
+        # Count health
+        healths = db.query(Health).filter(
+            Health.baby_id.in_(baby_ids),
+            Health.time.between(start_date, end_date)
+        ).all()
+
+        for health in healths:
+            caregiver_id = health.recorded_by
+            metrics['total_activities'] += 1
+            metrics['by_activity_type']['health']['total'] += 1
+
+            if caregiver_id in metrics['by_caregiver']:
+                metrics['by_caregiver'][caregiver_id]['total'] += 1
+                metrics['by_caregiver'][caregiver_id]['by_activity_type']['health'] += 1
+                metrics['by_activity_type']['health']['by_caregiver'][caregiver_id] += 1
+
+
+    #  'medication': {'total': 0, 'by_caregiver': {}},
+    #  'doctor_visit': {'total': 0, 'by_caregiver': {}}
+
     # Calculate percentages
     if metrics['total_activities'] > 0:
         for caregiver_id in metrics['by_caregiver']:
