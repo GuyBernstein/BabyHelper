@@ -72,7 +72,7 @@ def get_health_records_for_baby(db: Session, baby_id: int, current_user_id: int,
     # Apply pagination
     health_records = query.offset(skip).limit(limit).all()
 
-    # Add caregiver information to each feeding record
+    # Add caregiver information to each health record
     for health_record in health_records:
         caregiver = db.query(User).filter(User.id == health_record.recorded_by).first()
         if caregiver:
@@ -144,6 +144,10 @@ def update_health_record(db: Session, health_id: int, data: Dict[str, Any], curr
 
     db.commit()
     db.refresh(health)
+
+    caregiver = db.query(User).filter(User.id == health.recorded_by).first()
+    if caregiver:
+        health.caregiver_name = caregiver.name
 
     # Convert symptoms string to list before returning
     _prepare_symptoms_for_response(health)

@@ -128,6 +128,11 @@ def update_feeding(db: Session, feeding_id: int, data: Dict[str, Any], current_u
     
     db.commit()
     db.refresh(feeding)
+
+    caregiver = db.query(User).filter(User.id == feeding.recorded_by).first()
+    if caregiver:
+        feeding.caregiver_name = caregiver.name
+
     return feeding
 
 

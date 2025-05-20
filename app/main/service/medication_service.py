@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import Dict, List, Union, Any, Optional
+from typing import Dict, List, Union, Any, Optional, Type
 
 from sqlalchemy.orm import Session
 
+from app.main.model import User
 from app.main.model.medication import Medication
 from app.main.service.baby_service import get_baby_if_authorized
 
@@ -22,21 +23,26 @@ def create_medication(db: Session, data: Dict[str, Any], current_user_id: int) -
         dosage_unit=data['dosage_unit'],
         route=data['route'],
         time_given=data['time_given'],
-        given_by=data.get('given_by'),
         reason=data.get('reason'),
         notes=data.get('notes'),
-        baby_id=data['baby_id']
+        baby_id=data['baby_id'],
+        recorded_by=current_user_id
     )
 
     db.add(new_medication)
     db.commit()
     db.refresh(new_medication)
+
+    caregiver = db.query(User).filter(User.id == new_medication.recorded_by).first()
+    if caregiver:
+        new_medication.caregiver_name = caregiver.name
+
     return new_medication
 
 
 def get_medications_for_baby(db: Session, baby_id: int, current_user_id: int,
                              skip: int = 0, limit: int = 100, start_date: Optional[datetime] = None,
-                             end_date: Optional[datetime] = None) -> Union[List[Medication], Dict[str, str]]:
+                             end_date: Optional[datetime] = None) -> Union[dict[str, str], list[Type[Medication]]]:
     """Get medication records for a baby with optional date filtering"""
     # Check if user is authorized to view this baby's data
     baby = get_baby_if_authorized(db, baby_id, current_user_id)
@@ -58,10 +64,17 @@ def get_medications_for_baby(db: Session, baby_id: int, current_user_id: int,
     # Apply pagination
     medications = query.offset(skip).limit(limit).all()
 
+    # Add caregiver information to each medication record
+    for medication in medications:
+        caregiver = db.query(User).filter(User.id == medication.recorded_by).first()
+        if caregiver:
+            medication.caregiver_name = caregiver.name
+
     return medications
 
 
-def get_medication(db: Session, medication_id: int, current_user_id: int) -> Union[Medication, Dict[str, str]]:
+def get_medication(db: Session, medication_id: int, current_user_id: int) -> Union[
+    dict[str, str], dict[str, str], Type[Medication]]:
     """Get a specific medication record by ID"""
     # Get the medication record
     medication = db.query(Medication).filter(Medication.id == medication_id).first()
@@ -76,6 +89,10 @@ def get_medication(db: Session, medication_id: int, current_user_id: int) -> Uni
     baby = get_baby_if_authorized(db, medication.baby_id, current_user_id)
     if isinstance(baby, dict):  # Error response
         return baby
+
+    caregiver = db.query(User).filter(User.id == medication.recorded_by).first()
+    if caregiver:
+        medication.caregiver_name = caregiver.name
 
     return medication
 
@@ -103,12 +120,15 @@ def update_medication(db: Session, medication_id: int, data: Dict[str, Any], cur
     medication.dosage_unit = data.get('dosage_unit', medication.dosage_unit)
     medication.route = data.get('route', medication.route)
     medication.time_given = data.get('time_given', medication.time_given)
-    medication.given_by = data.get('given_by', medication.given_by)
     medication.reason = data.get('reason', medication.reason)
     medication.notes = data.get('notes', medication.notes)
 
     db.commit()
     db.refresh(medication)
+
+    caregiver = db.query(User).filter(User.id == medication.recorded_by).first()
+    if caregiver:
+        medication.caregiver_name = caregiver.name
     return medication
 
 

@@ -26,7 +26,6 @@ class MedicationBase(BaseModel):
     dosage_unit: str  # mg, ml, etc.
     route: MedicationRoute
     time_given: datetime
-    given_by: Optional[str] = None
     reason: Optional[str] = None
     notes: Optional[str] = None
 
@@ -43,6 +42,8 @@ class MedicationResponse(MedicationBase):
     id: int
     created_at: datetime
     baby_id: int
+    recorded_by: int
+    caregiver_name: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -65,12 +66,12 @@ class Medication(Base):
     dosage_unit = Column(String(20), nullable=False)
     route = Column(String(20), nullable=False)
     time_given = Column(DateTime, nullable=False)
-    given_by = Column(String(100), nullable=True)
     reason = Column(String(500), nullable=True)
     notes = Column(Text, nullable=True)
 
     # Foreign keys
     baby_id = Column(Integer, ForeignKey('baby.id'), nullable=False)
+    recorded_by = Column(Integer, ForeignKey('users.id'), nullable=False)
 
     # Relationships
     baby = relationship("Baby", back_populates="medications")

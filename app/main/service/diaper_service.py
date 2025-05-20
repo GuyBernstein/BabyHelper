@@ -121,6 +121,11 @@ def update_diaper(db: Session, diaper_id: int, data: Dict[str, Any], current_use
     
     db.commit()
     db.refresh(diaper)
+
+    caregiver = db.query(User).filter(User.id == diaper.recorded_by).first()
+    if caregiver:
+        diaper.caregiver_name = caregiver.name
+
     return diaper
 
 
