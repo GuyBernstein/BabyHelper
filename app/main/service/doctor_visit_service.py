@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import Dict, List, Union, Any, Optional
+from typing import Dict, Union, Any, Optional, Type
 
 from sqlalchemy.orm import Session
 
+from app.main.model import User
 from app.main.model.doctor_visit import DoctorVisit
 from app.main.service.baby_service import get_baby_if_authorized
 
@@ -25,18 +26,24 @@ def create_doctor_visit(db: Session, data: Dict[str, Any], current_user_id: int)
         treatment=data.get('treatment'),
         notes=data.get('notes'),
         next_appointment=data.get('next_appointment'),
-        baby_id=data['baby_id']
+        baby_id=data['baby_id'],
+        recorded_by=current_user_id
     )
 
     db.add(new_doctor_visit)
     db.commit()
     db.refresh(new_doctor_visit)
+
+    caregiver = db.query(User).filter(User.id == new_doctor_visit.recorded_by).first()
+    if caregiver:
+        new_doctor_visit.caregiver_name = caregiver.name
+
     return new_doctor_visit
 
 
 def get_doctor_visits_for_baby(db: Session, baby_id: int, current_user_id: int,
                                skip: int = 0, limit: int = 100, start_date: Optional[datetime] = None,
-                               end_date: Optional[datetime] = None) -> Union[List[DoctorVisit], Dict[str, str]]:
+                               end_date: Optional[datetime] = None) -> Union[dict[str, str], list[Type[DoctorVisit]]]:
     """Get doctor visit records for a baby with optional date filtering"""
     # Check if user is authorized to view this baby's data
     baby = get_baby_if_authorized(db, baby_id, current_user_id)
@@ -58,10 +65,17 @@ def get_doctor_visits_for_baby(db: Session, baby_id: int, current_user_id: int,
     # Apply pagination
     doctor_visits = query.offset(skip).limit(limit).all()
 
+    # Add caregiver information to each doctor_visit record
+    for doctor_visit in doctor_visits:
+        caregiver = db.query(User).filter(User.id == doctor_visit.recorded_by).first()
+        if caregiver:
+            doctor_visit.caregiver_name = caregiver.name
+
     return doctor_visits
 
 
-def get_doctor_visit(db: Session, doctor_visit_id: int, current_user_id: int) -> Union[DoctorVisit, Dict[str, str]]:
+def get_doctor_visit(db: Session, doctor_visit_id: int, current_user_id: int) -> Union[
+    dict[str, str], dict[str, str], Type[DoctorVisit]]:
     """Get a specific doctor visit record by ID"""
     # Get the doctor visit record
     doctor_visit = db.query(DoctorVisit).filter(DoctorVisit.id == doctor_visit_id).first()
@@ -77,11 +91,15 @@ def get_doctor_visit(db: Session, doctor_visit_id: int, current_user_id: int) ->
     if isinstance(baby, dict):  # Error response
         return baby
 
+    caregiver = db.query(User).filter(User.id == doctor_visit.recorded_by).first()
+    if caregiver:
+        doctor_visit.caregiver_name = caregiver.name
+
     return doctor_visit
 
 
 def update_doctor_visit(db: Session, doctor_visit_id: int, data: Dict[str, Any], current_user_id: int) -> Union[
-    DoctorVisit, Dict[str, str]]:
+    dict[str, str], dict[str, str], Type[DoctorVisit]]:
     """Update a doctor visit record"""
     # Get the doctor visit record
     doctor_visit = db.query(DoctorVisit).filter(DoctorVisit.id == doctor_visit_id).first()
@@ -109,6 +127,11 @@ def update_doctor_visit(db: Session, doctor_visit_id: int, data: Dict[str, Any],
 
     db.commit()
     db.refresh(doctor_visit)
+
+    caregiver = db.query(User).filter(User.id == doctor_visit.recorded_by).first()
+    if caregiver:
+        doctor_visit.caregiver_name = caregiver.name
+
     return doctor_visit
 
 
