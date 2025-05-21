@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import Dict, List, Union, Any, Optional
+from typing import Dict, List, Union, Any, Optional, Type
 
 from sqlalchemy.orm import Session
 
+from app.main.model import User
 from app.main.model.growth import Growth
 from app.main.service.baby_service import get_baby_if_authorized
 from app.main.service.growth_percentile_service import calculate_growth_percentile
@@ -23,7 +24,8 @@ def create_growth(db: Session, data: Dict[str, Any], current_user_id: int) -> Un
         height=data.get('height'),
         head_circumference=data.get('head_circumference'),
         notes=data.get('notes'),
-        baby_id=data['baby_id']
+        baby_id=data['baby_id'],
+        recorded_by=current_user_id
     )
 
     # Calculate percentiles based on WHO growth standards
@@ -41,12 +43,17 @@ def create_growth(db: Session, data: Dict[str, Any], current_user_id: int) -> Un
     db.add(new_growth)
     db.commit()
     db.refresh(new_growth)
+
+    caregiver = db.query(User).filter(User.id == new_growth.recorded_by).first()
+    if caregiver:
+        new_growth.caregiver_name = caregiver.name
+
     return new_growth
 
 
 def get_growths_for_baby(db: Session, baby_id: int, current_user_id: int,
                          skip: int = 0, limit: int = 100, start_date: Optional[datetime] = None,
-                         end_date: Optional[datetime] = None) -> Union[List[Growth], Dict[str, str]]:
+                         end_date: Optional[datetime] = None) -> Union[dict[str, str], list[Type[Growth]]]:
     """Get growth measurement records for a baby with optional date filtering"""
     # Check if user is authorized to view this baby's data
     baby = get_baby_if_authorized(db, baby_id, current_user_id)
@@ -68,6 +75,12 @@ def get_growths_for_baby(db: Session, baby_id: int, current_user_id: int,
     # Apply pagination
     growths = query.offset(skip).limit(limit).all()
 
+    # Add caregiver information to each growth record
+    for growth in growths:
+        caregiver = db.query(User).filter(User.id == growth.recorded_by).first()
+        if caregiver:
+            growth.caregiver_name = caregiver.name
+
     return growths
 
 
@@ -87,11 +100,15 @@ def get_growth(db: Session, growth_id: int, current_user_id: int) -> Union[Growt
     if isinstance(baby, dict):  # Error response
         return baby
 
+    caregiver = db.query(User).filter(User.id == growth.recorded_by).first()
+    if caregiver:
+        growth.caregiver_name = caregiver.name
+
     return growth
 
 
 def update_growth(db: Session, growth_id: int, data: Dict[str, Any], current_user_id: int) -> Union[
-    Growth, Dict[str, str]]:
+    dict[str, str], dict[str, str], Type[Growth]]:
     """Update a growth measurement record with recalculated percentiles"""
     # Get the growth record
     growth = db.query(Growth).filter(Growth.id == growth_id).first()
@@ -128,6 +145,11 @@ def update_growth(db: Session, growth_id: int, data: Dict[str, Any], current_use
 
     db.commit()
     db.refresh(growth)
+
+    caregiver = db.query(User).filter(User.id == growth.recorded_by).first()
+    if caregiver:
+        growth.caregiver_name = caregiver.name
+
     return growth
 
 

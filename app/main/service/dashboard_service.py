@@ -4,6 +4,7 @@ from typing import Dict, List, Any, Optional
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
+from app.main.model import Growth
 from app.main.model.baby import Baby
 from app.main.model.dashboard import DashboardPreference, WidgetType, TimeFrame
 from app.main.model.diaper import Diaper
@@ -308,7 +309,8 @@ def get_care_metrics(db: Session, baby_ids: List[int], timeframe: str,
             'diaper': {'total': 0, 'by_caregiver': {}},
             'health': {'total': 0, 'by_caregiver': {}},
             'medication': {'total': 0, 'by_caregiver': {}},
-            'doctor_visit': {'total': 0, 'by_caregiver': {}}
+            'doctor_visit': {'total': 0, 'by_caregiver': {}},
+            'growth': {'total': 0, 'by_caregiver': {}}
         }
     }
 
@@ -350,7 +352,8 @@ def get_care_metrics(db: Session, baby_ids: List[int], timeframe: str,
                 'diaper': 0,
                 'health': 0,
                 'medication': 0,
-                'doctor_visit': 0
+                'doctor_visit': 0,
+                'growth': 0
             }
         }
 
@@ -454,6 +457,22 @@ def get_care_metrics(db: Session, baby_ids: List[int], timeframe: str,
             metrics['by_caregiver'][caregiver_id]['by_activity_type']['doctor_visit'] += 1
             metrics['by_activity_type']['doctor_visit']['by_caregiver'][caregiver_id] += 1
 
+
+    # Count growths
+    growths = db.query(Growth).filter(
+        Growth.baby_id.in_(baby_ids),
+        Growth.measurement_date.between(start_date, end_date)
+    ).all()
+
+    for growth in growths:
+        caregiver_id = growth.recorded_by
+        metrics['total_activities'] += 1
+        metrics['by_activity_type']['growth']['total'] += 1
+
+        if caregiver_id in metrics['by_caregiver']:
+            metrics['by_caregiver'][caregiver_id]['total'] += 1
+            metrics['by_caregiver'][caregiver_id]['by_activity_type']['growth'] += 1
+            metrics['by_activity_type']['growth']['by_caregiver'][caregiver_id] += 1
 
     # Calculate percentages
     if metrics['total_activities'] > 0:

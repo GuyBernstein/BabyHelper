@@ -42,6 +42,8 @@ class GrowthResponse(GrowthBase):
     baby_id: int
     percentiles: Optional[Dict[str, PercentileInfo]] = None
     baby_age_months: Optional[float] = None
+    recorded_by: int
+    caregiver_name: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -68,6 +70,7 @@ class Growth(Base):
 
     # Foreign keys
     baby_id = Column(Integer, ForeignKey('baby.id'), nullable=False)
+    recorded_by = Column(Integer, ForeignKey('users.id'), nullable=False)
 
     # Relationships
     baby = relationship("Baby", back_populates="growth_records")
