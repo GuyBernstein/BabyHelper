@@ -38,6 +38,8 @@ class PhotoResponse(PhotoBase):
     baby_id: int
     url: Optional[str] = None
     milestone_id: Optional[int] = None
+    recorded_by: int
+    caregiver_name: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -63,6 +65,7 @@ class Photo(Base):
     # Foreign keys
     baby_id = Column(Integer, ForeignKey('baby.id'), nullable=False)
     milestone_id = Column(Integer, ForeignKey('milestone.id'), nullable=True)
+    recorded_by = Column(Integer, ForeignKey('users.id'), nullable=False)
 
     # Relationships
     baby = relationship("Baby", back_populates="photos")

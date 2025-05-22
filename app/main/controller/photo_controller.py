@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional
 
 from fastapi import Depends, HTTPException, status, File, UploadFile, Form
 from fastapi.responses import JSONResponse
@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 
 from app.main import get_db
 from app.main.model.photo import router, PhotoType
-from app.main.model.milestone import Milestone
 from app.main.model.user import User
 from app.main.service.aws_service import create_presigned_url
 from app.main.service.oauth_service import get_current_user
@@ -19,28 +18,6 @@ from app.main.service.photo_service import (
     link_photo_to_milestone,
     delete_photo
 )
-
-
-@router.post("/profile/{baby_id}")
-async def upload_profile_picture(
-        baby_id: int,
-        file: UploadFile = File(...),
-        db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
-):
-    """Upload a profile picture for a baby (requires authentication and parent/co-parent relationship)"""
-    result = await upload_baby_profile_picture(db, baby_id, file, current_user.id)
-
-    if isinstance(result, dict) and result.get('status') == 'fail':
-        status_code = status.HTTP_403_FORBIDDEN if result.get(
-            'message') == 'Not authorized to access this baby' else status.HTTP_400_BAD_REQUEST
-        raise HTTPException(
-            status_code=status_code,
-            detail=result.get('message', 'Failed to upload profile picture')
-        )
-
-    return JSONResponse(content=result)
-
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def upload_photo(

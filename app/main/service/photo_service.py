@@ -4,6 +4,7 @@ import uuid
 
 from sqlalchemy.orm import Session
 
+from app.main.model import User
 from app.main.model.photo import Photo, PhotoType
 from app.main.model.milestone import Milestone
 from app.main.service.baby_service import get_baby_if_authorized
@@ -56,7 +57,7 @@ async def upload_baby_photo(db: Session, data: Dict[str, Any], file, current_use
 
     # If this is a milestone photo, verify the milestone exists and belongs to this baby
     milestone = None
-    if data.get('milestone_id') and data['photo_type'] == PhotoType.MILESTONE:
+    if data.get('milestone_id'):
         milestone = db.query(Milestone).filter(
             Milestone.id == data['milestone_id'],
             Milestone.baby_id == data['baby_id']
@@ -77,34 +78,40 @@ async def upload_baby_photo(db: Session, data: Dict[str, Any], file, current_use
     file_content = await file.read()
 
     # Upload to S3
-    if upload_file(file_content, s3_key):
-        # Create new photo record
-        new_photo = Photo(
-            created_at=datetime.utcnow(),
-            photo_type=data['photo_type'],
-            description=data.get('description'),
-            date_taken=data.get('date_taken', datetime.utcnow()),
-            s3_key=s3_key,
-            baby_id=data['baby_id'],
-            milestone_id=data.get('milestone_id')
-        )
-
-        db.add(new_photo)
-        db.commit()
-        db.refresh(new_photo)
-
-        # If associated with a milestone, update the milestone's photo_url
-        if milestone:
-            url = create_presigned_url(s3_key)
-            milestone.photo_url = url
-            db.commit()
-
-        return new_photo
-    else:
+    if not upload_file(file_content, s3_key):
         return {
             'status': 'fail',
             'message': 'Failed to upload photo'
         }
+
+    # Create new photo record
+    new_photo = Photo(
+        created_at=datetime.utcnow(),
+        photo_type=data['photo_type'] if not milestone else PhotoType.MILESTONE,
+        description=data.get('description'),
+        date_taken=data.get('date_taken', datetime.utcnow()),
+        s3_key=s3_key,
+        baby_id=data['baby_id'],
+        milestone_id=data.get('milestone_id'),
+        recorded_by=current_user_id
+    )
+
+    db.add(new_photo)
+    db.commit()
+    db.refresh(new_photo)
+
+    # If associated with a milestone, update the milestone's photo_url
+    if milestone:
+        url = create_presigned_url(s3_key)
+        milestone.photo_url = url
+        db.commit()
+
+    caregiver = db.query(User).filter(User.id == new_photo.recorded_by).first()
+    if caregiver:
+        new_photo.caregiver_name = caregiver.name
+
+    return new_photo
+
 
 
 def get_baby_photos(db: Session, baby_id: int, current_user_id: int, photo_type: Optional[PhotoType] = None) -> Union[
@@ -125,9 +132,14 @@ def get_baby_photos(db: Session, baby_id: int, current_user_id: int, photo_type:
     # Get all matching photos
     photos = query.all()
 
+
     # Create response with presigned URLs
     result = []
     for photo in photos:
+        caregiver = db.query(User).filter(User.id == photo.recorded_by).first()
+        if caregiver:
+            photo.caregiver_name = caregiver.name
+
         photo_dict = {
             'id': photo.id,
             'created_at': photo.created_at,
@@ -136,7 +148,8 @@ def get_baby_photos(db: Session, baby_id: int, current_user_id: int, photo_type:
             'date_taken': photo.date_taken,
             'baby_id': photo.baby_id,
             'milestone_id': photo.milestone_id,
-            'url': create_presigned_url(photo.s3_key)
+            'url': create_presigned_url(photo.s3_key),
+            'recorded_by' : caregiver.name
         }
         result.append(photo_dict)
 
@@ -166,6 +179,9 @@ def get_photos_for_milestone(db: Session, milestone_id: int, current_user_id: in
     # Create response with presigned URLs
     result = []
     for photo in photos:
+        caregiver = db.query(User).filter(User.id == photo.recorded_by).first()
+        if caregiver:
+            photo.caregiver_name = caregiver.name
         photo_dict = {
             'id': photo.id,
             'created_at': photo.created_at,
@@ -174,7 +190,8 @@ def get_photos_for_milestone(db: Session, milestone_id: int, current_user_id: in
             'date_taken': photo.date_taken,
             'baby_id': photo.baby_id,
             'milestone_id': photo.milestone_id,
-            'url': create_presigned_url(photo.s3_key)
+            'url': create_presigned_url(photo.s3_key),
+            'recorded_by' : caregiver.name
         }
         result.append(photo_dict)
 

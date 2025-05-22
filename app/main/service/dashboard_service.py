@@ -12,6 +12,7 @@ from app.main.model.doctor_visit import DoctorVisit
 from app.main.model.feeding import Feeding
 from app.main.model.health import Health
 from app.main.model.medication import Medication
+from app.main.model.photo import Photo
 from app.main.model.sleep import Sleep
 from app.main.model.user import User
 from app.main.service.baby_service import get_all_babies_for_user
@@ -480,7 +481,7 @@ def get_care_metrics(db: Session, baby_ids: List[int], timeframe: str,
             metrics['by_caregiver'][caregiver_id]['by_activity_type']['growth'] += 1
             metrics['by_activity_type']['growth']['by_caregiver'][caregiver_id] += 1
 
-    # Count milestone
+    # Count milestones
     milestones = db.query(Milestone).filter(
         Milestone.baby_id.in_(baby_ids),
         Milestone.achieved_date.between(start_date, end_date)
@@ -496,8 +497,22 @@ def get_care_metrics(db: Session, baby_ids: List[int], timeframe: str,
             metrics['by_caregiver'][caregiver_id]['by_activity_type']['milestone'] += 1
             metrics['by_activity_type']['milestone']['by_caregiver'][caregiver_id] += 1
 
-    #'milestone': 0,
-    # 'photo': 0,
+    # Count photos
+    photos = db.query(Photo).filter(
+        Photo.baby_id.in_(baby_ids),
+        Photo.date_taken.between(start_date, end_date)
+    ).all()
+
+    for photo in photos:
+        caregiver_id = photo.recorded_by
+        metrics['total_activities'] += 1
+        metrics['by_activity_type']['photo']['total'] += 1
+
+        if caregiver_id in metrics['by_caregiver']:
+            metrics['by_caregiver'][caregiver_id]['total'] += 1
+            metrics['by_caregiver'][caregiver_id]['by_activity_type']['photo'] += 1
+            metrics['by_activity_type']['photo']['by_caregiver'][caregiver_id] += 1
+
     # 'pumping': 0
 
     # Calculate percentages
