@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Type, Union
 
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from app.main.model import Growth
+from app.main.model import Growth, Milestone
 from app.main.model.baby import Baby
 from app.main.model.dashboard import DashboardPreference, WidgetType, TimeFrame
 from app.main.model.diaper import Diaper
@@ -17,7 +17,7 @@ from app.main.model.user import User
 from app.main.service.baby_service import get_all_babies_for_user
 
 
-def get_or_create_dashboard_preferences(db: Session, user_id: int) -> DashboardPreference:
+def get_or_create_dashboard_preferences(db: Session, user_id: int) -> Union[DashboardPreference, Type[DashboardPreference]]:
     """Get existing dashboard preferences or create default ones"""
     preferences = db.query(DashboardPreference).filter(DashboardPreference.user_id == user_id).first()
 
@@ -310,7 +310,10 @@ def get_care_metrics(db: Session, baby_ids: List[int], timeframe: str,
             'health': {'total': 0, 'by_caregiver': {}},
             'medication': {'total': 0, 'by_caregiver': {}},
             'doctor_visit': {'total': 0, 'by_caregiver': {}},
-            'growth': {'total': 0, 'by_caregiver': {}}
+            'growth': {'total': 0, 'by_caregiver': {}},
+            'milestone': {'total': 0, 'by_caregiver': {}},
+            'photo': {'total': 0, 'by_caregiver': {}},
+            'pumping': {'total': 0, 'by_caregiver': {}}
         }
     }
 
@@ -353,7 +356,10 @@ def get_care_metrics(db: Session, baby_ids: List[int], timeframe: str,
                 'health': 0,
                 'medication': 0,
                 'doctor_visit': 0,
-                'growth': 0
+                'growth': 0,
+                'milestone': 0,
+                'photo': 0,
+                'pumping': 0
             }
         }
 
@@ -474,6 +480,26 @@ def get_care_metrics(db: Session, baby_ids: List[int], timeframe: str,
             metrics['by_caregiver'][caregiver_id]['by_activity_type']['growth'] += 1
             metrics['by_activity_type']['growth']['by_caregiver'][caregiver_id] += 1
 
+    # Count milestone
+    milestones = db.query(Milestone).filter(
+        Milestone.baby_id.in_(baby_ids),
+        Milestone.achieved_date.between(start_date, end_date)
+    ).all()
+
+    for milestone in milestones:
+        caregiver_id = milestone.recorded_by
+        metrics['total_activities'] += 1
+        metrics['by_activity_type']['milestone']['total'] += 1
+
+        if caregiver_id in metrics['by_caregiver']:
+            metrics['by_caregiver'][caregiver_id]['total'] += 1
+            metrics['by_caregiver'][caregiver_id]['by_activity_type']['milestone'] += 1
+            metrics['by_activity_type']['milestone']['by_caregiver'][caregiver_id] += 1
+
+    #'milestone': 0,
+    # 'photo': 0,
+    # 'pumping': 0
+
     # Calculate percentages
     if metrics['total_activities'] > 0:
         for caregiver_id in metrics['by_caregiver']:
@@ -571,12 +597,13 @@ def get_dashboard_data(db: Session, user_id: int, baby_id: Optional[int] = None,
     # Sort widgets by position
     enabled_widgets.sort(key=lambda w: w.get('position', 0))
 
+
     # Process each widget
     for widget_config in enabled_widgets:
         widget_type = widget_config.get('type')
         widget_timeframe = widget_config.get('timeframe', timeframe)
 
-        widget = {
+        widget: Dict[str, Union[str, int, None, List[Dict[str, Any]], Dict[str, Any]]] = {
             'type': widget_type,
             'timeframe': widget_timeframe,
             'position': widget_config.get('position', 0),

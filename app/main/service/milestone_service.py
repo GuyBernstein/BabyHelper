@@ -1,12 +1,13 @@
 from datetime import datetime
-from typing import Dict, List, Union, Any, Optional
+from typing import Dict, Union, Any, Optional, Type
 
 from sqlalchemy.orm import Session
 
+from app.main.model import User
 from app.main.model.milestone import Milestone
 from app.main.model.photo import Photo, PhotoType
-from app.main.service.baby_service import get_baby_if_authorized
 from app.main.service.aws_service import create_presigned_url
+from app.main.service.baby_service import get_baby_if_authorized
 
 
 def create_milestone(db: Session, data: Dict[str, Any], current_user_id: int) -> Union[Milestone, Dict[str, str]]:
@@ -25,7 +26,8 @@ def create_milestone(db: Session, data: Dict[str, Any], current_user_id: int) ->
         description=data.get('description'),
         notes=data.get('notes'),
         photo_url=data.get('photo_url'),
-        baby_id=data['baby_id']
+        baby_id=data['baby_id'],
+        recorded_by=current_user_id
     )
 
     db.add(new_milestone)
@@ -53,12 +55,16 @@ def create_milestone(db: Session, data: Dict[str, Any], current_user_id: int) ->
             new_milestone.photo_url = create_presigned_url(new_milestone.photo_url)
             db.commit()
 
+    caregiver = db.query(User).filter(User.id == new_milestone.recorded_by).first()
+    if caregiver:
+        new_milestone.caregiver_name = caregiver.name
+
     return new_milestone
 
 
 def get_milestones_for_baby(db: Session, baby_id: int, current_user_id: int,
                             skip: int = 0, limit: int = 100, start_date: Optional[datetime] = None,
-                            end_date: Optional[datetime] = None) -> Union[List[Milestone], Dict[str, str]]:
+                            end_date: Optional[datetime] = None) -> Union[dict[str, str], list[Type[Milestone]]]:
     """Get developmental milestone records for a baby with optional date filtering"""
     # Check if user is authorized to view this baby's data
     baby = get_baby_if_authorized(db, baby_id, current_user_id)
@@ -88,10 +94,16 @@ def get_milestones_for_baby(db: Session, baby_id: int, current_user_id: int,
             milestone.photo_url = create_presigned_url(photos.s3_key)
             db.commit()
 
+        # Add caregiver information to each milestone record
+        caregiver = db.query(User).filter(User.id == milestone.recorded_by).first()
+        if caregiver:
+            milestone.caregiver_name = caregiver.name
+
     return milestones
 
 
-def get_milestone(db: Session, milestone_id: int, current_user_id: int) -> Union[Milestone, Dict[str, str]]:
+def get_milestone(db: Session, milestone_id: int, current_user_id: int) -> Union[
+    dict[str, str], dict[str, str], Type[Milestone]]:
     """Get a specific developmental milestone record by ID"""
     # Get the milestone record
     milestone = db.query(Milestone).filter(Milestone.id == milestone_id).first()
@@ -113,11 +125,15 @@ def get_milestone(db: Session, milestone_id: int, current_user_id: int) -> Union
         milestone.photo_url = create_presigned_url(photos.s3_key)
         db.commit()
 
+    caregiver = db.query(User).filter(User.id == milestone.recorded_by).first()
+    if caregiver:
+        milestone.caregiver_name = caregiver.name
+
     return milestone
 
 
 def update_milestone(db: Session, milestone_id: int, data: Dict[str, Any], current_user_id: int) -> Union[
-    Milestone, Dict[str, str]]:
+    dict[str, str], dict[str, str], Type[Milestone]]:
     """Update a developmental milestone record"""
     # Get the milestone record
     milestone = db.query(Milestone).filter(Milestone.id == milestone_id).first()
@@ -168,6 +184,11 @@ def update_milestone(db: Session, milestone_id: int, data: Dict[str, Any], curre
 
     db.commit()
     db.refresh(milestone)
+
+    caregiver = db.query(User).filter(User.id == milestone.recorded_by).first()
+    if caregiver:
+        milestone.caregiver_name = caregiver.name
+
     return milestone
 
 

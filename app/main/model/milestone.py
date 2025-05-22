@@ -39,6 +39,8 @@ class MilestoneResponse(MilestoneBase):
     id: int
     created_at: datetime
     baby_id: int
+    recorded_by: int
+    caregiver_name: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -65,6 +67,7 @@ class Milestone(Base):
 
     # Foreign keys
     baby_id = Column(Integer, ForeignKey('baby.id'), nullable=False)
+    recorded_by = Column(Integer, ForeignKey('users.id'), nullable=False)
 
     # Relationships
     baby = relationship("Baby", back_populates="milestones")
