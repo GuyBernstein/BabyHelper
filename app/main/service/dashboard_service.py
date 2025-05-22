@@ -4,7 +4,7 @@ from typing import Dict, List, Any, Optional, Type, Union
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from app.main.model import Growth, Milestone
+from app.main.model import Growth, Milestone, Pumping
 from app.main.model.baby import Baby
 from app.main.model.dashboard import DashboardPreference, WidgetType, TimeFrame
 from app.main.model.diaper import Diaper
@@ -513,7 +513,24 @@ def get_care_metrics(db: Session, baby_ids: List[int], timeframe: str,
             metrics['by_caregiver'][caregiver_id]['by_activity_type']['photo'] += 1
             metrics['by_activity_type']['photo']['by_caregiver'][caregiver_id] += 1
 
-    # 'pumping': 0
+
+    # Count pumping sessions
+    # Note: pumping sessions are user activities, not baby activities
+    # So we query for pumping sessions by caregivers who have access to these babies
+    pumpings = db.query(Pumping).filter(
+        Pumping.user_id.in_(list(caregivers.keys())),
+        Pumping.start_time.between(start_date, end_date)
+    ).all()
+
+    for pumping in pumpings:
+        caregiver_id = pumping.user_id
+        metrics['total_activities'] += 1
+        metrics['by_activity_type']['pumping']['total'] += 1
+
+        if caregiver_id in metrics['by_caregiver']:
+            metrics['by_caregiver'][caregiver_id]['total'] += 1
+            metrics['by_caregiver'][caregiver_id]['by_activity_type']['pumping'] += 1
+            metrics['by_activity_type']['pumping']['by_caregiver'][caregiver_id] += 1
 
     # Calculate percentages
     if metrics['total_activities'] > 0:
