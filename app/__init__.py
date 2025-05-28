@@ -6,15 +6,14 @@ from fastapi.responses import HTMLResponse
 from .main.controller import (
     baby_controller, feeding_controller, sleep_controller, diaper_controller, health_controller,
     doctor_visit_controller, growth_controller, medication_controller, milestone_controller, pumping_controller,
-    photo_controller, dashboard_controller
+    photo_controller, dashboard_controller, tool_controller
 )
 
-from .main.controller.auth_controller import router as auth_router
 from .main.controller.coparent_controller import router as coparent_router
 from .main.controller.notification_controller import router as notification_router
+from .main.controller.auth_controller import router as auth_router
 from .main.model.baby import router as baby_router
 from .main.model.user import router as user_router
-from .main.controller.auth_controller import router as auth_router
 from .main.model.feeding import router as feeding_router
 from .main.model.sleep import router as sleep_router
 from .main.model.diaper import router as diaper_router
@@ -26,6 +25,7 @@ from .main.model.medication import router as medication_router
 from .main.model.pumping import router as pumping_router
 from .main.model.photo import router as photo_router
 from .main.model.dashboard import router as dashboard_router
+from .main.model.tool import router as tool_router
 
 
 def create_app():
@@ -61,7 +61,7 @@ def create_app():
     app.include_router(pumping_router)
     app.include_router(photo_router)
     app.include_router(dashboard_router)
-
+    app.include_router(tool_router)
 
     @app.get("/", response_class=HTMLResponse)
     async def root():

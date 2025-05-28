@@ -100,6 +100,31 @@ def downgrade():
     os.system("alembic downgrade -1")
     print("Downgraded one migration.")
 
+@db.command()
+def current():
+    """Shows current database revision."""
+    os.system("alembic current")
+
+@db.command()
+def heads():
+    """Shows available migration heads."""
+    os.system("alembic heads")
+
+@db.command()
+def history():
+    """Shows migration history."""
+    os.system("alembic history")
+
+@db.command()
+@click.argument('revision')
+def stamp(revision):
+    """Stamps database with specific revision without running migrations."""
+    os.system(f"alembic stamp {revision}")
+
+@db.command()
+def show():
+    """Shows available revisions."""
+    os.system("alembic show head")
 
 if __name__ == '__main__':
     manager()
