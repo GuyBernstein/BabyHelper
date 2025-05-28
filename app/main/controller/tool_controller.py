@@ -5,9 +5,11 @@ Handles HTTP requests for tool management and execution.
 from typing import List, Optional
 
 from fastapi import Depends, HTTPException, status
+from sqlalchemy.dialects.postgresql import psycopg2
 from sqlalchemy.orm import Session
 
 from app.main import get_db
+from app.main.model import Baby
 from app.main.model.tool import ToolResponse, ToolCreate, router, ToolUpdate, ToolExecutionRequest, \
     ToolExecutionResponse
 
@@ -112,6 +114,14 @@ async def execute_tool_endpoint(
     This endpoint allows direct tool execution for testing
     or specific use cases.
     """
+    # Proactive validation
+    if request.baby_id:
+        baby = db.query(Baby).filter(Baby.id == request.baby_id).first()
+        if not baby:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Baby not found"
+            )
     try:
         result = execute_tool(
             db,
@@ -121,6 +131,7 @@ async def execute_tool_endpoint(
             request.baby_id
         )
         return result
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -154,6 +165,14 @@ async def process_query(
     - "How has my baby been sleeping this week?"
     - "Who has been taking care of the baby today?"
     """
+    # Proactive validation
+    if baby_id:
+        baby = db.query(Baby).filter(Baby.id == baby_id).first()
+        if not baby:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Baby not found"
+            )
     try:
         result = await claude_service.process_query_with_tools(
             db,

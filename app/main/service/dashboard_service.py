@@ -138,7 +138,7 @@ def get_recent_activities(db: Session, baby_ids: List[int], timeframe: str,
 
     for feeding in feedings:
         baby = db.query(Baby).filter(Baby.id == feeding.baby_id).first()
-        user = db.query(User).filter(User.id == baby.parent_id).first()
+        user = db.query(User).filter(User.id == feeding.recorded_by).first()
 
         activities.append({
             'id': feeding.id,
@@ -163,7 +163,7 @@ def get_recent_activities(db: Session, baby_ids: List[int], timeframe: str,
 
     for sleep in sleeps:
         baby = db.query(Baby).filter(Baby.id == sleep.baby_id).first()
-        user = db.query(User).filter(User.id == baby.parent_id).first()
+        user = db.query(User).filter(User.id == sleep.recorded_by).first()
 
         activities.append({
             'id': sleep.id,
@@ -188,7 +188,7 @@ def get_recent_activities(db: Session, baby_ids: List[int], timeframe: str,
 
     for diaper in diapers:
         baby = db.query(Baby).filter(Baby.id == diaper.baby_id).first()
-        user = db.query(User).filter(User.id == baby.parent_id).first()
+        user = db.query(User).filter(User.id == diaper.recorded_by).first()
 
         activities.append({
             'id': diaper.id,
@@ -213,7 +213,7 @@ def get_recent_activities(db: Session, baby_ids: List[int], timeframe: str,
 
     for health in health_records:
         baby = db.query(Baby).filter(Baby.id == health.baby_id).first()
-        user = db.query(User).filter(User.id == baby.parent_id).first()
+        user = db.query(User).filter(User.id == health.recorded_by).first()
 
         activities.append({
             'id': health.id,
