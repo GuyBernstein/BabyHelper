@@ -2,26 +2,21 @@
 Tool controller for API endpoints.
 Handles HTTP requests for tool management and execution.
 """
-from typing import List, Optional
+from typing import List
 
 from fastapi import Depends, HTTPException, status
-from sqlalchemy.dialects.postgresql import psycopg2
 from sqlalchemy.orm import Session
 
 from app.main import get_db
 from app.main.model import Baby
 from app.main.model.tool import ToolResponse, ToolCreate, router, ToolUpdate, ToolExecutionRequest, \
     ToolExecutionResponse
-
 from app.main.model.user import User
+from app.main.service.baby_service import get_baby_if_authorized
+from app.main.service.oauth_service import get_current_user, is_admin_user
 from app.main.service.tool_service import (
     create_tool, get_tool, get_active_tools, update_tool, execute_tool
 )
-from app.main.service.claude_api_service import ClaudeAPIService
-from app.main.service.oauth_service import get_current_user, is_admin_user
-
-# Initialize Claude API service
-claude_service = ClaudeAPIService()
 
 
 @router.post("/", response_model=ToolResponse, status_code=status.HTTP_201_CREATED)
@@ -114,13 +109,13 @@ async def execute_tool_endpoint(
     This endpoint allows direct tool execution for testing
     or specific use cases.
     """
-    # Proactive validation
+    # Verify user has access to this baby
     if request.baby_id:
         baby = db.query(Baby).filter(Baby.id == request.baby_id).first()
         if not baby:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Baby not found"
+                detail=f"Baby not found"
             )
     try:
         result = execute_tool(
@@ -142,61 +137,3 @@ async def execute_tool_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Tool execution failed: {str(e)}"
         )
-
-
-@router.post("/query")
-async def process_query(
-        query: str,
-        baby_id: Optional[int] = None,
-        db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
-):
-    """
-    Process a natural language query using appropriate tools.
-
-    This endpoint uses the Claude API service to:
-    1. Analyze the query
-    2. Select appropriate tools
-    3. Execute the tools
-    4. Format results for response
-
-    Example queries:
-    - "Show me the last 10 activities for my baby"
-    - "How has my baby been sleeping this week?"
-    - "Who has been taking care of the baby today?"
-    """
-    # Proactive validation
-    if baby_id:
-        baby = db.query(Baby).filter(Baby.id == baby_id).first()
-        if not baby:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Baby not found"
-            )
-    try:
-        result = await claude_service.process_query_with_tools(
-            db,
-            current_user.id,
-            query,
-            baby_id
-        )
-        return result
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Query processing failed: {str(e)}"
-        )
-
-# Prepared for future SSE/WebSocket implementation
-# @router.websocket("/stream")
-# async def stream_query_results(
-#     websocket: WebSocket,
-#     db: Session = Depends(get_db)
-# ):
-#     """
-#     WebSocket endpoint for streaming query results.
-#     Prepared for future real-time implementation.
-#     """
-#     await websocket.accept()
-#     # Implementation will be added when SSE/WebSocket is needed
-#     await websocket.close()

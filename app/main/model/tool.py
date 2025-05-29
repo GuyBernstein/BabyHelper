@@ -9,7 +9,7 @@ from typing import Optional, Dict, Any, Annotated
 
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
-from sqlalchemy import Column, Integer, String, DateTime, JSON, Boolean, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, JSON, Boolean, Text, ForeignKey, Enum as SQLEnum
 from sqlalchemy.orm import relationship
 
 from app.main import Base
@@ -40,8 +40,8 @@ class ToolBase(BaseModel):
     tool_type: ToolType = Field(..., description="Type of tool")
     description: str = Field(..., description="Tool description")
     version: str = Field(default="1.0.0", description="Tool version")
-    capabilities: Annotated[Dict[str, Any] , Field(default_factory=dict, description="Tool capabilities")]
-    configuration: Annotated[Dict[str, Any] , Field(default_factory=dict, description="Tool configuration")]
+    capabilities: Annotated[Dict[str, Any], Field(default_factory=dict, description="Tool capabilities")]
+    configuration: Annotated[Dict[str, Any], Field(default_factory=dict, description="Tool configuration")]
     status: ToolStatus = Field(default=ToolStatus.ACTIVE, description="Tool status")
 
     model_config = {
@@ -79,8 +79,8 @@ class ToolExecutionRequest(BaseModel):
     """Schema for tool execution request"""
     tool_id: int
     baby_id: Optional[int] = None
-    parameters: Annotated[Dict[str, Any] , Field(default_factory=dict)]
-    context: Annotated[Optional[Dict[str, Any]] , Field(default_factory=dict)]
+    parameters: Annotated[Dict[str, Any], Field(default_factory=dict)]
+    context: Annotated[Optional[Dict[str, Any]], Field(default_factory=dict)]
 
     model_config = {
         "from_attributes": True
@@ -92,7 +92,7 @@ class ToolExecutionResponse(BaseModel):
     execution_id: str
     status: str
     data: Dict[str, Any]
-    execution_metadata: Annotated[Dict[str, Any] , Field(default_factory=dict)]
+    execution_metadata: Annotated[Dict[str, Any], Field(default_factory=dict)]
     execution_time_ms: float
 
     model_config = {
@@ -121,7 +121,9 @@ class Tool(Base):
 
     # Tool identification
     name = Column(String(100), nullable=False, unique=True)
-    tool_type = Column(String(50), nullable=False)
+
+    # FIXED: Use native_enum=False to ensure proper enum value handling
+    tool_type = Column(SQLEnum(ToolType, native_enum=False, values_callable=lambda obj: [e.value for e in obj]), nullable=False)
     description = Column(Text, nullable=False)
     version = Column(String(20), nullable=False, default="1.0.0")
 
@@ -129,8 +131,8 @@ class Tool(Base):
     capabilities = Column(JSON, nullable=False, default=dict)  # What the tool can do
     configuration = Column(JSON, nullable=False, default=dict)  # Tool-specific config
 
-    # Tool status
-    status = Column(String(20), nullable=False, default="active")
+    # FIXED: Use native_enum=False for status as well
+    status = Column(SQLEnum(ToolStatus, native_enum=False, values_callable=lambda obj: [e.value for e in obj]), nullable=False, default=ToolStatus.ACTIVE)
     is_active = Column(Boolean, default=True)
 
     # Usage tracking
@@ -155,7 +157,7 @@ class ToolExecution(Base):
     execution_id = Column(String(50), nullable=False, unique=True)  # UUID for tracking
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
-    # Execution details - FIXED: Removed nested Column constructors
+    # Execution details
     tool_id = Column(Integer, ForeignKey('tool.id'), nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     baby_id = Column(Integer, ForeignKey('baby.id'), nullable=True)
@@ -175,3 +177,4 @@ class ToolExecution(Base):
 
     def __repr__(self):
         return f"<ToolExecution {self.execution_id} for tool {self.tool_id}>"
+

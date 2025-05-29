@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse
 from .main.controller import (
     baby_controller, feeding_controller, sleep_controller, diaper_controller, health_controller,
     doctor_visit_controller, growth_controller, medication_controller, milestone_controller, pumping_controller,
-    photo_controller, dashboard_controller, tool_controller
+    photo_controller, dashboard_controller, tool_controller, query_controller
 )
 
 from .main.controller.coparent_controller import router as coparent_router
@@ -26,6 +26,7 @@ from .main.model.pumping import router as pumping_router
 from .main.model.photo import router as photo_router
 from .main.model.dashboard import router as dashboard_router
 from .main.model.tool import router as tool_router
+from .main.model.query import router as query_router
 
 
 def create_app():
@@ -62,6 +63,7 @@ def create_app():
     app.include_router(photo_router)
     app.include_router(dashboard_router)
     app.include_router(tool_router)
+    app.include_router(query_router)
 
     @app.get("/", response_class=HTMLResponse)
     async def root():

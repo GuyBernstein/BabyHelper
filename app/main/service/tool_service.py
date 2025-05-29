@@ -7,10 +7,13 @@ import uuid
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Type
 
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
+from starlette import status
 
+from app.main.model import Baby
 from app.main.model.tool import Tool, ToolExecution, ToolType, ToolStatus
-from app.main.service.baby_service import get_baby_if_authorized
+from app.main.service.baby_service import get_baby_if_authorized, get_all_babies_for_user
 from app.main.service.dashboard_service import (
     get_recent_activities,
     get_upcoming_events,
@@ -26,14 +29,18 @@ def create_tool(db: Session, tool_data: Dict[str, Any]) -> Tool:
     if existing_tool:
         raise ValueError(f"Tool with name '{tool_data['name']}' already exists")
 
+    # Convert string values to enum instances
+    tool_type = ToolType(tool_data['tool_type'])
+    status = ToolStatus(tool_data.get('status', ToolStatus.ACTIVE.value))
+
     new_tool = Tool(
         name=tool_data['name'],
-        tool_type=tool_data['tool_type'],
+        tool_type=tool_type,  # Now using enum instance
         description=tool_data['description'],
         version=tool_data.get('version', '1.0.0'),
         capabilities=tool_data.get('capabilities', {}),
         configuration=tool_data.get('configuration', {}),
-        status=tool_data.get('status', ToolStatus.ACTIVE)
+        status=status  # Now using enum instance
     )
 
     db.add(new_tool)
@@ -63,7 +70,7 @@ def get_tools_by_type(db: Session, tool_type: ToolType) -> list[Type[Tool]]:
 def get_active_tools(db: Session) -> list[Type[Tool]]:
     """Get all active tools"""
     return db.query(Tool).filter(
-        Tool.status == ToolStatus.ACTIVE,
+        Tool.status == ToolStatus.ACTIVE,  # Fixed: removed .value
         Tool.is_active == True
     ).all()
 
@@ -86,7 +93,7 @@ def update_tool(db: Session, tool_id: int, tool_data: Dict[str, Any]) -> Optiona
     if 'configuration' in tool_data:
         tool.configuration = tool_data['configuration']
     if 'status' in tool_data:
-        tool.status = tool_data['status']
+        tool.status = ToolStatus(tool_data['status'])  # Convert to enum instance
 
     tool.updated_at = datetime.utcnow()
 
@@ -106,6 +113,7 @@ def execute_tool(
     Execute a tool and return the results.
     This is the main entry point for tool execution.
     """
+
     start_time = time.time()
     execution_id = str(uuid.uuid4())
 
@@ -190,7 +198,6 @@ def _execute_tool_by_type(
         baby_ids = [baby_id]
     else:
         # Get all babies the user has access to
-        from app.main.service.baby_service import get_all_babies_for_user
         babies = get_all_babies_for_user(db, user_id)
         baby_ids = [baby.id for baby in babies]
 
@@ -276,11 +283,31 @@ def _execute_sleep_analyzer(
     Analyze sleep patterns for the specified babies.
     Provides insights into sleep quality and patterns.
     """
-    # Extract parameters
-    days = parameters.get('days', 7)
+    # Extract and process timeframe parameter
+    timeframe = parameters.get('timeframe', 7)
+
+    # Map string timeframes to numeric days
+    if isinstance(timeframe, str):
+        timeframe_mapping = {
+            "today": 1,
+            "week": 7,
+            "two_weeks": 14,
+            "month": 30,
+            "1": 1,
+            "7": 7,
+            "14": 14,
+            "30": 30
+        }
+        days = timeframe_mapping.get(timeframe.lower(), 7)
+    elif isinstance(timeframe, int):
+        # Validate against supported analysis periods
+        supported_periods = [1, 7, 14, 30]
+        days = timeframe if timeframe in supported_periods else 7
+    else:
+        days = 7  # Default fallback
     include_details = parameters.get('include_details', True)
 
-    # Get sleep patterns for each baby
+    # Rest of your existing code remains the same...
     all_patterns: Dict[int, Dict[str, Any]] = {}
     successful_babies: List[int] = []
 
@@ -309,12 +336,9 @@ def _execute_sleep_analyzer(
     baby_count = len(successful_babies)
 
     for baby_id in successful_babies:
-        # Explicit approach to avoid type warnings
         patterns = all_patterns.get(baby_id, {})
         if patterns and 'summary' in patterns:
             summary = patterns['summary']
-
-            # Use the pre-calculated averages from get_sleep_patterns
             total_sleep_hours += float(summary.get('avg_total_sleep_hours', 0))
             total_night_sleep_hours += float(summary.get('avg_night_sleep_hours', 0))
             total_naps += float(summary.get('avg_naps_per_day', 0))
@@ -335,7 +359,6 @@ def _execute_sleep_analyzer(
     }
 
     if include_details:
-        # Include detailed patterns for each baby
         detailed_patterns: Dict[int, Dict[str, Any]] = {}
         for baby_id in successful_babies:
             if baby_id in all_patterns:

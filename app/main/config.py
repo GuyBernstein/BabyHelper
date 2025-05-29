@@ -13,3 +13,6 @@ class AWSConfig:
     SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
     REGION = os.environ.get('AWS_REGION')
     S3_BUCKET = os.environ.get('AWS_S3_BUCKET')
+
+class CLAUDEConfig:
+    API_KEY_CLAUDE = os.environ.get('ANTHROPIC_API_KEY')
