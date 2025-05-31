@@ -1,6 +1,6 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Dict, Union, Any, Optional, Type
+from typing import Dict, Union, Any, Optional, Type, List
 
 from sqlalchemy.orm import Session
 
@@ -178,19 +178,23 @@ def get_sleep_patterns(db: Session, baby_id: int, current_user_id: int, days: in
         return baby
 
     # Calculate the start date based on the number of days
-    start_date = datetime.utcnow() - timedelta(days=days)
+    end_date = datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999)
+    start_date = (end_date - timedelta(days=days - 1)).replace(hour=0, minute=0, second=0, microsecond=0)
 
     # Get all sleep records for the baby in the specified period
     sleeps = db.query(Sleep).filter(
         Sleep.baby_id == baby_id,
-        Sleep.start_time >= start_date
+        Sleep.start_time >= start_date,
+        Sleep.start_time <= end_date
     ).order_by(Sleep.start_time).all()
 
     # Initialize data structures for analysis
     daily_sleep = defaultdict(int)  # Total minutes per day
     daily_naps = defaultdict(int)  # Number of naps per day
+    daily_nap_duration = defaultdict(int)  # Total nap duration per day
     night_sleep = defaultdict(int)  # Night sleep duration per day
     sleep_locations = defaultdict(int)  # Count by location
+    sleep_qualities = []  # Store all quality ratings for averaging
 
     # Analyze sleep data
     for sleep in sleeps:
@@ -203,35 +207,133 @@ def get_sleep_patterns(db: Session, baby_id: int, current_user_id: int, days: in
 
             # Count as night sleep if between 7pm and 7am
             hour = sleep.start_time.hour
-            if hour >= 19 or hour <= 7:
+            if hour >= 19 or hour < 7:  # Changed <= to < for clarity
                 night_sleep[date_str] += sleep.duration
             else:
                 # It's a nap
                 daily_naps[date_str] += 1
+                daily_nap_duration[date_str] += sleep.duration
 
-        # Track sleep locations if available
-        if hasattr(sleep, 'location') and sleep.location:
+        # Track sleep locations using proper enum handling
+        if sleep.location:
             location_value = sleep.location.value if hasattr(sleep.location, 'value') else str(sleep.location)
             sleep_locations[location_value] += 1
 
-    # Calculate averages
-    avg_total_sleep = sum(daily_sleep.values()) / len(daily_sleep) if daily_sleep else 0
-    avg_night_sleep = sum(night_sleep.values()) / len(night_sleep) if night_sleep else 0
-    avg_naps = sum(daily_naps.values()) / len(daily_naps) if daily_naps else 0
+        # Track sleep quality for scoring
+        if sleep.quality:
+            quality_value = sleep.quality.value if hasattr(sleep.quality, 'value') else str(sleep.quality)
+            sleep_qualities.append(quality_value)
+
+    # Calculate totals
+    total_sleep_minutes = sum(daily_sleep.values())
+    total_night_sleep_minutes = sum(night_sleep.values())
+    total_nap_minutes = sum(daily_nap_duration.values())
+    total_naps = sum(daily_naps.values())
+
+    # Average per day over the ENTIRE analysis period
+    avg_total_sleep = total_sleep_minutes / days
+    avg_night_sleep = total_night_sleep_minutes / days
+    avg_nap_duration = total_nap_minutes / days if days > 0 else 0
+    avg_naps = total_naps / days
+
+    # Calculate sleep quality score with days_with_data info
+    days_with_data = len(daily_sleep)
+    quality_score, quality_rating = calculate_sleep_quality_score(
+        avg_total_sleep, sleep_qualities, days, days_with_data
+    )
 
     # Prepare the response
     patterns = {
         'summary': {
             'avg_total_sleep_minutes': round(avg_total_sleep, 1),
-            'avg_total_sleep_hours': round(avg_total_sleep / 60, 1),
-            'avg_night_sleep_hours': round(avg_night_sleep / 60, 1),
-            'avg_naps_per_day': round(avg_naps, 1),
+            'avg_total_sleep_hours': round(avg_total_sleep / 60, 2),
+            'avg_night_sleep_minutes': round(avg_night_sleep, 1),
+            'avg_night_sleep_hours': round(avg_night_sleep / 60, 2),
+            'avg_nap_duration_minutes': round(avg_nap_duration, 1),
+            'avg_nap_duration_hours': round(avg_nap_duration / 60, 2),
+            'avg_naps_per_day': round(avg_naps, 2),
+            'sleep_quality_score': quality_score,
+            'sleep_quality_rating': quality_rating,
+            'total_days_analyzed': days,
+            'days_with_sleep_data': days_with_data
         },
         'by_location': dict(sleep_locations),
-        'daily_sleep': [{'date': k, 'minutes': v, 'hours': round(v / 60, 1)} for k, v in sorted(daily_sleep.items())]
+        'daily_sleep': [
+            {
+                'date': k,
+                'total_minutes': v,
+                'total_hours': round(v / 60, 2),
+                'night_minutes': night_sleep.get(k, 0),
+                'nap_minutes': daily_nap_duration.get(k, 0),
+                'nap_count': daily_naps.get(k, 0)
+            }
+            for k, v in sorted(daily_sleep.items())
+        ]
+
     }
 
     return {
         'status': 'success',
         'patterns': patterns
     }
+
+
+def calculate_sleep_quality_score(avg_daily_minutes: float, qualities: List[str],
+                                 days: int, days_with_data: int) -> tuple[int, str]:
+    """
+    Calculate sleep quality score based on average daily sleep and recorded quality ratings.
+
+    Baby sleep recommendations (approximate):
+    - Newborns (0-3 months): 14-17 hours per day
+    - Infants (4-11 months): 12-15 hours per day
+    - Toddlers (1-2 years): 11-14 hours per day
+    """
+
+    # Handle case where there's no sleep data in the period
+    if days_with_data == 0:
+        # No data available - return a neutral "No Data" result
+        return 0, "No Data"
+
+    # Convert to hours for easier calculation
+    avg_daily_hours = avg_daily_minutes / 60
+
+    # Base score on sleep duration (assuming infant range as default)
+    if avg_daily_hours >= 12:
+        duration_score = 100
+    elif avg_daily_hours >= 10:
+        duration_score = 80
+    elif avg_daily_hours >= 8:
+        duration_score = 60
+    elif avg_daily_hours >= 6:
+        duration_score = 40
+    elif avg_daily_hours >= 3:
+        duration_score = 20
+    else:
+        duration_score = 10  # Very poor sleep
+
+    # Factor in recorded quality ratings if available
+    quality_score = 50  # Default neutral score
+    if qualities:
+        quality_mapping = {
+            'excellent': 100,
+            'good': 80,
+            'fair': 60,
+            'poor': 30
+        }
+        quality_scores = [quality_mapping.get(q.lower(), 50) for q in qualities]
+        quality_score = sum(quality_scores) / len(quality_scores)
+
+    # Combine duration and quality scores (70% duration, 30% quality)
+    final_score = int((duration_score * 0.7) + (quality_score * 0.3))
+
+    # Determine rating
+    if final_score >= 80:
+        rating = "Excellent"
+    elif final_score >= 65:
+        rating = "Good"
+    elif final_score >= 45:
+        rating = "Fair"
+    else:
+        rating = "Poor"
+
+    return final_score, rating

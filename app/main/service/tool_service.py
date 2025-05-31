@@ -283,7 +283,7 @@ def _execute_sleep_analyzer(
     Analyze sleep patterns for the specified babies.
     Provides insights into sleep quality and patterns.
     """
-    # Extract and process timeframe parameter
+    # Extract and process parameters
     timeframe = parameters.get('timeframe', 7)
 
     if isinstance(timeframe, int):
@@ -296,9 +296,23 @@ def _execute_sleep_analyzer(
             days = timeframe
     else:
         days = 7  # Default fallback for any other type
+
     include_details = parameters.get('include_details', True)
 
-    # Rest of your existing code remains the same...
+    # Extract metrics parameter - default to all metrics if not specified
+    requested_metrics = parameters.get('metrics', ['total_sleep', 'night_sleep', 'naps', 'quality'])
+    if not isinstance(requested_metrics, list):
+        requested_metrics = ['total_sleep', 'night_sleep', 'naps', 'quality']
+
+    # Validate metrics
+    valid_metrics = {'total_sleep', 'night_sleep', 'naps', 'quality'}
+    requested_metrics = [m for m in requested_metrics if m in valid_metrics]
+
+    # If no valid metrics specified, default to all
+    if not requested_metrics:
+        requested_metrics = list(valid_metrics)
+
+    # Collect data from all babies
     all_patterns: Dict[int, Dict[str, Any]] = {}
     successful_babies: List[int] = []
 
@@ -310,53 +324,194 @@ def _execute_sleep_analyzer(
 
     # If no successful data, return empty result
     if not successful_babies:
-        return {
-            "summary": {
-                "analysis_period_days": days,
-                "babies_analyzed": 0,
-                "avg_total_sleep_hours": 0,
-                "avg_night_sleep_hours": 0,
-                "avg_naps_per_day": 0
-            }
-        }
+        return _create_empty_result(days, requested_metrics)
 
-    # Aggregate data across all babies
-    total_sleep_hours = 0.0
-    total_night_sleep_hours = 0.0
-    total_naps = 0.0
+    # Aggregate only requested metrics
+    aggregated_data = _aggregate_metrics(all_patterns, successful_babies, requested_metrics)
+
+    # Build summary based on requested metrics
+    summary = {
+        "analysis_period_days": days,
+        "babies_analyzed": len(successful_babies),
+        "metrics_analyzed": requested_metrics
+    }
+
+    # Add metric-specific results
+    if 'total_sleep' in requested_metrics:
+        summary["avg_total_sleep_hours"] = aggregated_data['avg_total_sleep_hours']
+
+    if 'night_sleep' in requested_metrics:
+        summary["avg_night_sleep_hours"] = aggregated_data['avg_night_sleep_hours']
+
+    if 'naps' in requested_metrics:
+        summary["avg_naps_per_day"] = aggregated_data['avg_naps_per_day']
+
+    if 'quality' in requested_metrics:
+        summary["avg_sleep_quality_score"] = aggregated_data['avg_sleep_quality_score']
+        summary["sleep_quality_rating"] = aggregated_data['sleep_quality_rating']
+
+    result = {"summary": summary}
+
+    # Add detailed patterns if requested
+    if include_details:
+        detailed_patterns: Dict[int, Dict[str, Any]] = {}
+
+        for baby_id in successful_babies:
+            if baby_id in all_patterns:
+                # Filter patterns based on requested metrics
+                filtered_pattern = _filter_pattern_by_metrics(
+                    all_patterns[baby_id],
+                    requested_metrics
+                )
+                detailed_patterns[baby_id] = filtered_pattern
+
+        result["detailed_patterns"] = detailed_patterns
+
+    return result
+
+
+def _create_empty_result(days: int, requested_metrics: List[str]) -> Dict[str, Any]:
+    """Create an empty result with appropriate structure based on requested metrics."""
+    summary = {
+        "analysis_period_days": days,
+        "babies_analyzed": 0,
+        "metrics_analyzed": requested_metrics
+    }
+
+    # Add zeros for requested metrics
+    if 'total_sleep' in requested_metrics:
+        summary["avg_total_sleep_hours"] = 0
+
+    if 'night_sleep' in requested_metrics:
+        summary["avg_night_sleep_hours"] = 0
+
+    if 'naps' in requested_metrics:
+        summary["avg_naps_per_day"] = 0
+
+    if 'quality' in requested_metrics:
+        summary["avg_sleep_quality_score"] = 0
+        summary["sleep_quality_rating"] = "No Data"
+
+    return {"summary": summary}
+
+
+def _aggregate_metrics(
+        all_patterns: Dict[int, Dict[str, Any]],
+        successful_babies: List[int],
+        requested_metrics: List[str]
+) -> Dict[str, Any]:
+    """Aggregate only the requested metrics across all babies."""
+    # Initialize aggregation variables only for requested metrics
+    aggregated = {}
     baby_count = len(successful_babies)
 
+    if 'total_sleep' in requested_metrics:
+        aggregated['total_sleep_hours'] = 0.0
+
+    if 'night_sleep' in requested_metrics:
+        aggregated['total_night_sleep_hours'] = 0.0
+
+    if 'naps' in requested_metrics:
+        aggregated['total_naps'] = 0.0
+
+    if 'quality' in requested_metrics:
+        aggregated['total_quality_scores'] = 0.0
+        aggregated['babies_with_valid_scores'] = 0
+
+    # Collect data for requested metrics only
     for baby_id in successful_babies:
         patterns = all_patterns.get(baby_id, {})
         if patterns and 'summary' in patterns:
             summary = patterns['summary']
-            total_sleep_hours += float(summary.get('avg_total_sleep_hours', 0))
-            total_night_sleep_hours += float(summary.get('avg_night_sleep_hours', 0))
-            total_naps += float(summary.get('avg_naps_per_day', 0))
 
-    # Calculate averages across all babies
-    avg_sleep_hours = total_sleep_hours / baby_count
-    avg_night_sleep = total_night_sleep_hours / baby_count
-    avg_naps = total_naps / baby_count
+            if 'total_sleep' in requested_metrics:
+                aggregated['total_sleep_hours'] += float(summary.get('avg_total_sleep_hours', 0))
 
-    result = {
-        "summary": {
-            "analysis_period_days": days,
-            "babies_analyzed": baby_count,
-            "avg_total_sleep_hours": round(avg_sleep_hours, 1),
-            "avg_night_sleep_hours": round(avg_night_sleep, 1),
-            "avg_naps_per_day": round(avg_naps, 1)
-        }
-    }
+            if 'night_sleep' in requested_metrics:
+                aggregated['total_night_sleep_hours'] += float(summary.get('avg_night_sleep_hours', 0))
 
-    if include_details:
-        detailed_patterns: Dict[int, Dict[str, Any]] = {}
-        for baby_id in successful_babies:
-            if baby_id in all_patterns:
-                detailed_patterns[baby_id] = all_patterns[baby_id]
-        result["detailed_patterns"] = detailed_patterns
+            if 'naps' in requested_metrics:
+                aggregated['total_naps'] += float(summary.get('avg_naps_per_day', 0))
+
+            if 'quality' in requested_metrics:
+                quality_score = summary.get('sleep_quality_score', 0)
+                if quality_score > 0:  # Valid score (not "No Data")
+                    aggregated['total_quality_scores'] += float(quality_score)
+                    aggregated['babies_with_valid_scores'] += 1
+
+    # Calculate averages
+    result = {}
+
+    if 'total_sleep' in requested_metrics:
+        result['avg_total_sleep_hours'] = round(aggregated['total_sleep_hours'] / baby_count, 1)
+
+    if 'night_sleep' in requested_metrics:
+        result['avg_night_sleep_hours'] = round(aggregated['total_night_sleep_hours'] / baby_count, 1)
+
+    if 'naps' in requested_metrics:
+        result['avg_naps_per_day'] = round(aggregated['total_naps'] / baby_count, 1)
+
+    if 'quality' in requested_metrics:
+        if aggregated['babies_with_valid_scores'] > 0:
+            avg_quality_score = aggregated['total_quality_scores'] / aggregated['babies_with_valid_scores']
+            result['avg_sleep_quality_score'] = round(avg_quality_score)
+
+            # Determine overall quality rating
+            if avg_quality_score >= 80:
+                result['sleep_quality_rating'] = "Excellent"
+            elif avg_quality_score >= 65:
+                result['sleep_quality_rating'] = "Good"
+            elif avg_quality_score >= 45:
+                result['sleep_quality_rating'] = "Fair"
+            else:
+                result['sleep_quality_rating'] = "Poor"
+        else:
+            result['avg_sleep_quality_score'] = 0
+            result['sleep_quality_rating'] = "No Data"
 
     return result
+
+
+def _filter_pattern_by_metrics(
+        pattern: Dict[str, Any],
+        requested_metrics: List[str]
+) -> Dict[str, Any]:
+    """Filter pattern data to include only requested metrics."""
+    filtered = {}
+
+    if 'summary' in pattern:
+        filtered_summary = {}
+        summary = pattern['summary']
+
+        # Always include these meta fields
+        filtered_summary['total_days_analyzed'] = summary.get('total_days_analyzed')
+        filtered_summary['days_with_sleep_data'] = summary.get('days_with_sleep_data')
+
+        # Add metric-specific fields
+        if 'total_sleep' in requested_metrics:
+            filtered_summary['avg_total_sleep_minutes'] = summary.get('avg_total_sleep_minutes')
+            filtered_summary['avg_total_sleep_hours'] = summary.get('avg_total_sleep_hours')
+
+        if 'night_sleep' in requested_metrics:
+            filtered_summary['avg_night_sleep_hours'] = summary.get('avg_night_sleep_hours')
+
+        if 'naps' in requested_metrics:
+            filtered_summary['avg_naps_per_day'] = summary.get('avg_naps_per_day')
+
+        if 'quality' in requested_metrics:
+            filtered_summary['sleep_quality_score'] = summary.get('sleep_quality_score')
+            filtered_summary['sleep_quality_rating'] = summary.get('sleep_quality_rating')
+
+        filtered['summary'] = filtered_summary
+
+    # Include additional details based on metrics
+    if 'total_sleep' in requested_metrics and 'daily_sleep' in pattern:
+        filtered['daily_sleep'] = pattern['daily_sleep']
+
+    if ('total_sleep' in requested_metrics or 'quality' in requested_metrics) and 'by_location' in pattern:
+        filtered['by_location'] = pattern['by_location']
+
+    return filtered
 
 
 def _execute_care_metrics_analyzer(
