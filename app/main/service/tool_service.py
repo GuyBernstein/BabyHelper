@@ -286,25 +286,16 @@ def _execute_sleep_analyzer(
     # Extract and process timeframe parameter
     timeframe = parameters.get('timeframe', 7)
 
-    # Map string timeframes to numeric days
-    if isinstance(timeframe, str):
-        timeframe_mapping = {
-            "today": 1,
-            "week": 7,
-            "two_weeks": 14,
-            "month": 30,
-            "1": 1,
-            "7": 7,
-            "14": 14,
-            "30": 30
-        }
-        days = timeframe_mapping.get(timeframe.lower(), 7)
-    elif isinstance(timeframe, int):
-        # Validate against supported analysis periods
-        supported_periods = [1, 7, 14, 30]
-        days = timeframe if timeframe in supported_periods else 7
+    if isinstance(timeframe, int):
+        # Accept any positive integer with reasonable bounds
+        if timeframe <= 0:
+            days = 1  # Minimum of 1 day
+        elif timeframe > 365:
+            days = 365  # Maximum of 1 year for performance reasons
+        else:
+            days = timeframe
     else:
-        days = 7  # Default fallback
+        days = 7  # Default fallback for any other type
     include_details = parameters.get('include_details', True)
 
     # Rest of your existing code remains the same...

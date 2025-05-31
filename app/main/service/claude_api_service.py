@@ -634,9 +634,8 @@ Provide response as JSON:
             })
         elif tool_type == ToolType.SLEEP_PATTERN_ANALYZER:
             fallback_params.update({
-                "limit": 10,
-                "time_range": "last_7_days",
-                "include_trends": True
+                "timeframe": 7,
+                "include_details": True
             })
         elif tool_type == ToolType.CARE_METRICS_ANALYZER:
             fallback_params.update({

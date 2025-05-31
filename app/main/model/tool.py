@@ -122,7 +122,6 @@ class Tool(Base):
     # Tool identification
     name = Column(String(100), nullable=False, unique=True)
 
-    # FIXED: Use native_enum=False to ensure proper enum value handling
     tool_type = Column(SQLEnum(ToolType, native_enum=False, values_callable=lambda obj: [e.value for e in obj]), nullable=False)
     description = Column(Text, nullable=False)
     version = Column(String(20), nullable=False, default="1.0.0")
