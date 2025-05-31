@@ -7,10 +7,10 @@ import json
 import logging
 import time
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Tuple, Type
+from typing import Dict, List, Any, Optional, Type, Union
 
 from anthropic import Anthropic
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, InstrumentedAttribute
 
 from app.main.model.query import ClaudeAPIConfig, QueryProcessingResult, ToolSelectionResult, ToolExecutionInfo, \
     ExecutionStatus, ToolSelectionInfo, QueryType
@@ -39,7 +39,8 @@ class ClaudeAPIService:
             user_id: int,
             query: str,
             baby_id: Optional[int] = None,
-            stream: bool = False
+            stream: bool = False,
+            include_thinking: bool = False
     ) -> QueryProcessingResult:
         """
         Enhanced query processing using structured schemas.
@@ -54,6 +55,7 @@ class ClaudeAPIService:
                 "baby_id": baby_id,
                 "user_id": user_id,
                 "stream_enabled": stream,
+                "include_thinking": include_thinking,
                 "start_time": start_time,
                 "phases": {}
             }
@@ -85,7 +87,7 @@ class ClaudeAPIService:
             # Phase 2: Tool selection using Claude
             phase_start = time.time()
             tool_selection_result = await self.select_tools_for_query(
-                db, query, available_tools, baby_id
+                db, query, available_tools, baby_id, include_thinking
             )
             processing_metadata["phases"]["tool_selection"] = {
                 "duration_ms": (time.time() - phase_start) * 1000,
@@ -222,7 +224,8 @@ class ClaudeAPIService:
             db: Session,
             query: str,
             available_tools: Optional[List[Type[Tool]]] = None,
-            baby_id: Optional[int] = None
+            baby_id: Optional[int] = None,
+            include_thinking: bool = False
     ) -> ToolSelectionResult:
         """
         Enhanced tool selection using structured schemas.
@@ -249,20 +252,26 @@ class ClaudeAPIService:
         prompt = self._create_tool_selection_prompt(query, tool_descriptions, baby_id)
 
         try:
-            # Use Claude with thinking enabled
-            response = self.client.messages.create(
-                model=self.config.model,
-                max_tokens=self.config.max_tokens,
-                temperature=self.config.temperature,
-                messages=[{
+            # Use Claude with thinking based on parameter
+            # Build the base parameters
+            params = {
+                "model": self.config.model,
+                "max_tokens": self.config.max_tokens,
+                "temperature": self.config.temperature,
+                "messages": [{
                     "role": "user",
                     "content": prompt
-                }],
-                thinking={
+                }]
+            }
+
+            # Only add thinking parameter when needed
+            if include_thinking:
+                params["thinking"] = {
                     "type": "enabled",
                     "budget_tokens": self.config.thinking_budget_tokens
-                } if self.config.enable_thinking else None
-            )
+                }
+
+            response = self.client.messages.create(**params)
 
             # Extract thinking process and response content properly
             thinking_process = None
@@ -337,7 +346,8 @@ class ClaudeAPIService:
             self,
             response_content: str,
             available_tools: List[Type[Tool]]
-    ) -> Tuple[List[Tool], List[ToolSelectionInfo], str, float, Optional[QueryType]]:
+    ) -> Union[tuple[list[Type[Tool]], list[ToolSelectionInfo], Any, float, Optional[QueryType]], tuple[
+        list[Union[Type[Tool], Any]], list[ToolSelectionInfo], str, float, QueryType]]:
         """Enhanced parsing with structured tool information"""
 
         try:
@@ -423,11 +433,12 @@ class ClaudeAPIService:
                 QueryType.GENERAL_QUESTION
             )
 
-    def _prepare_tool_descriptions(self, tools: List[Tool]) -> Dict[str, Dict[str, str]]:
+    def _prepare_tool_descriptions(self, tools: List[Type[Tool]]) -> dict[
+        InstrumentedAttribute, dict[str, Union[Union[InstrumentedAttribute, str], Any]]]:
         """Prepare detailed tool descriptions for Claude"""
         descriptions = {}
 
-        # Enhanced descriptions for each tool type
+        # descriptions for each tool type
         tool_type_info = {
             ToolType.ACTIVITY_ANALYZER: {
                 "description": "Analyzes baby activities, recent events, and daily patterns",
@@ -640,7 +651,7 @@ Provide response as JSON:
 
         return fallback_params
 
-    def _fallback_tool_selection(self, query: str, available_tools: List[Tool]) -> List[Tool]:
+    def _fallback_tool_selection(self, query: str, available_tools: List[Type[Tool]]) -> list[Type[Tool]]:
         """Enhanced fallback tool selection using keyword matching"""
         selected_tools = []
         query_lower = query.lower()

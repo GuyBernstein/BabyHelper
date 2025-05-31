@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.main import Config, get_db
+from app.main import get_db
 from app.main.config import CLAUDEConfig
 from app.main.model import User, Baby
 from app.main.model.query import ClaudeAPIConfig, router, QueryResponse, QueryRequest, ToolSelectionResponse
@@ -28,7 +28,7 @@ claude_service = ClaudeAPIService(
 
 @router.post("/query", response_model=QueryResponse)
 async def process_query(
-        request: QueryRequest,  # Now using structured request model
+        request: QueryRequest,
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
@@ -57,7 +57,8 @@ async def process_query(
             user_id=current_user.id,
             query=request.query,
             baby_id=request.baby_id,
-            stream=request.stream
+            stream=request.stream,
+            include_thinking=request.include_thinking
         )
 
         if not result.success:
@@ -114,7 +115,8 @@ async def debug_query_processing(
             db=db,
             query=request.query,
             available_tools=available_tools,
-            baby_id=request.baby_id
+            baby_id=request.baby_id,
+            include_thinking=request.include_thinking  # Pass include_thinking for debug too
         )
 
         return ToolSelectionResponse(
@@ -144,4 +146,3 @@ async def debug_query_processing(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Debug processing failed: {str(e)}"
         )
-
