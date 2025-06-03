@@ -1,6 +1,6 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Dict, Union, Any, Optional, Type, List
+from typing import Dict, Union, Any, Optional, Type, List, Tuple
 
 from sqlalchemy.orm import Session
 
@@ -8,6 +8,57 @@ from app.main.model import User
 from app.main.model.sleep import Sleep
 from app.main.service.baby_service import get_baby_if_authorized
 
+# Age-based sleep requirements configuration
+SLEEP_REQUIREMENTS = {
+    'newborn': {  # 0-3 months
+        'age_range': (0, 3),
+        'sleep_range': (14, 17),
+        'sleep_midpoint': 15.5,
+        'nap_range': (3, 5),
+        'min_night_ratio': 0.4,
+        'name': 'Newborn: 0-3 months'
+    },
+    'infant': {  # 4-11 months
+        'age_range': (4, 11),
+        'sleep_range': (12, 15),
+        'sleep_midpoint': 13.5,
+        'nap_range': (2, 3),
+        'min_night_ratio': 0.6,
+        'name': 'Infant: 4-11 months'
+    },
+    'young_toddler': {  # 12-24 months
+        'age_range': (12, 24),
+        'sleep_range': (11, 14),
+        'sleep_midpoint': 12.5,
+        'nap_range': (1, 2),
+        'min_night_ratio': 0.7,
+        'name': 'Toddler: 1-2 years'
+    },
+    'older_toddler': {  # 24+ months
+        'age_range': (25, float('inf')),
+        'sleep_range': (10, 13),
+        'sleep_midpoint': 11.5,
+        'nap_range': (0, 1),
+        'min_night_ratio': 0.7,
+        'name': 'Toddler: 2+ years'
+    }
+}
+
+# Quality scoring mappings
+QUALITY_SCORES = {
+    'Excellent': 100,
+    'Good': 75,
+    'Fair': 50,
+    'Poor': 25
+}
+
+# Constants
+MIN_ACCEPTABLE_SLEEP_HOURS = 6  # Below this is critically low
+NIGHT_SLEEP_START_HOUR = 19  # 7 PM
+NIGHT_SLEEP_END_HOUR = 7  # 7 AM
+DEFAULT_AGE_CATEGORY = 'infant'
+DEFAULT_QUALITY_SCORE = 50
+MONTHS_PER_YEAR = 30  # Approximate days per month for age calculation
 
 def create_sleep(db: Session, data: Dict[str, Any], current_user_id: int) -> Union[Sleep, Dict[str, str]]:
     """Create a new sleep record for a baby"""
@@ -169,98 +220,178 @@ def delete_sleep(db: Session, sleep_id: int, current_user_id: int) -> Union[Dict
     return {'status': 'DELETED'}
 
 
-def get_sleep_patterns(db: Session, baby_id: int, current_user_id: int, days: int = 7,
-                       calculation_method: str = None) -> Union[Dict[str, Any], Dict[str, str]]:
+"""
+Sleep Pattern Analysis
+
+This pattern analysis provides comprehensive sleep pattern analysis for babies/toddlers,
+including age-appropriate sleep recommendations and quality scoring using both
+PSQI-inspired and custom methodologies.
+"""
+def get_sleep_patterns(
+        db: Session,
+        baby_id: int,
+        current_user_id: int,
+        days: int = 7,
+        calculation_method: Optional[str] = None
+) -> Union[Dict[str, Any], Dict[str, str]]:
     """
-    Get sleep patterns for a specified number of days
+    Analyze sleep patterns for a baby over a specified period.
 
     Args:
         db: Database session
         baby_id: ID of the baby
         current_user_id: ID of the current user
         days: Number of days to analyze (default: 7)
-        calculation_method: Sleep quality calculation method - "PSQI" or "custom" (default: None)
-                          If None, no quality calculation is performed
+        calculation_method: Quality calculation method - "PSQI" or "custom" (optional)
+
+    Returns:
+        Dictionary containing sleep patterns analysis and quality scores
     """
-    # Check if user is authorized to view this baby's data
+    # Verify authorization
     baby = get_baby_if_authorized(db, baby_id, current_user_id)
     if isinstance(baby, dict):  # Error response
         return baby
 
-    # Calculate the start date based on the number of days
-    end_date = datetime.utcnow().replace(hour=23, minute=59, second=59, microsecond=999999)
-    start_date = (end_date - timedelta(days=days - 1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    # Define analysis period
+    end_date = _get_end_of_day(datetime.utcnow())
+    start_date = _get_start_of_day(end_date - timedelta(days=days - 1))
 
-    # Get all sleep records for the baby in the specified period
-    sleeps = db.query(Sleep).filter(
+    # Retrieve sleep records
+    sleep_records = _fetch_sleep_records(db, baby_id, start_date, end_date)
+
+    # Analyze sleep data
+    sleep_analysis = _analyze_sleep_records(sleep_records)
+
+    # Calculate baby's age
+    baby_age_months = _calculate_age_months(baby.birthdate) if hasattr(baby, 'birthdate') and baby.birthdate else None
+
+    # Generate summary statistics
+    summary = _create_sleep_summary(sleep_analysis, days, baby_age_months)
+
+    # Add quality assessment if requested
+    if calculation_method in ["PSQI", "custom"]:
+        quality_data = _calculate_sleep_quality(
+            sleep_analysis,
+            summary,
+            baby_age_months,
+            calculation_method
+        )
+        summary.update(quality_data)
+
+    return {
+        'status': 'success',
+        'patterns': {
+            'summary': summary,
+            'by_location': dict(sleep_analysis['locations']),
+            'daily_sleep': _format_daily_sleep(sleep_analysis)
+        }
+    }
+
+
+def _get_start_of_day(date: datetime) -> datetime:
+    """Return the start of the given day (00:00:00.000)."""
+    return date.replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+def _get_end_of_day(date: datetime) -> datetime:
+    """Return the end of the given day (23:59:59.999)."""
+    return date.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+
+def _fetch_sleep_records(db: Session, baby_id: int, start_date: datetime, end_date: datetime) -> List:
+    """Fetch sleep records within the specified date range."""
+    return db.query(Sleep).filter(
         Sleep.baby_id == baby_id,
         Sleep.start_time >= start_date,
         Sleep.start_time <= end_date
     ).order_by(Sleep.start_time).all()
 
-    # Initialize data structures for analysis
-    daily_sleep = defaultdict(int)  # Total minutes per day
-    daily_naps = defaultdict(int)  # Number of naps per day
-    daily_nap_duration = defaultdict(int)  # Total nap duration per day
-    night_sleep = defaultdict(int)  # Night sleep duration per day
-    sleep_locations = defaultdict(int)  # Count by location
-    sleep_qualities = []  # Store all quality ratings for averaging
 
-    # Analyze sleep data
-    for sleep in sleeps:
-        # Get date string for daily grouping
+def _is_night_sleep(hour: int) -> bool:
+    """Determine if the given hour falls within night sleep time (7pm-7am)."""
+    return hour >= NIGHT_SLEEP_START_HOUR or hour < NIGHT_SLEEP_END_HOUR
+
+
+def _analyze_sleep_records(sleep_records: List) -> Dict[str, Any]:
+    """
+    Analyze sleep records and aggregate data by various dimensions.
+
+    Returns:
+        Dictionary containing aggregated sleep data by date, location, and quality
+    """
+    analysis = {
+        'daily_total': defaultdict(int),
+        'daily_naps': defaultdict(int),
+        'daily_nap_duration': defaultdict(int),
+        'daily_night': defaultdict(int),
+        'locations': defaultdict(int),
+        'qualities': []
+    }
+
+    for sleep in sleep_records:
+        if not sleep.duration:
+            continue
+
         date_str = sleep.start_time.strftime('%Y-%m-%d')
+        analysis['daily_total'][date_str] += sleep.duration
 
-        # Add to total sleep time if duration is available
-        if sleep.duration:
-            daily_sleep[date_str] += sleep.duration
+        # Classify sleep type based on start time
+        if _is_night_sleep(sleep.start_time.hour):
+            analysis['daily_night'][date_str] += sleep.duration
+        else:
+            analysis['daily_naps'][date_str] += 1
+            analysis['daily_nap_duration'][date_str] += sleep.duration
 
-            # Count as night sleep if between 7pm and 7am
-            hour = sleep.start_time.hour
-            if hour >= 19 or hour < 7:
-                night_sleep[date_str] += sleep.duration
-            else:
-                # It's a nap
-                daily_naps[date_str] += 1
-                daily_nap_duration[date_str] += sleep.duration
-
-        # Track sleep locations using proper enum handling
+        # Track location
         if sleep.location:
-            location_value = sleep.location.value if hasattr(sleep.location, 'value') else str(sleep.location)
-            sleep_locations[location_value] += 1
+            location_value = _get_enum_value(sleep.location)
+            analysis['locations'][location_value] += 1
 
-        # Track sleep quality for scoring
+        # Track quality
         if sleep.quality:
-            quality_value = sleep.quality.value if hasattr(sleep.quality, 'value') else str(sleep.quality)
-            sleep_qualities.append(quality_value)
+            quality_value = _get_enum_value(sleep.quality)
+            analysis['qualities'].append(quality_value)
 
+    return analysis
+
+
+def _get_enum_value(enum_or_str) -> str:
+    """Extract string value from enum or return string as-is."""
+    return enum_or_str.value if hasattr(enum_or_str, 'value') else str(enum_or_str)
+
+
+def _calculate_age_months(birthdate: datetime) -> Optional[int]:
+    """Calculate age in months from birthdate."""
+    if not birthdate:
+        return None
+    age_days = (datetime.utcnow() - birthdate).days
+    return age_days // MONTHS_PER_YEAR
+
+
+def _create_sleep_summary(analysis: Dict[str, Any], days: int, baby_age_months: Optional[int]) -> Dict[str, Any]:
+    """
+    Create summary statistics from sleep analysis.
+
+    Note: Averages are calculated over the entire period, not just days with data.
+    """
     # Calculate totals
-    total_sleep_minutes = sum(daily_sleep.values())
-    total_night_sleep_minutes = sum(night_sleep.values())
-    total_nap_minutes = sum(daily_nap_duration.values())
-    total_naps = sum(daily_naps.values())
+    total_sleep = sum(analysis['daily_total'].values())
+    total_night = sum(analysis['daily_night'].values())
+    total_nap_duration = sum(analysis['daily_nap_duration'].values())
+    total_naps = sum(analysis['daily_naps'].values())
+    days_with_data = len(analysis['daily_total'])
 
-    # Average per day over the ENTIRE analysis period
-    avg_total_sleep = total_sleep_minutes / days
-    avg_night_sleep = total_night_sleep_minutes / days
-    avg_nap_duration = total_nap_minutes / days if days > 0 else 0
+    # Calculate averages (over entire period)
+    avg_total = total_sleep / days
+    avg_night = total_night / days
+    avg_nap_duration = total_nap_duration / days
     avg_naps = total_naps / days
 
-    # Calculate days with data
-    days_with_data = len(daily_sleep)
-
-    # Calculate baby's age in months if birth date is available
-    baby_age_months = None
-    if hasattr(baby, 'birthdate') and baby.birthdate:
-        age_delta = datetime.utcnow() - baby.birthdate
-        baby_age_months = age_delta.days // 30  # Approximate months
-
-    # Prepare base summary
-    summary = {
-        'avg_total_sleep_minutes': round(avg_total_sleep, 1),
-        'avg_total_sleep_hours': round(avg_total_sleep / 60, 2),
-        'avg_night_sleep_minutes': round(avg_night_sleep, 1),
-        'avg_night_sleep_hours': round(avg_night_sleep / 60, 2),
+    return {
+        'avg_total_sleep_minutes': round(avg_total, 1),
+        'avg_total_sleep_hours': round(avg_total / 60, 2),
+        'avg_night_sleep_minutes': round(avg_night, 1),
+        'avg_night_sleep_hours': round(avg_night / 60, 2),
         'avg_nap_duration_minutes': round(avg_nap_duration, 1),
         'avg_nap_duration_hours': round(avg_nap_duration / 60, 2),
         'avg_naps_per_day': round(avg_naps, 2),
@@ -268,352 +399,379 @@ def get_sleep_patterns(db: Session, baby_id: int, current_user_id: int, days: in
         'days_with_sleep_data': days_with_data
     }
 
-    # Calculate sleep quality only if method is specified
-    if calculation_method in ["PSQI", "custom"]:
-        if days_with_data == 0:
-            # Handle no data case
-            summary['sleep_quality_score'] = 0
-            summary['sleep_quality_rating'] = "No Data"
-            summary['sleep_quality_explanation'] = "No sleep data available for the selected period"
-            summary['calculation_method'] = calculation_method
-        else:
-            # Prepare sleep_data dictionary for the calculation functions
-            sleep_data = {
-                'avg_total_sleep_minutes': avg_total_sleep,
-                'avg_night_sleep_minutes': avg_night_sleep,
-                'avg_naps_per_day': avg_naps,
-                'avg_nap_duration_minutes': avg_nap_duration,
-                'sleep_qualities': sleep_qualities,
-                'days_with_data': days_with_data,
-                'days': days,
-                'sleep_locations': dict(sleep_locations),
-                'baby_age_months': baby_age_months
-            }
 
-            # Calculate sleep quality score using the specified method
-            quality_score, quality_rating, quality_explanation = calculate_sleep_quality(
-                sleep_data, calculation_method
-            )
-
-            summary['sleep_quality_score'] = quality_score
-            summary['sleep_quality_rating'] = quality_rating
-            summary['sleep_quality_explanation'] = quality_explanation
-            summary['calculation_method'] = calculation_method
-
-    # Prepare the response
-    patterns = {
-        'summary': summary,
-        'by_location': dict(sleep_locations),
-        'daily_sleep': [
-            {
-                'date': k,
-                'total_minutes': v,
-                'total_hours': round(v / 60, 2),
-                'night_minutes': night_sleep.get(k, 0),
-                'nap_minutes': daily_nap_duration.get(k, 0),
-                'nap_count': daily_naps.get(k, 0)
-            }
-            for k, v in sorted(daily_sleep.items())
-        ]
-    }
-
-    return {
-        'status': 'success',
-        'patterns': patterns
-    }
+def _format_daily_sleep(analysis: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Format daily sleep data for response."""
+    return [
+        {
+            'date': date,
+            'total_minutes': minutes,
+            'total_hours': round(minutes / 60, 2),
+            'night_minutes': analysis['daily_night'].get(date, 0),
+            'nap_minutes': analysis['daily_nap_duration'].get(date, 0),
+            'nap_count': analysis['daily_naps'].get(date, 0)
+        }
+        for date, minutes in sorted(analysis['daily_total'].items())
+    ]
 
 
-def calculate_sleep_quality(sleep_data, calculation_method):
+def _get_age_category(baby_age_months: Optional[int]) -> Dict[str, Any]:
+    """Get age-appropriate sleep requirements based on baby's age."""
+    if baby_age_months is None:
+        return SLEEP_REQUIREMENTS[DEFAULT_AGE_CATEGORY]
+
+    for category in SLEEP_REQUIREMENTS.values():
+        min_age, max_age = category['age_range']
+        if min_age <= baby_age_months <= max_age:
+            return category
+
+    return SLEEP_REQUIREMENTS['older_toddler']
+
+
+def _calculate_sleep_quality(
+        analysis: Dict[str, Any],
+        summary: Dict[str, Any],
+        baby_age_months: Optional[int],
+        method: str
+) -> Dict[str, Any]:
     """
-    Calculate sleep quality metrics for babies based on sleep data and specified method.
+    Calculate sleep quality score using the specified method.
+
     Args:
-    sleep_data (dict): Dictionary containing sleep metrics
-    calculation_method (str): Either "PSQI" or "custom"
+        analysis: Analyzed sleep data
+        summary: Summary statistics
+        baby_age_months: Baby's age in months
+        method: Calculation method ("PSQI" or "custom")
 
     Returns:
-        tuple: (score, rating, explanation)
+        Dictionary containing quality score, rating, and explanation
     """
-    if calculation_method == "PSQI":
-        return calculate_psqi_score(sleep_data)
-    elif calculation_method == "custom":
-        return calculate_custom_score(sleep_data)
-    else:
-        return 0, "Unknown", "Invalid calculation method specified"
+    # Handle no data case
+    if summary['days_with_sleep_data'] == 0:
+        return {
+            'sleep_quality_score': 0,
+            'sleep_quality_rating': "No Data",
+            'sleep_quality_explanation': "No sleep data available for the selected period",
+            'calculation_method': method
+        }
+
+    age_category = _get_age_category(baby_age_months)
+
+    # Calculate score based on method
+    if method == "PSQI":
+        score, rating, explanation = _calculate_psqi_score(
+            analysis, summary, age_category, baby_age_months
+        )
+    else:  # custom
+        score, rating, explanation = _calculate_custom_score(
+            analysis, summary, age_category, baby_age_months
+        )
+
+    return {
+        'sleep_quality_score': round(score, 1),
+        'sleep_quality_rating': rating,
+        'sleep_quality_explanation': explanation,
+        'calculation_method': method
+    }
 
 
-def calculate_psqi_score(sleep_data):
-    """Calculate PSQI-Inspired Baby Sleep Score (0-100 scale)"""
-    # Extract data
-    avg_total_sleep_minutes = sleep_data.get('avg_total_sleep_minutes', 0)
-    avg_night_sleep_minutes = sleep_data.get('avg_night_sleep_minutes', 0)
-    avg_naps_per_day = sleep_data.get('avg_naps_per_day', 0)
-    sleep_qualities = sleep_data.get('sleep_qualities', [])
-    days_with_data = sleep_data.get('days_with_data', 0)
-    days = sleep_data.get('days', 1)
-    baby_age_months = sleep_data.get('baby_age_months', None)
+def _calculate_psqi_score(
+        analysis: Dict[str, Any],
+        summary: Dict[str, Any],
+        age_category: Dict[str, Any],
+        baby_age_months: Optional[int]
+) -> Tuple[float, str, str]:
+    """
+    Calculate PSQI-inspired sleep score (0-100).
 
-    # Convert to hours
-    avg_total_sleep_hours = avg_total_sleep_minutes / 60
-
-    # Component calculations
+    Component weights:
+    - Sleep Duration (25%): Age-appropriate sleep amount
+    - Sleep Quality (20%): Subjective sleep quality ratings
+    - Sleep Efficiency (20%): Data completeness and consistency
+    - Sleep Pattern (20%): Night vs day sleep distribution
+    - Nap Consistency (15%): Age-appropriate nap frequency
+    """
     components = {}
+    raw_scores = {}  # Store raw scores (0-100) for each component
+    avg_total_hours = summary['avg_total_sleep_hours']
 
-    # 1. Sleep Duration Component (25%)
-    # Determine age-appropriate sleep targets
-    if baby_age_months is not None:
-        if baby_age_months <= 3:
-            # Newborns (0-3 months): 14-17 hours
-            target_min, target_max, target_midpoint = 14, 17, 15.5
-            ideal_naps_min, ideal_naps_max = 3, 5  # Multiple short naps
-        elif baby_age_months <= 11:
-            # Infants (4-11 months): 12-15 hours
-            target_min, target_max, target_midpoint = 12, 15, 13.5
-            ideal_naps_min, ideal_naps_max = 2, 3
-        elif baby_age_months <= 24:
-            # Toddlers (1-2 years): 11-14 hours
-            target_min, target_max, target_midpoint = 11, 14, 12.5
-            ideal_naps_min, ideal_naps_max = 1, 2
-        else:
-            # Older toddlers (2+ years): 10-13 hours
-            target_min, target_max, target_midpoint = 10, 13, 11.5
-            ideal_naps_min, ideal_naps_max = 0, 1
-    else:
-        # Default to infant range if age unknown
-        target_min, target_max, target_midpoint = 12, 15, 13.5
-        ideal_naps_min, ideal_naps_max = 2, 3
+    # 1. Sleep Duration Component
+    raw_scores['duration'] = _calculate_duration_score(avg_total_hours, age_category)
+    components['duration'] = raw_scores['duration'] * 0.25
 
-    # Calculate duration score based on age-appropriate range
-    if target_min <= avg_total_sleep_hours <= target_max:
-        duration_score = 100
-    elif avg_total_sleep_hours < target_min:
-        # Score decreases as sleep gets further below minimum
-        deficit = target_min - avg_total_sleep_hours
-        duration_score = max(0, 100 - (deficit * 15))  # Lose 15 points per hour below minimum
-    else:
-        # Score decreases as sleep gets further above maximum
-        excess = avg_total_sleep_hours - target_max
-        duration_score = max(0, 100 - (excess * 10))  # Lose 10 points per hour above maximum
+    # 2. Sleep Quality Component
+    raw_scores['quality'] = _calculate_quality_score(analysis['qualities'], avg_total_hours)
+    components['quality'] = raw_scores['quality'] * 0.20
 
-    components['duration'] = duration_score * 0.25
+    # 3. Sleep Efficiency Component
+    raw_scores['efficiency'] = _calculate_efficiency_score(summary, avg_total_hours)
+    components['efficiency'] = raw_scores['efficiency'] * 0.20
 
-    # 2. Sleep Quality Component (20%)
-    quality_map = {'Excellent': 100, 'Good': 75, 'Fair': 50, 'Poor': 25}
-    if sleep_qualities:
-        quality_scores = [quality_map.get(q, 50) for q in sleep_qualities]
-        quality_score = sum(quality_scores) / len(quality_scores)
-    else:
-        quality_score = 50  # Default when no data
-    components['quality'] = quality_score * 0.20
+    # 4. Sleep Pattern Component
+    raw_scores['pattern'] = _calculate_pattern_score(summary, age_category, avg_total_hours)
+    components['pattern'] = raw_scores['pattern'] * 0.20
 
-    # 3. Sleep Efficiency Component (20%)
-    efficiency_score = (days_with_data / days * 100) if days > 0 else 0
-    components['efficiency'] = efficiency_score * 0.20
-
-    # 4. Sleep Pattern Component (20%)
-    if avg_total_sleep_minutes > 0:
-        night_day_ratio = avg_night_sleep_minutes / avg_total_sleep_minutes
-    else:
-        night_day_ratio = 0
-
-    # Age-adjusted pattern scoring
-    if baby_age_months is not None and baby_age_months <= 3:
-        # Newborns have less consolidated night sleep
-        if night_day_ratio >= 0.5:
-            pattern_score = 100
-        elif 0.4 <= night_day_ratio < 0.5:
-            pattern_score = 75
-        elif 0.3 <= night_day_ratio < 0.4:
-            pattern_score = 50
-        else:
-            pattern_score = 25
-    else:
-        # Older babies should have more consolidated night sleep
-        if night_day_ratio >= 0.7:
-            pattern_score = 100
-        elif 0.5 <= night_day_ratio < 0.7:
-            pattern_score = 75
-        elif 0.3 <= night_day_ratio < 0.5:
-            pattern_score = 50
-        else:
-            pattern_score = 25
-    components['pattern'] = pattern_score * 0.20
-
-    # 5. Nap Consistency Component (15%)
-    if ideal_naps_min <= avg_naps_per_day <= ideal_naps_max:
-        nap_score = 100
-    else:
-        deviation = min(abs(avg_naps_per_day - ideal_naps_min),
-                        abs(avg_naps_per_day - ideal_naps_max))
-        nap_score = max(0, 100 - (deviation * 25))
-    components['nap_consistency'] = nap_score * 0.15
+    # 5. Nap Consistency Component
+    raw_scores['nap_consistency'] = _calculate_nap_score(summary, age_category, avg_total_hours)
+    components['nap_consistency'] = raw_scores['nap_consistency'] * 0.15
 
     # Calculate final score
     final_score = sum(components.values())
+    rating = _get_score_rating(final_score)
 
-    # Determine rating
-    if final_score >= 85:
-        rating = "Excellent"
-    elif final_score >= 70:
-        rating = "Good"
-    elif final_score >= 50:
-        rating = "Fair"
-    else:
-        rating = "Poor"
+    # Create explanation with weighted contributions
+    age_context = f" ({age_category['name']})" if baby_age_months is not None else ""
 
-    # Create explanation with age context
-    age_context = ""
-    if baby_age_months is not None:
-        if baby_age_months <= 3:
-            age_context = " (Newborn: 0-3 months)"
-        elif baby_age_months <= 11:
-            age_context = " (Infant: 4-11 months)"
-        elif baby_age_months <= 24:
-            age_context = " (Toddler: 1-2 years)"
-        else:
-            age_context = " (Toddler: 2+ years)"
-
-    explanation = (f"PSQI-Inspired Score: {final_score:.1f}/100 {age_context}. "
-                   f"Components - Duration: {duration_score:.0f}%, "
-                   f"Quality: {quality_score:.0f}%, "
-                   f"Efficiency: {efficiency_score:.0f}%, "
-                   f"Sleep Pattern: {pattern_score:.0f}%, "
-                   f"Nap Consistency: {nap_score:.0f}%")
+    # Show how much each component contributed to the final score
+    explanation = (
+        f"PSQI-Inspired Score: {final_score:.1f}/100{age_context}. "
+        f"Contributions - Duration: {components['duration']:.1f}/25, "
+        f"Quality: {components['quality']:.1f}/20, "
+        f"Efficiency: {components['efficiency']:.1f}/20, "
+        f"Sleep Pattern: {components['pattern']:.1f}/20, "
+        f"Nap Consistency: {components['nap_consistency']:.1f}/15"
+    )
 
     return final_score, rating, explanation
 
 
-def calculate_custom_score(sleep_data):
-    """Calculate custom sleep score based on multiple factors"""
-    # Extract data
-    avg_total_sleep_minutes = sleep_data.get('avg_total_sleep_minutes', 0)
-    avg_night_sleep_minutes = sleep_data.get('avg_night_sleep_minutes', 0)
-    sleep_qualities = sleep_data.get('sleep_qualities', [])
-    days_with_data = sleep_data.get('days_with_data', 0)
-    days = sleep_data.get('days', 1)
-    sleep_locations = sleep_data.get('sleep_locations', {})
-    baby_age_months = sleep_data.get('baby_age_months', None)
+def _calculate_duration_score(avg_total_hours: float, age_category: Dict[str, Any]) -> float:
+    """Calculate sleep duration score (0-100) based on age-appropriate targets."""
+    if avg_total_hours < MIN_ACCEPTABLE_SLEEP_HOURS:
+        # Severe penalty for critically low sleep
+        return 30 * (avg_total_hours / MIN_ACCEPTABLE_SLEEP_HOURS)
 
-    score_components = []
+    target_min, target_max = age_category['sleep_range']
 
-    # Total sleep duration (0-35 points) - age adjusted
-    avg_total_sleep_hours = avg_total_sleep_minutes / 60
-
-    if baby_age_months is not None:
-        if baby_age_months <= 3:
-            # Newborns need more sleep
-            if avg_total_sleep_hours >= 15:
-                duration_points = 35
-            elif avg_total_sleep_hours >= 14:
-                duration_points = 30
-            elif avg_total_sleep_hours >= 12:
-                duration_points = 20
-            else:
-                duration_points = max(0, avg_total_sleep_hours * 2.5)
-        elif baby_age_months <= 11:
-            # Infants
-            if avg_total_sleep_hours >= 13:
-                duration_points = 35
-            elif avg_total_sleep_hours >= 12:
-                duration_points = 30
-            elif avg_total_sleep_hours >= 10:
-                duration_points = 20
-            else:
-                duration_points = max(0, avg_total_sleep_hours * 2)
-        elif baby_age_months <= 24:
-            # Toddlers
-            if avg_total_sleep_hours >= 12:
-                duration_points = 35
-            elif avg_total_sleep_hours >= 11:
-                duration_points = 30
-            elif avg_total_sleep_hours >= 9:
-                duration_points = 20
-            else:
-                duration_points = max(0, avg_total_sleep_hours * 2)
-        else:
-            # Older toddlers
-            if avg_total_sleep_hours >= 11:
-                duration_points = 35
-            elif avg_total_sleep_hours >= 10:
-                duration_points = 30
-            elif avg_total_sleep_hours >= 8:
-                duration_points = 20
-            else:
-                duration_points = max(0, avg_total_sleep_hours * 2)
+    if target_min <= avg_total_hours <= target_max:
+        return 100
+    elif avg_total_hours < target_min:
+        deficit = target_min - avg_total_hours
+        return max(30, 100 - (deficit * 15))
     else:
-        # Default scoring when age is unknown
-        if avg_total_sleep_hours >= 14:
-            duration_points = 35
-        elif avg_total_sleep_hours >= 12:
-            duration_points = 30
-        elif avg_total_sleep_hours >= 10:
-            duration_points = 20
-        else:
-            duration_points = max(0, avg_total_sleep_hours * 2)
+        excess = avg_total_hours - target_max
+        return max(50, 100 - (excess * 10))
 
-    score_components.append(duration_points)
 
-    # Night sleep proportion (0-25 points) - age adjusted
-    if avg_total_sleep_minutes > 0:
-        night_proportion = avg_night_sleep_minutes / avg_total_sleep_minutes
-        if baby_age_months is not None and baby_age_months <= 3:
-            # Newborns have less consolidated night sleep, so be more lenient
-            night_points = min(25, night_proportion * 35)
-        else:
-            night_points = night_proportion * 25
+def _calculate_quality_score(qualities: List[str], avg_total_hours: float) -> float:
+    """Calculate sleep quality score based on subjective ratings."""
+    if not qualities:
+        base_score = DEFAULT_QUALITY_SCORE
     else:
-        night_points = 0
-    score_components.append(night_points)
+        quality_values = [QUALITY_SCORES.get(q, DEFAULT_QUALITY_SCORE) for q in qualities]
+        base_score = sum(quality_values) / len(quality_values)
 
-    # Data consistency (0-20 points)
-    consistency_ratio = days_with_data / days if days > 0 else 0
-    consistency_points = consistency_ratio * 20
-    score_components.append(consistency_points)
+    # Apply penalty for low sleep
+    if avg_total_hours < MIN_ACCEPTABLE_SLEEP_HOURS:
+        base_score *= 0.5
 
-    # Sleep quality ratings (0-15 points)
-    quality_map = {'Excellent': 15, 'Good': 11, 'Fair': 7, 'Poor': 3}
-    if sleep_qualities:
-        quality_scores = [quality_map.get(q, 7) for q in sleep_qualities]
-        quality_points = sum(quality_scores) / len(quality_scores)
+    return base_score
+
+
+def _calculate_efficiency_score(summary: Dict[str, Any], avg_total_hours: float) -> float:
+    """Calculate sleep efficiency score based on data availability."""
+    efficiency_ratio = summary['days_with_sleep_data'] / summary['total_days_analyzed']
+    base_score = efficiency_ratio * 100
+
+    # Apply penalty for low sleep
+    if avg_total_hours < MIN_ACCEPTABLE_SLEEP_HOURS:
+        base_score *= 0.5
+
+    return base_score
+
+
+def _calculate_pattern_score(summary: Dict[str, Any], age_category: Dict[str, Any], avg_total_hours: float) -> float:
+    """Calculate sleep pattern score based on night/day distribution."""
+    if summary['avg_total_sleep_minutes'] > 0:
+        night_ratio = summary['avg_night_sleep_minutes'] / summary['avg_total_sleep_minutes']
     else:
-        quality_points = 7  # Default to fair
-    score_components.append(quality_points)
+        return 0
 
-    # Sleep location consistency (0-5 points)
-    if sleep_locations:
-        total_locations = sum(sleep_locations.values())
-        if total_locations > 0:
-            max_location_count = max(sleep_locations.values())
-            location_consistency = max_location_count / total_locations
-            location_points = location_consistency * 5
-        else:
-            location_points = 2.5
+    min_night_ratio = age_category['min_night_ratio']
+
+    if night_ratio >= min_night_ratio:
+        base_score = 100
     else:
-        location_points = 2.5  # Default
-    score_components.append(location_points)
+        base_score = (night_ratio / min_night_ratio) * 100
+
+    # Apply penalty for low sleep
+    if avg_total_hours < MIN_ACCEPTABLE_SLEEP_HOURS:
+        base_score *= 0.5
+
+    return base_score
+
+
+def _calculate_nap_score(summary: Dict[str, Any], age_category: Dict[str, Any], avg_total_hours: float) -> float:
+    """Calculate nap consistency score based on age-appropriate nap frequency."""
+    nap_min, nap_max = age_category['nap_range']
+    avg_naps = summary['avg_naps_per_day']
+
+    if nap_min <= avg_naps <= nap_max:
+        base_score = 100
+    else:
+        deviation = min(abs(avg_naps - nap_min), abs(avg_naps - nap_max))
+        base_score = max(0, 100 - (deviation * 25))
+
+    # Apply penalty for low sleep
+    if avg_total_hours < MIN_ACCEPTABLE_SLEEP_HOURS:
+        base_score *= 0.5
+
+    return base_score
+
+
+def _calculate_custom_score(
+        analysis: Dict[str, Any],
+        summary: Dict[str, Any],
+        age_category: Dict[str, Any],
+        baby_age_months: Optional[int]
+) -> Tuple[float, str, str]:
+    """
+    Calculate custom sleep score (0-100).
+
+    Point distribution:
+    - Total sleep duration: 35 points
+    - Night sleep proportion: 25 points
+    - Data consistency: 20 points
+    - Sleep quality ratings: 15 points
+    - Sleep location consistency: 5 points
+    """
+    components = {}
+
+    # 1. Total sleep duration (35 points)
+    components['duration'] = _calculate_custom_duration_points(
+        summary['avg_total_sleep_hours'],
+        age_category
+    )
+
+    # 2. Night sleep proportion (25 points)
+    components['night_proportion'] = _calculate_custom_night_points(
+        summary,
+        age_category
+    )
+
+    # 3. Data consistency (20 points)
+    components['consistency'] = _calculate_custom_consistency_points(
+        summary
+    )
+
+    # 4. Sleep quality ratings (15 points)
+    components['quality'] = _calculate_custom_quality_points(
+        analysis['qualities'],
+        summary['avg_total_sleep_hours']
+    )
+
+    # 5. Sleep location consistency (5 points)
+    components['location'] = _calculate_custom_location_points(
+        analysis['locations']
+    )
 
     # Calculate final score
-    final_score = sum(score_components)
+    final_score = sum(components.values())
+    rating = _get_score_rating(final_score)
 
-    # Determine rating
-    if final_score >= 85:
-        rating = "Excellent"
-    elif final_score >= 70:
-        rating = "Good"
-    elif final_score >= 50:
-        rating = "Fair"
-    else:
-        rating = "Poor"
+    # Create explanation
+    age_context = f" (Age: {baby_age_months} months)" if baby_age_months is not None else ""
 
-    # Add age context to explanation
-    age_context = ""
-    if baby_age_months is not None:
-        age_context = f" (Age: {baby_age_months} months)"
-
-    explanation = (f"Custom Score: {final_score:.1f}/100 {age_context}. "
-                   f"Based on sleep duration ({duration_points:.0f} pts), "
-                   f"night sleep ratio ({night_points:.0f} pts), "
-                   f"data consistency ({consistency_points:.0f} pts), "
-                   f"sleep quality ({quality_points:.0f} pts), "
-                   f"and location consistency ({location_points:.0f} pts)")
+    # Show percentage of max possible points for each component
+    explanation = (
+        f"Custom Score: {final_score:.1f}/100{age_context}. "
+        f"Component scores - Duration: {components['duration']:.0f}/35 , "
+        f"Night ratio: {components['night_proportion']:.0f}/25 , "
+        f"Consistency: {components['consistency']:.0f}/20 , "
+        f"Quality: {components['quality']:.0f}/15 , "
+        f"Location: {components['location']:.0f}/5 "
+    )
 
     return final_score, rating, explanation
+
+
+def _calculate_custom_duration_points(avg_total_hours: float, age_category: Dict[str, Any]) -> float:
+    """Calculate duration points for custom scoring (max 35 points)."""
+    if avg_total_hours < MIN_ACCEPTABLE_SLEEP_HOURS:
+        return 10 * (avg_total_hours / MIN_ACCEPTABLE_SLEEP_HOURS)
+
+    target_min, _ = age_category['sleep_range']
+    midpoint = age_category['sleep_midpoint']
+
+    if avg_total_hours >= midpoint:
+        return 35
+    elif avg_total_hours >= target_min:
+        return 30
+    elif avg_total_hours >= target_min - 2:
+        return 20
+    else:
+        return max(10, avg_total_hours * 2)
+
+
+def _calculate_custom_night_points(summary: Dict[str, Any], age_category: Dict[str, Any]) -> float:
+    """Calculate night sleep proportion points (max 25 points)."""
+    if summary['avg_total_sleep_minutes'] <= 0:
+        return 0
+
+    night_proportion = summary['avg_night_sleep_minutes'] / summary['avg_total_sleep_minutes']
+    min_night_ratio = age_category['min_night_ratio']
+
+    if night_proportion >= min_night_ratio:
+        points = 25
+    else:
+        points = (night_proportion / min_night_ratio) * 25
+
+    # Apply penalty for low total sleep
+    if summary['avg_total_sleep_hours'] < MIN_ACCEPTABLE_SLEEP_HOURS:
+        points *= 0.3
+
+    return points
+
+
+def _calculate_custom_consistency_points(summary: Dict[str, Any]) -> float:
+    """Calculate data consistency points (max 20 points)."""
+    consistency_ratio = summary['days_with_sleep_data'] / summary['total_days_analyzed']
+    points = consistency_ratio * 20
+
+    # Apply penalty for low average sleep
+    if summary['avg_total_sleep_hours'] < MIN_ACCEPTABLE_SLEEP_HOURS:
+        points *= 0.5
+
+    return points
+
+
+def _calculate_custom_quality_points(qualities: List[str], avg_total_hours: float) -> float:
+    """Calculate quality rating points (max 15 points)."""
+    if not qualities:
+        points = 7.5  # Default to middle
+    else:
+        quality_values = [QUALITY_SCORES.get(q, DEFAULT_QUALITY_SCORE) for q in qualities]
+        avg_quality = sum(quality_values) / len(quality_values)
+        points = (avg_quality / 100) * 15
+
+    # Apply penalty for low sleep
+    if avg_total_hours < MIN_ACCEPTABLE_SLEEP_HOURS:
+        points *= 0.5
+
+    return points
+
+
+def _calculate_custom_location_points(locations: Dict[str, int]) -> float:
+    """Calculate location consistency points (max 5 points)."""
+    if not locations:
+        return 2.5  # Default to middle
+
+    total_locations = sum(locations.values())
+    if total_locations == 0:
+        return 2.5
+
+    max_location_count = max(locations.values())
+    location_consistency = max_location_count / total_locations
+    return location_consistency * 5
+
+
+def _get_score_rating(score: float) -> str:
+    """Convert numeric score to qualitative rating."""
+    if score >= 85:
+        return "Excellent"
+    elif score >= 70:
+        return "Good"
+    elif score >= 50:
+        return "Fair"
+    else:
+        return "Poor"
