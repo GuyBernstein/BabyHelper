@@ -121,11 +121,12 @@ async def delete_sleep_record(
 async def get_baby_sleep_patterns(
         baby_id: int,
         days: int = Query(7, description="Number of days to analyze"),
+        calculation_method: str = Query("custom", description="For calculating the sleep quality. can be \"custom\" or \"PSQI\""),
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
     """Get sleep patterns analysis for a baby"""
-    result = get_sleep_patterns(db, baby_id, current_user.id, days)
+    result = get_sleep_patterns(db, baby_id, current_user.id, days, calculation_method)
 
     if isinstance(result, dict) and result.get('status') == 'fail':
         status_code = status.HTTP_403_FORBIDDEN if result.get('message') == 'Not authorized to access this baby' else status.HTTP_404_NOT_FOUND

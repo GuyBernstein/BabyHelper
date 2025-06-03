@@ -576,60 +576,70 @@ Analyze the query and provide your tool selection in the specified JSON format."
         if tool_type == ToolType.SLEEP_PATTERN_ANALYZER:
             parameter_extraction_prompt = f"""Extract parameters from this user query for a sleep pattern analyzer tool:
 
-    QUERY: "{query}"
-    TOOL TYPE: {tool_type.value}
+QUERY: "{query}"
+TOOL TYPE: {tool_type.value}
 
-    This tool analyzes sleep patterns and can provide different metrics:
-    - total_sleep: Overall sleep duration statistics
-    - night_sleep: Nighttime sleep analysis
-    - naps: Daytime nap patterns and frequencies
-    - quality: Sleep quality scores and ratings
+This tool analyzes sleep patterns and can provide different metrics:
+- total_sleep: Overall sleep duration statistics
+- night_sleep: Nighttime sleep analysis
+- naps: Daytime nap patterns and frequencies
+- quality: Sleep quality scores and ratings
 
-    Based on the query, determine:
-    1. Time range (convert to number of days)
-    2. Whether to include detailed patterns (true/false)
-    3. Which specific metrics to analyze (array of metric names)
+Based on the query, determine:
+1. Time range (convert to number of days)
+2. Whether to include detailed patterns (true/false)
+3. Which specific metrics to analyze (array of metric names)
+4. Sleep quality calculation method (when quality metric is selected)
 
-    RULES FOR METRICS SELECTION:
-    - If query mentions specific aspects (e.g., "night sleep", "naps", "quality"), select only those metrics
-    - If query is general about sleep, include all metrics: ["total_sleep", "night_sleep", "naps", "quality"]
-    - If query mentions "total" or "overall", include at least "total_sleep"
-    - If query mentions "quality", "good", "bad", "well", include "quality"
-    - If query mentions "nap", "daytime", include "naps"
-    - If query mentions "night", "bedtime", "overnight", include "night_sleep"
+RULES FOR METRICS SELECTION:
+- If query mentions specific aspects (e.g., "night sleep", "naps", "quality"), select only those metrics
+- If query is general about sleep, include all metrics: ["total_sleep", "night_sleep", "naps", "quality"]
+- If query mentions "total" or "overall", include at least "total_sleep"
+- If query mentions "quality", "good", "bad", "well", include "quality"
+- If query mentions "nap", "daytime", include "naps"
+- If query mentions "night", "bedtime", "overnight", include "night_sleep"
 
-    Provide response as JSON:
-    {{
-        "timeframe": <integer_days>,
-        "include_details": <boolean>,
-        "metrics": [<array_of_metric_names>]
-    }}
+RULES FOR CALCULATION METHOD (when "quality" is in metrics):
+- If query mentions "PSQI", "Pittsburgh", "standardized", "clinical": use "PSQI"
+- If query mentions "custom", "special", "personalized", "tailored": use "custom"
+- If no specific method mentioned: use "PSQI" (default)
 
-    Examples:
-    - "How did my baby sleep last week?" → {{"timeframe": 7, "include_details": true, "metrics": ["total_sleep", "night_sleep", "naps", "quality"]}}
-    - "Show me nap patterns for the past 3 days" → {{"timeframe": 3, "include_details": true, "metrics": ["naps"]}}
-    - "How was the sleep quality this month?" → {{"timeframe": 30, "include_details": true, "metrics": ["quality"]}}
-    - "Night sleep analysis for yesterday" → {{"timeframe": 1, "include_details": true, "metrics": ["night_sleep"]}}"""
+Provide response as JSON:
+{{
+    "timeframe": <integer_days>,
+    "include_details": <boolean>,
+    "metrics": [<array_of_metric_names>],
+    "calculation_method": "<method_name_if_quality_selected_else_null>"
+}}
+
+Examples:
+- "How did my baby sleep last week?" → {{"timeframe": 7, "include_details": true, "metrics": ["total_sleep", "night_sleep", "naps", "quality"], "calculation_method": "PSQI"}}
+- "Show me nap patterns for the past 3 days" → {{"timeframe": 3, "include_details": true, "metrics": ["naps"], "calculation_method": null}}
+- "How was the sleep quality this month?" → {{"timeframe": 30, "include_details": true, "metrics": ["quality"], "calculation_method": "PSQI"}}
+- "Night sleep analysis for yesterday" → {{"timeframe": 1, "include_details": true, "metrics": ["night_sleep"], "calculation_method": null}}
+- "PSQI sleep quality for this week" → {{"timeframe": 7, "include_details": true, "metrics": ["quality"], "calculation_method": "PSQI"}}
+- "Custom quality analysis for the past month" → {{"timeframe": 30, "include_details": true, "metrics": ["quality"], "calculation_method": "custom"}}"""
+
 
         else:
             # Generic parameter extraction for other tools
             parameter_extraction_prompt = f"""Extract parameters from this user query for a {tool_type.value} tool:
 
-    QUERY: "{query}"
-    TOOL TYPE: {tool_type.value}
+QUERY: "{query}"
+TOOL TYPE: {tool_type.value}
 
-    Extract relevant parameters like:
-    - Time ranges (today, this week, last 7 days, specific dates, etc.)
-    - Limits (number of results, top N, recent X, etc.)
-    - Filters (specific activities, caregivers, types, etc.)
-    - Sorting preferences (recent first, oldest first, by duration, etc.)
-    - Analysis depth (summary, detailed, with trends, etc.)
+Extract relevant parameters like:
+- Time ranges (today, this week, last 7 days, specific dates, etc.)
+- Limits (number of results, top N, recent X, etc.)
+- Filters (specific activities, caregivers, types, etc.)
+- Sorting preferences (recent first, oldest first, by duration, etc.)
+- Analysis depth (summary, detailed, with trends, etc.)
 
-    Provide response as JSON:
-    {{
-        "timeframe": "integer of detected time range by days or null",
-        "include_details": "true or false to include details",
-    }}"""
+Provide response as JSON:
+{{
+    "timeframe": "integer of detected time range by days or null",
+    "include_details": "true or false to include details",
+}}"""
 
         try:
             response = self.client.messages.create(
@@ -657,6 +667,8 @@ Analyze the query and provide your tool selection in the specified JSON format."
                 # Validate metrics for sleep analyzer
                 if tool_type == ToolType.SLEEP_PATTERN_ANALYZER:
                     valid_metrics = {"total_sleep", "night_sleep", "naps", "quality"}
+                    valid_calculation_methods = {"PSQI", "custom"}
+
                     if "metrics" in parameters:
                         # Ensure metrics is a list
                         if not isinstance(parameters["metrics"], list):
@@ -670,6 +682,23 @@ Analyze the query and provide your tool selection in the specified JSON format."
                     else:
                         # Default to all metrics if not specified
                         parameters["metrics"] = ["total_sleep", "night_sleep", "naps", "quality"]
+
+                    # Handle calculation_method validation
+                    if "calculation_method" in parameters:
+                        # Only keep calculation_method if quality is in metrics
+                        if "quality" in parameters["metrics"]:
+                            # Validate the calculation method
+                            if parameters["calculation_method"] not in valid_calculation_methods:
+                                parameters["calculation_method"] = "PSQI"
+                        else:
+                            # Remove calculation_method if quality not in metrics
+                            parameters["calculation_method"] = None
+                    else:
+                        # Set default calculation_method if quality is in metrics
+                        if "quality" in parameters["metrics"]:
+                            parameters["calculation_method"] = "PSQI"
+                        else:
+                            parameters["calculation_method"] = None
 
                 return parameters
 
