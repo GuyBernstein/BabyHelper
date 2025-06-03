@@ -419,6 +419,7 @@ def _aggregate_metrics(
         aggregated['total_quality_scores'] = 0.0
         aggregated['babies_with_valid_scores'] = 0
         aggregated['quality_explanations'] = []
+        aggregated['quality_ratings'] = []
         aggregated['calculation_methods'] = set()
 
     # Collect data for requested metrics only
@@ -442,20 +443,26 @@ def _aggregate_metrics(
                     aggregated['total_quality_scores'] += float(quality_score)
                     aggregated['babies_with_valid_scores'] += 1
 
-                    # Collect explanations and methods for reference
+                    # Collect explanations, ratings, and methods for reference
                     if 'sleep_quality_explanation' in summary:
                         aggregated['quality_explanations'].append(summary['sleep_quality_explanation'])
+                    if 'sleep_quality_rating' in summary:
+                        aggregated['quality_ratings'].append(summary['sleep_quality_rating'])
                     if 'calculation_method' in summary:
                         aggregated['calculation_methods'].add(summary['calculation_method'])
 
-    # Calculate averages
+    # Calculate averages with better precision handling
     result = {}
 
     if 'total_sleep' in requested_metrics:
-        result['avg_total_sleep_hours'] = round(aggregated['total_sleep_hours'] / baby_count, 1)
+        avg_sleep = aggregated['total_sleep_hours'] / baby_count
+        # Use more precision for very small values, otherwise round to 1 decimal
+        result['avg_total_sleep_hours'] = round(avg_sleep, 2) if avg_sleep < 0.1 else round(avg_sleep, 1)
 
     if 'night_sleep' in requested_metrics:
-        result['avg_night_sleep_hours'] = round(aggregated['total_night_sleep_hours'] / baby_count, 1)
+        avg_night = aggregated['total_night_sleep_hours'] / baby_count
+        # Use more precision for very small values, otherwise round to 1 decimal
+        result['avg_night_sleep_hours'] = round(avg_night, 2) if avg_night < 0.1 else round(avg_night, 1)
 
     if 'naps' in requested_metrics:
         result['avg_naps_per_day'] = round(aggregated['total_naps'] / baby_count, 1)
@@ -465,21 +472,36 @@ def _aggregate_metrics(
             avg_quality_score = aggregated['total_quality_scores'] / aggregated['babies_with_valid_scores']
             result['sleep_quality_score'] = round(avg_quality_score, 1)
 
-            # Determine overall quality rating based on average score
-            if avg_quality_score >= 80:
-                result['sleep_quality_rating'] = "Excellent"
-            elif avg_quality_score >= 65:
-                result['sleep_quality_rating'] = "Good"
-            elif avg_quality_score >= 45:
-                result['sleep_quality_rating'] = "Fair"
+            # Handle rating based on number of babies
+            if aggregated['babies_with_valid_scores'] == 1:
+                # For single baby, use the original rating
+                result['sleep_quality_rating'] = aggregated['quality_ratings'][0] if aggregated[
+                    'quality_ratings'] else "No Data"
             else:
-                result['sleep_quality_rating'] = "Poor"
+                # For multiple babies, calculate aggregate rating based on average score
+                # Use same thresholds as individual calculations for consistency
+                if avg_quality_score >= 85:
+                    result['sleep_quality_rating'] = "Excellent"
+                elif avg_quality_score >= 70:
+                    result['sleep_quality_rating'] = "Good"
+                elif avg_quality_score >= 50:
+                    result['sleep_quality_rating'] = "Fair"
+                else:
+                    result['sleep_quality_rating'] = "Poor"
 
-            # Create aggregated explanation
+            # Handle explanation based on number of babies
             methods_used = list(aggregated['calculation_methods'])
             method_str = methods_used[0] if len(methods_used) == 1 else "Mixed"
-            result[
-                'sleep_quality_explanation'] = f"Average {method_str} Score: {result['sleep_quality_score']}/100 across {aggregated['babies_with_valid_scores']} babies"
+
+            if aggregated['babies_with_valid_scores'] == 1:
+                # For single baby, use the original detailed explanation
+                result['sleep_quality_explanation'] = aggregated['quality_explanations'][0] if aggregated[
+                    'quality_explanations'] else f"{method_str} Score: {result['sleep_quality_score']}/100"
+            else:
+                # For multiple babies, create aggregated explanation
+                result[
+                    'sleep_quality_explanation'] = f"Average {method_str} Score: {result['sleep_quality_score']}/100 across {aggregated['babies_with_valid_scores']} babies"
+
             result['calculation_method'] = method_str
         else:
             result['sleep_quality_score'] = 0
@@ -494,7 +516,7 @@ def _filter_pattern_by_metrics(
         pattern: Dict[str, Any],
         requested_metrics: List[str]
 ) -> Dict[str, Any]:
-    """Filter pattern data to include only requested metrics."""
+    """Filter pattern data to include only requested metrics and avoid redundancy with summary."""
     filtered = {}
 
     if 'summary' in pattern:
@@ -505,33 +527,32 @@ def _filter_pattern_by_metrics(
         filtered_summary['total_days_analyzed'] = summary.get('total_days_analyzed')
         filtered_summary['days_with_sleep_data'] = summary.get('days_with_sleep_data')
 
-        # Add metric-specific fields
+        # For detailed patterns, include more granular data (minutes) but not the redundant hour calculations
         if 'total_sleep' in requested_metrics:
             filtered_summary['avg_total_sleep_minutes'] = summary.get('avg_total_sleep_minutes')
-            filtered_summary['avg_total_sleep_hours'] = summary.get('avg_total_sleep_hours')
+            # Remove redundant hours field - it's calculated in summary
 
         if 'night_sleep' in requested_metrics:
             filtered_summary['avg_night_sleep_minutes'] = summary.get('avg_night_sleep_minutes')
-            filtered_summary['avg_night_sleep_hours'] = summary.get('avg_night_sleep_hours')
+            # Remove redundant hours field - it's calculated in summary
 
         if 'naps' in requested_metrics:
             filtered_summary['avg_naps_per_day'] = summary.get('avg_naps_per_day')
             filtered_summary['avg_nap_duration_minutes'] = summary.get('avg_nap_duration_minutes')
-            filtered_summary['avg_nap_duration_hours'] = summary.get('avg_nap_duration_hours')
+            # Remove redundant hours field - can be calculated if needed
 
         if 'quality' in requested_metrics:
-            filtered_summary['sleep_quality_score'] = summary.get('sleep_quality_score')
-            filtered_summary['sleep_quality_rating'] = summary.get('sleep_quality_rating')
-            filtered_summary['sleep_quality_explanation'] = summary.get('sleep_quality_explanation')
-            filtered_summary['calculation_method'] = summary.get('calculation_method')
+            # Only include quality in detailed patterns if there are multiple babies
+            # For single baby, this is redundant with summary
+            pass
 
         filtered['summary'] = filtered_summary
 
     # Include additional details based on metrics
-    if 'total_sleep' in requested_metrics and 'daily_sleep' in pattern:
+    if ('total_sleep' in requested_metrics or 'night_sleep' in requested_metrics or 'naps' in requested_metrics) and 'daily_sleep' in pattern:
         filtered['daily_sleep'] = pattern['daily_sleep']
 
-    if ('total_sleep' in requested_metrics or 'quality' in requested_metrics) and 'by_location' in pattern:
+    if 'total_sleep' in requested_metrics and 'by_location' in pattern:
         filtered['by_location'] = pattern['by_location']
 
     return filtered
@@ -546,15 +567,15 @@ def _create_empty_result(days: int, requested_metrics: List[str], calculation_me
         "message": "No sleep data available for the specified timeframe"
     }
 
-    # Add zeros/defaults for requested metrics
+    # Add zeros/defaults for requested metrics with consistent precision
     if 'total_sleep' in requested_metrics:
-        summary["avg_total_sleep_hours"] = 0
+        summary["avg_total_sleep_hours"] = 0.0
 
     if 'night_sleep' in requested_metrics:
-        summary["avg_night_sleep_hours"] = 0
+        summary["avg_night_sleep_hours"] = 0.0
 
     if 'naps' in requested_metrics:
-        summary["avg_naps_per_day"] = 0
+        summary["avg_naps_per_day"] = 0.0
 
     if 'quality' in requested_metrics:
         summary["sleep_quality_score"] = 0
