@@ -574,51 +574,84 @@ Analyze the query and provide your tool selection in the specified JSON format."
 
         # Tool-specific parameter extraction prompts
         if tool_type == ToolType.SLEEP_PATTERN_ANALYZER:
+            # Enhanced Parameter Extraction Prompt for Sleep Pattern Analyzer
             parameter_extraction_prompt = f"""Extract parameters from this user query for a sleep pattern analyzer tool:
 
 QUERY: "{query}"
 TOOL TYPE: {tool_type.value}
 
-This tool analyzes sleep patterns and can provide different metrics:
+This tool analyzes sleep patterns and provides different metrics with two quality calculation methods:
+
+## AVAILABLE METRICS:
 - total_sleep: Overall sleep duration statistics
 - night_sleep: Nighttime sleep analysis
 - naps: Daytime nap patterns and frequencies
-- quality: Sleep quality scores and ratings
+- quality: Sleep quality scores using either PSQI or custom method
 
-Based on the query, determine:
-1. Time range (convert to number of days)
-2. Whether to include detailed patterns (true/false)
-3. Which specific metrics to analyze (array of metric names)
-4. Sleep quality calculation method (when quality metric is selected)
+## QUALITY CALCULATION METHODS (when "quality" metric is selected):
 
-RULES FOR METRICS SELECTION:
-- If query mentions specific aspects (e.g., "night sleep", "naps", "quality"), select only those metrics
-- If query is general about sleep, include all metrics: ["total_sleep", "night_sleep", "naps", "quality"]
-- If query mentions "total" or "overall", include at least "total_sleep"
-- If query mentions "quality", "good", "bad", "well", include "quality"
-- If query mentions "nap", "daytime", include "naps"
-- If query mentions "night", "bedtime", "overnight", include "night_sleep"
+### PSQI (Pittsburgh Sleep Quality Index) - Clinical Standard:
+- **What it is**: A medically-inspired scoring system based on the clinical PSQI standard
+- **Components**: Sleep Duration (25%), Sleep Quality (20%), Sleep Efficiency (20%), Sleep Pattern (20%), Nap Consistency (15%)
+- **Best for**: Clinical assessments, comparing to medical standards, tracking sleep disorders, healthcare discussions
+- **Use when query mentions**: "PSQI", "Pittsburgh", "clinical", "medical", "standard", "professional", "doctor", "pediatrician", "healthcare"
 
-RULES FOR CALCULATION METHOD (when "quality" is in metrics):
-- If query mentions "PSQI", "Pittsburgh", "standardized", "clinical": use "PSQI"
-- If query mentions "custom", "special", "personalized", "tailored": use "custom"
-- If no specific method mentioned: use "PSQI" (default)
+### Custom Method - Practical Parent-Focused:
+- **What it is**: A practical scoring system designed for everyday parent use
+- **Components**: Total sleep duration (35pts), Night sleep proportion (25pts), Data consistency (20pts), Sleep quality ratings (15pts), Sleep location consistency (5pts)
+- **Best for**: Day-to-day tracking, practical insights, location-based analysis, parent-friendly metrics
+- **Use when query mentions**: "custom", "practical", "simple", "location", "where baby sleeps", "everyday", "basic"
+- **Default choice**: When quality is requested without specifying a method
+
+## PARAMETER EXTRACTION RULES:
+
+1. **Time Range**: Convert to number of days (1-365)
+2. **Include Details**: Always true for better insights
+3. **Metrics Selection**:
+   - General sleep queries → all metrics: ["total_sleep", "night_sleep", "naps", "quality"]
+   - Specific aspect queries → only relevant metrics
+   - "total"/"overall" → include "total_sleep"
+   - "quality"/"good"/"bad"/"well" → include "quality"
+   - "nap"/"daytime" → include "naps"
+   - "night"/"bedtime"/"overnight" → include "night_sleep"
+
+4. **Calculation Method** (required when "quality" in metrics):
+   - PSQI: Clinical/medical context or explicitly requested
+   - custom: Practical use, location analysis, or when no specific method mentioned (default)
 
 Provide response as JSON:
 {{
     "timeframe": <integer_days>,
-    "include_details": <boolean>,
+    "include_details": true,
     "metrics": [<array_of_metric_names>],
     "calculation_method": "<method_name_if_quality_selected_else_null>"
 }}
 
-Examples:
-- "How did my baby sleep last week?" → {{"timeframe": 7, "include_details": true, "metrics": ["total_sleep", "night_sleep", "naps", "quality"], "calculation_method": "PSQI"}}
-- "Show me nap patterns for the past 3 days" → {{"timeframe": 3, "include_details": true, "metrics": ["naps"], "calculation_method": null}}
-- "How was the sleep quality this month?" → {{"timeframe": 30, "include_details": true, "metrics": ["quality"], "calculation_method": "PSQI"}}
-- "Night sleep analysis for yesterday" → {{"timeframe": 1, "include_details": true, "metrics": ["night_sleep"], "calculation_method": null}}
-- "PSQI sleep quality for this week" → {{"timeframe": 7, "include_details": true, "metrics": ["quality"], "calculation_method": "PSQI"}}
-- "Custom quality analysis for the past month" → {{"timeframe": 30, "include_details": true, "metrics": ["quality"], "calculation_method": "custom"}}"""
+## EXAMPLES:
+
+- "How did my baby sleep last week?" 
+  → {{"timeframe": 7, "include_details": true, "metrics": ["total_sleep", "night_sleep", "naps", "quality"], "calculation_method": "custom"}}
+
+- "Show me PSQI sleep quality scores for the past month"
+  → {{"timeframe": 30, "include_details": true, "metrics": ["quality"], "calculation_method": "PSQI"}}
+
+- "I need a clinical assessment of sleep quality this week for the doctor"
+  → {{"timeframe": 7, "include_details": true, "metrics": ["quality"], "calculation_method": "PSQI"}}
+
+- "How's the sleep quality been? Want to see where baby sleeps best"
+  → {{"timeframe": 7, "include_details": true, "metrics": ["quality"], "calculation_method": "custom"}}
+
+- "Analyze nap patterns for the past 3 days"
+  → {{"timeframe": 3, "include_details": true, "metrics": ["naps"], "calculation_method": null}}
+
+- "Night sleep analysis for yesterday"
+  → {{"timeframe": 1, "include_details": true, "metrics": ["night_sleep"], "calculation_method": null}}
+
+- "Give me a professional sleep quality report for the pediatrician"
+  → {{"timeframe": 30, "include_details": true, "metrics": ["total_sleep", "night_sleep", "naps", "quality"], "calculation_method": "PSQI"}}
+
+- "Simple sleep quality check for this week"
+  → {{"timeframe": 7, "include_details": true, "metrics": ["quality"], "calculation_method": "custom"}}"""
 
 
         else:
