@@ -80,7 +80,6 @@ class ToolExecutionRequest(BaseModel):
     tool_id: int
     baby_id: Optional[int] = None
     parameters: Annotated[Dict[str, Any], Field(default_factory=dict)]
-    context: Annotated[Optional[Dict[str, Any]], Field(default_factory=dict)]
 
     model_config = {
         "from_attributes": True
@@ -130,7 +129,7 @@ class Tool(Base):
     capabilities = Column(JSON, nullable=False, default=dict)  # What the tool can do
     configuration = Column(JSON, nullable=False, default=dict)  # Tool-specific config
 
-    # FIXED: Use native_enum=False for status as well
+    # Use native_enum=False for status
     status = Column(SQLEnum(ToolStatus, native_enum=False, values_callable=lambda obj: [e.value for e in obj]), nullable=False, default=ToolStatus.ACTIVE)
     is_active = Column(Boolean, default=True)
 
