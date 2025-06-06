@@ -1,10 +1,10 @@
-import uvicorn
-import unittest
 import os
+import unittest
+
 import click
+import uvicorn
+
 from app import create_app
-from app.main import Base, engine
-from app.main.model.baby import Baby
 
 app = create_app()
 

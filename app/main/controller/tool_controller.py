@@ -109,14 +109,6 @@ async def execute_tool_endpoint(
     This endpoint allows direct tool execution for testing
     or specific use cases.
     """
-    # Verify user has access to this baby
-    if request.baby_id:
-        baby = db.query(Baby).filter(Baby.id == request.baby_id).first()
-        if not baby:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Baby not found"
-            )
     try:
         result = execute_tool(
             db,

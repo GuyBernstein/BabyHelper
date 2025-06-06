@@ -91,7 +91,7 @@ class ToolExecutionResponse(BaseModel):
     execution_id: str
     status: str
     data: Dict[str, Any]
-    execution_metadata: Annotated[Dict[str, Any], Field(default_factory=dict)]
+    metadata: Annotated[Dict[str, Any], Field(default_factory=dict)]
     execution_time_ms: float
 
     model_config = {

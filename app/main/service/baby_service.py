@@ -1,7 +1,9 @@
 from datetime import datetime
 from typing import Dict, List, Any, Union
 
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
+from starlette import status
 
 from app.main.model.baby import Baby
 from app.main.model.user import User
@@ -139,3 +141,18 @@ def delete_baby(db: Session, id: int, current_user_id: int) -> Union[Dict[str, s
     db.delete(baby)
     db.commit()
     return {'status': 'DELETED'}
+
+def _get_baby_ids(db, user_id, baby_id):
+    if baby_id is not None:
+        # Verify user has access to this baby
+        baby = get_baby_if_authorized(db, baby_id, user_id)
+        if isinstance(baby, dict):  # Error response
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=baby.get('message', 'Unauthorized')
+            )
+        return [baby_id]
+    else:
+        # Get all babies the user has access to
+        babies = get_all_babies_for_user(db, user_id)
+        return [baby.id for baby in babies]
