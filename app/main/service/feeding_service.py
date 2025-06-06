@@ -46,7 +46,7 @@ def create_feeding(db: Session, data: Dict[str, Any], current_user_id: int) -> U
 
 
 def get_feedings_for_baby(db: Session, baby_id: int, current_user_id: int, 
-                        skip: int = 0, limit: int = 100, start_date: Optional[datetime] = None, 
+                        skip: int = 0, limit: int = None, start_date: Optional[datetime] = None,
                         end_date: Optional[datetime] = None) -> Union[dict[str, str], list[Type[Feeding]]]:
     """Get feeding records for a baby with optional date filtering"""
     # Check if user is authorized to view this baby's data
@@ -67,8 +67,10 @@ def get_feedings_for_baby(db: Session, baby_id: int, current_user_id: int,
     query = query.order_by(Feeding.start_time.desc())
     
     # Apply pagination
-    feedings = query.offset(skip).limit(limit).all()
-
+    if limit:
+        feedings = query.offset(skip).limit(limit).all()
+    else:
+        feedings = query.all()
     # Add caregiver information to each feeding record
     for feeding in feedings:
         caregiver = db.query(User).filter(User.id == feeding.recorded_by).first()

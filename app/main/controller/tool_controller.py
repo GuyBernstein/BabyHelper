@@ -8,14 +8,12 @@ from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.main import get_db
-from app.main.model import Baby
 from app.main.model.tool import ToolResponse, ToolCreate, router, ToolUpdate, ToolExecutionRequest, \
     ToolExecutionResponse
 from app.main.model.user import User
-from app.main.service.baby_service import get_baby_if_authorized
 from app.main.service.oauth_service import get_current_user, is_admin_user
 from app.main.service.tool_service import (
-    create_tool, get_tool, get_active_tools, update_tool, execute_tool
+    create_tool, get_tool, update_tool, execute_tool, get_all_tools
 )
 
 
@@ -52,7 +50,7 @@ async def list_tools(
     Returns a list of tools that can be used for data extraction
     and analysis.
     """
-    tools = get_active_tools(db)
+    tools = get_all_tools(db)
     return tools
 
 

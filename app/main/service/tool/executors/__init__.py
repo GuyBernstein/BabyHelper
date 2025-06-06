@@ -13,14 +13,14 @@ from . import sleep
 from .sleep import SleepAnalyzer
 # from .care_metrics import CareMetricsAnalyzer
 # from .schedule import ScheduleAssistant
-# from .feeding import FeedingTracker
+from .feeding import FeedingTracker
 # from .growth import GrowthTracker
 
 __all__ = [
     # 'ActivityAnalyzer',
-    'SleepAnalyzer' # ,
+    'SleepAnalyzer',
     # 'CareMetricsAnalyzer',
     # 'ScheduleAssistant',
-    # 'FeedingTracker',
+    'FeedingTracker' #,
     # 'GrowthTracker'
 ]

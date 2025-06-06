@@ -10,10 +10,10 @@ from .utils.common import ToolUtils
 # Import all executors to ensure they're registered
 from .executors import (
     # activity ,
-    sleep #,
+    sleep,
     # care_metrics,
     # schedule,
-    # feeding,
+    feeding
     # growth
 )
 

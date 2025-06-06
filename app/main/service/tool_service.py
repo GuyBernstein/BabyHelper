@@ -27,12 +27,12 @@ def create_tool(db: Session, tool_data: Dict[str, Any]) -> Tool:
 
     new_tool = Tool(
         name=tool_data['name'],
-        tool_type=tool_type,  # Now using enum instance
+        tool_type=tool_type,
         description=tool_data['description'],
         version=tool_data.get('version', '1.0.0'),
         capabilities=tool_data.get('capabilities', {}),
         configuration=tool_data.get('configuration', {}),
-        status=status  # Now using enum instance
+        status=status
     )
 
     db.add(new_tool)
@@ -62,9 +62,13 @@ def get_tools_by_type(db: Session, tool_type: ToolType) -> list[Type[Tool]]:
 def get_active_tools(db: Session) -> list[Type[Tool]]:
     """Get all active tools"""
     return db.query(Tool).filter(
-        Tool.status == ToolStatus.ACTIVE,  # Fixed: removed .value
+        Tool.status == ToolStatus.ACTIVE,
         Tool.is_active == True
     ).all()
+
+def get_all_tools(db: Session) -> list[Type[Tool]]:
+    """Get all active tools"""
+    return db.query(Tool).all()
 
 
 def update_tool(db: Session, tool_id: int, tool_data: Dict[str, Any]) -> Optional[Tool]:
@@ -74,6 +78,8 @@ def update_tool(db: Session, tool_id: int, tool_data: Dict[str, Any]) -> Optiona
         return None
 
     # Update fields if provided
+    if 'tool_type' in tool_data:
+        tool.tool_type = ToolType(tool_data['tool_type'])
     if 'name' in tool_data:
         tool.name = tool_data['name']
     if 'description' in tool_data:
@@ -85,7 +91,7 @@ def update_tool(db: Session, tool_id: int, tool_data: Dict[str, Any]) -> Optiona
     if 'configuration' in tool_data:
         tool.configuration = tool_data['configuration']
     if 'status' in tool_data:
-        tool.status = ToolStatus(tool_data['status'])  # Convert to enum instance
+        tool.status = ToolStatus(tool_data['status'])
 
     tool.updated_at = datetime.utcnow()
 

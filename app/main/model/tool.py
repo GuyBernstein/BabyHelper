@@ -56,6 +56,7 @@ class ToolCreate(ToolBase):
 class ToolUpdate(BaseModel):
     """Schema for updating a tool"""
     name: Optional[str] = None
+    tool_type : ToolType = Field(description="Tool type")
     description: Optional[str] = None
     version: Optional[str] = None
     capabilities: Optional[Dict[str, Any]] = None
