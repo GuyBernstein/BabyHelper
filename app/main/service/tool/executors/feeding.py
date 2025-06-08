@@ -1,4 +1,4 @@
-"""Enhanced Feeding Tracker Tool Executor with Nutrition, Cluster Detection, and Efficiency Trends"""
+"""Feeding Tracker Tool Executor"""
 from collections import defaultdict
 from datetime import datetime, timedelta
 from statistics import mean, stdev
@@ -27,6 +27,13 @@ class FeedingTracker(ToolExecutor):
             'proteins': 1.5,
             'default': 1.0    # Default for unspecified solids
         }
+    }
+
+    # Efficiency benchmarks for context
+    EFFICIENCY_BENCHMARKS = {
+        'newborn': {'min': 0.5, 'max': 2.0, 'typical': 1.0},  # 0-3 months
+        'infant': {'min': 1.0, 'max': 4.0, 'typical': 2.5},   # 3-6 months
+        'older_infant': {'min': 2.0, 'max': 6.0, 'typical': 4.0}  # 6+ months
     }
 
     def validate_parameters(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -329,7 +336,9 @@ class FeedingTracker(ToolExecutor):
             'all_clusters': [],
             'efficiency_data': [],
             'nutrition_by_type': defaultdict(float),
-            'feedings_by_date': defaultdict(list)
+            'feedings_by_date': defaultdict(list),
+            'feedings_with_efficiency': 0,
+            'feedings_by_date_with_efficiency': defaultdict(int)
         }
 
         # Process each baby's data
@@ -365,10 +374,14 @@ class FeedingTracker(ToolExecutor):
                 if 'efficiency' in requested_metrics:
                     efficiency = self._calculate_feeding_efficiency(feeding)
                     if efficiency is not None:
+                        aggregated['feedings_with_efficiency'] += 1
+                        aggregated['feedings_by_date_with_efficiency'][date_key] += 1
                         aggregated['efficiency_data'].append({
                             'efficiency': efficiency,
                             'type': feeding.feeding_type,
-                            'timestamp': feeding.start_time
+                            'timestamp': feeding.start_time,
+                            'volume': feeding.amount,
+                            'duration': feeding.duration
                         })
 
                 # Volume metrics
@@ -523,15 +536,22 @@ class FeedingTracker(ToolExecutor):
             efficiencies = [d['efficiency'] for d in aggregated['efficiency_data']]
             avg_efficiency = mean(efficiencies)
 
+            # Get efficiency context
+            efficiency_context = self._get_efficiency_context(avg_efficiency)
+
             efficiency_metrics = {
-                'avg_feeding_efficiency_ml_per_min': round(avg_efficiency, 2),
-                'min_efficiency': round(min(efficiencies), 2),
-                'max_efficiency': round(max(efficiencies), 2)
+                'avg_feeding_rate_ml_per_min': round(avg_efficiency, 2),
+                'efficiency_interpretation': efficiency_context,
+                'min_rate_ml_per_min': round(min(efficiencies), 2),
+                'max_rate_ml_per_min': round(max(efficiencies), 2),
+                'feedings_with_valid_data': aggregated['feedings_with_efficiency'],
+                'total_feedings': aggregated['total_feedings'],
+                'data_coverage_percentage': round((aggregated['feedings_with_efficiency'] / aggregated['total_feedings']) * 100, 1)
             }
 
             # Calculate standard deviation if enough data
             if len(efficiencies) > 1:
-                efficiency_metrics['efficiency_std_dev'] = round(stdev(efficiencies), 2)
+                efficiency_metrics['rate_variability_std_dev'] = round(stdev(efficiencies), 2)
 
             # Efficiency by feeding type
             efficiency_by_type = defaultdict(list)
@@ -541,12 +561,40 @@ class FeedingTracker(ToolExecutor):
             type_efficiency = {}
             for ftype, values in efficiency_by_type.items():
                 if values:
-                    type_efficiency[ftype] = round(mean(values), 2)
+                    type_efficiency[ftype] = {
+                        'avg_rate_ml_per_min': round(mean(values), 2),
+                        'sample_count': len(values)
+                    }
 
-            efficiency_metrics['efficiency_by_type'] = type_efficiency
+            efficiency_metrics['rate_by_feeding_type'] = type_efficiency
+
+            # Add helpful explanation
+            efficiency_metrics['explanation'] = (
+                "Feeding rate (efficiency) measures how quickly baby consumes milk/formula in ml per minute. "
+                "Higher rates indicate faster feeding. Rates typically increase as babies grow and become more efficient feeders."
+            )
+
             summary['feeding_efficiency'] = efficiency_metrics
+        elif 'efficiency' in requested_metrics:
+            summary['feeding_efficiency'] = {
+                'message': "No efficiency data available - requires both volume and duration data for calculation",
+                'explanation': "Feeding efficiency measures ml consumed per minute during feeding sessions"
+            }
 
         return summary
+
+    def _get_efficiency_context(self, avg_efficiency: float) -> str:
+        """Provide context for efficiency values based on typical ranges"""
+        if avg_efficiency < 1.0:
+            return "Below typical range - may indicate slow feeding or latching difficulties"
+        elif avg_efficiency < 2.0:
+            return "Typical for newborns (0-3 months)"
+        elif avg_efficiency < 4.0:
+            return "Typical for infants (3-6 months)"
+        elif avg_efficiency < 6.0:
+            return "Typical for older infants (6+ months)"
+        else:
+            return "Above typical range - very efficient feeding"
 
     def _analyze_trends(
             self,
@@ -584,6 +632,10 @@ class FeedingTracker(ToolExecutor):
             for date in sorted_dates:
                 daily_feedings = feedings_by_date[date]
                 daily_efficiencies = []
+
+                # Track all feedings and those with efficiency data
+                total_daily_feedings = len(daily_feedings)
+
                 for f in daily_feedings:
                     eff = self._calculate_feeding_efficiency(f)
                     if eff is not None:
@@ -592,10 +644,19 @@ class FeedingTracker(ToolExecutor):
                 if daily_efficiencies:
                     efficiency_trend.append({
                         'date': date.isoformat(),
-                        'avg_efficiency': round(mean(daily_efficiencies), 2),
-                        'sample_size': len(daily_efficiencies)
+                        'avg_feeding_rate_ml_per_min': round(mean(daily_efficiencies), 2),
+                        'min_rate': round(min(daily_efficiencies), 2),
+                        'max_rate': round(max(daily_efficiencies), 2),
+                        'feedings_with_efficiency_data': len(daily_efficiencies),
+                        'total_feedings': total_daily_feedings,
+                        'data_coverage_percentage': round((len(daily_efficiencies) / total_daily_feedings) * 100, 1)
                     })
-            trends['efficiency_trend'] = efficiency_trend
+
+            if efficiency_trend:
+                trends['efficiency_trend'] = {
+                    'daily_data': efficiency_trend,
+                    'explanation': "Shows daily average feeding rates (ml/min) with data coverage information"
+                }
 
         if 'nutrition' in requested_metrics:
             nutrition_trend = []
@@ -627,9 +688,16 @@ class FeedingTracker(ToolExecutor):
         return intervals
 
     def _analyze_schedule_patterns(self, feeding_times: List[datetime]) -> Dict[str, Any]:
-        """Analyze feeding schedule patterns"""
-        time_periods = self.config.get('configuration', {}).get('validation', {}).get('time_periods', {})
+        """Analyze feeding schedule patterns - FIXED VERSION"""
         precision = self.config.get('configuration', {}).get('precision', {})
+
+        # Define time periods with explicit configuration
+        time_periods = {
+            'morning': {'start': 6, 'end': 12},
+            'afternoon': {'start': 12, 'end': 18},
+            'evening': {'start': 18, 'end': 24},  # Using 24 instead of 0 for clarity
+            'night': {'start': 0, 'end': 6}
+        }
 
         # Count feedings by time period
         period_counts = {
@@ -642,18 +710,15 @@ class FeedingTracker(ToolExecutor):
         for feeding_time in feeding_times:
             hour = feeding_time.hour
 
-            for period_name, period_config in time_periods.items():
-                start_hour = int(period_config['start'].split(':')[0])
-                end_hour = int(period_config['end'].split(':')[0])
-
-                if start_hour <= end_hour:
-                    if start_hour <= hour < end_hour:
-                        period_counts[period_name] += 1
-                        break
-                else:  # Crosses midnight
-                    if hour >= start_hour or hour < end_hour:
-                        period_counts[period_name] += 1
-                        break
+            # Determine which period this hour falls into
+            if 0 <= hour < 6:
+                period_counts['night'] += 1
+            elif 6 <= hour < 12:
+                period_counts['morning'] += 1
+            elif 12 <= hour < 18:
+                period_counts['afternoon'] += 1
+            else:  # 18 <= hour < 24
+                period_counts['evening'] += 1
 
         # Calculate percentages
         total = sum(period_counts.values())
@@ -765,15 +830,42 @@ class FeedingTracker(ToolExecutor):
 
         if 'efficiency' in requested_metrics:
             efficiencies = []
+            feedings_with_efficiency = 0
+
             for feeding in feedings:
                 eff = self._calculate_feeding_efficiency(feeding)
                 if eff is not None:
-                    efficiencies.append(eff)
+                    efficiencies.append({
+                        'value': eff,
+                        'timestamp': feeding.start_time,
+                        'volume': feeding.amount,
+                        'duration': feeding.duration
+                    })
+                    feedings_with_efficiency += 1
 
             if efficiencies:
+                efficiency_values = [e['value'] for e in efficiencies]
+                avg_efficiency = mean(efficiency_values)
+
                 patterns['efficiency_analysis'] = {
-                    'avg_efficiency_ml_per_min': round(mean(efficiencies), 2),
-                    'improving_trend': self._detect_efficiency_trend(feedings)
+                    'avg_feeding_rate_ml_per_min': round(avg_efficiency, 2),
+                    'rate_interpretation': self._get_efficiency_context(avg_efficiency),
+                    'improving_trend': self._detect_efficiency_trend(feedings),
+                    'feedings_with_complete_data': feedings_with_efficiency,
+                    'total_feedings': len(feedings),
+                    'data_completeness_percentage': round((feedings_with_efficiency / len(feedings)) * 100, 1),
+                    'rate_range': {
+                        'min_ml_per_min': round(min(efficiency_values), 2),
+                        'max_ml_per_min': round(max(efficiency_values), 2)
+                    }
+                }
+
+                # Add variability if enough data
+                if len(efficiency_values) > 1:
+                    patterns['efficiency_analysis']['rate_consistency_std_dev'] = round(stdev(efficiency_values), 2)
+            else:
+                patterns['efficiency_analysis'] = {
+                    'message': "No feedings with both volume and duration data available for efficiency calculation"
                 }
 
         return patterns
@@ -802,11 +894,11 @@ class FeedingTracker(ToolExecutor):
         second_half_avg = mean(weekly_avgs[mid_point:])
 
         if second_half_avg > first_half_avg * 1.1:  # 10% improvement threshold
-            return "improving"
+            return "improving - feeding rate increasing over time"
         elif second_half_avg < first_half_avg * 0.9:  # 10% decline threshold
-            return "declining"
+            return "declining - feeding rate decreasing over time"
         else:
-            return "stable"
+            return "stable - consistent feeding rate"
 
     def _create_empty_result(
             self,
@@ -864,7 +956,8 @@ class FeedingTracker(ToolExecutor):
 
         if 'efficiency' in requested_metrics:
             summary["feeding_efficiency"] = {
-                "message": "No efficiency data available"
+                "message": "No efficiency data available",
+                "explanation": "Feeding efficiency measures ml consumed per minute during feeding sessions"
             }
 
         return {"summary": summary}
