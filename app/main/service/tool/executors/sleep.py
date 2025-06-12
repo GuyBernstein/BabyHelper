@@ -1,75 +1,83 @@
-"""Sleep Pattern Analyzer Tool Executor"""
+from collections import defaultdict
 from typing import Dict, Any, List, Optional
 
 from app.main.model.tool import ToolType
 from app.main.service.sleep_service import get_sleep_patterns
 from app.main.service.tool.base.executor import ToolExecutor
 from app.main.service.tool.base.registry import ToolRegistry
+from app.main.service.tool.utils.common import (
+    ParameterValidator, MetricAggregator, ResultBuilder,
+    DateTimeUtils
+)
 
 
 @ToolRegistry.register(ToolType.SLEEP_PATTERN_ANALYZER)
 class SleepAnalyzer(ToolExecutor):
-    """Analyzes sleep patterns for specified babies"""
+    """Analyzes sleep patterns for specified babies using common utilities"""
 
     def validate_parameters(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """Validate sleep analyzer parameters"""
-        config = self.config.get('configuration', {})
-        defaults = config.get('defaults', {})
-        validation = config.get('validation', {})
+        """
+        Validate sleep analyzer parameters using common validator.
 
-        # Extract and process parameters
-        timeframe = parameters.get('timeframe', defaults.get('timeframe', 7))
-        timeframe_bounds = validation.get('timeframe_bounds', {})
-        min_days = timeframe_bounds.get('min', 1)
-        max_days = timeframe_bounds.get('max', 365)
+        Leverages ParameterValidator for standard parameter validation,
+        then adds tool-specific validation for calculation_method.
+        """
+        config = self.config
 
-        # Validate timeframe
-        if isinstance(timeframe, int):
-            days = max(min_days, min(timeframe, max_days))
-        else:
-            days = defaults.get('timeframe', 7)
+        # Use common validator for base parameters
+        base_params = ParameterValidator.validate_base_parameters(parameters, config)
 
-        # Extract other parameters
-        include_details = parameters.get('include_details', defaults.get('include_details', True))
+        # validation for calculation_method
+        calculation_method = self._validate_calculation_method(
+            parameters.get('calculation_method'),
+            base_params['requested_metrics'],
+            config
+        )
 
-        # Extract metrics parameter - default to all metrics if not specified
-        default_metrics = defaults.get('metrics', ['total_sleep', 'night_sleep', 'naps', 'quality'])
-        requested_metrics = parameters.get('metrics', default_metrics)
-        if not isinstance(requested_metrics, list):
-            requested_metrics = default_metrics
-
-        # Validate metrics
-        valid_metrics = set(validation.get('allowed_metrics', ['total_sleep', 'night_sleep', 'naps', 'quality']))
-        requested_metrics = [m for m in requested_metrics if m in valid_metrics]
-
-        # Extract and validate calculation_method
-        calculation_method = parameters.get('calculation_method', None)
-
-        # Define valid calculation methods
-        valid_calculation_methods = set(validation.get('allowed_calculation_methods', ['PSQI', 'custom']))
-        default_calc_method = defaults.get('calculation_method', 'custom')
-
-        if calculation_method is not None:
-            if calculation_method not in valid_calculation_methods:
-                calculation_method = default_calc_method
-
-            if 'quality' not in requested_metrics:
-                calculation_method = None
-        else:
-            if 'quality' in requested_metrics:
-                calculation_method = default_calc_method
-
-        # If no valid metrics specified, default to all
-        if not requested_metrics:
-            requested_metrics = list(valid_metrics)
-            calculation_method = defaults.get('calculation_method', 'custom')
-
+        # Merge base and specific parameters
         return {
-            'days': days,
-            'include_details': include_details,
-            'requested_metrics': requested_metrics,
+            **base_params,
             'calculation_method': calculation_method
         }
+
+    def _validate_calculation_method(
+        self,
+        calculation_method: Optional[str],
+        requested_metrics: List[str],
+        config: Dict[str, Any]
+    ) -> Optional[str]:
+        """
+        Validate calculation method parameter specific to sleep analysis.
+
+        Args:
+            calculation_method: Method requested by user
+            requested_metrics: List of requested metrics
+            config: Tool configuration
+
+        Returns:
+            Validated calculation method or None
+        """
+        validation = config.get('validation', {})
+        defaults = config.get('defaults', {})
+
+        # Get allowed methods from config
+        allowed_methods = validation.get('allowed_calculation_methods', ['PSQI', 'custom'])
+        default_method = defaults.get('calculation_method', 'custom')
+
+        # Only validate if quality metric is requested
+        if 'quality' not in requested_metrics:
+            return None
+
+        # Validate the method using common validator
+        if calculation_method is not None:
+            return ParameterValidator.validate_filter_parameter(
+                'calculation_method',
+                calculation_method,
+                allowed_methods,
+                default_method
+            )
+        else:
+            return default_method
 
     def execute(
             self,
@@ -77,7 +85,7 @@ class SleepAnalyzer(ToolExecutor):
             user_id: int,
             parameters: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Execute sleep pattern analysis"""
+        """Execute sleep pattern analysis using common data processing utilities"""
         # Validate parameters
         params = self.validate_parameters(parameters)
 
@@ -97,47 +105,54 @@ class SleepAnalyzer(ToolExecutor):
                 all_patterns[baby_id] = result['patterns']
                 successful_babies.append(baby_id)
 
-        # If no successful data, return empty result
+        # If no successful data, use common result builder
         if not successful_babies:
-            return self._create_empty_result(
+            return self._create_empty_result_using_common(
                 params['days'],
                 params['requested_metrics'],
                 params['calculation_method']
             )
 
         # Aggregate only requested metrics
-        aggregated_data = self._aggregate_metrics(
+        aggregated_data = self._aggregate_metrics_using_common(
             all_patterns,
             successful_babies,
             params['requested_metrics']
         )
 
-        # Build summary based on requested metrics
-        summary = {
+        # Build summary using common builder
+        base_summary = {
             "analysis_period_days": params['days'],
             "babies_analyzed": len(successful_babies),
             "metrics_analyzed": params['requested_metrics']
         }
 
-        # Add calculation_method to summary if quality was analyzed
+        # Add calculation method if quality was analyzed
         if 'quality' in params['requested_metrics'] and params['calculation_method']:
-            summary["calculation_method_used"] = params['calculation_method']
+            base_summary["calculation_method_used"] = params['calculation_method']
 
-        # Add metric-specific results
-        if 'total_sleep' in params['requested_metrics']:
-            summary["avg_total_sleep_hours"] = aggregated_data['avg_total_sleep_hours']
+        # Define metric mapping for summary builder
+        metric_mapping = {
+            'total_sleep': 'avg_total_sleep_hours',
+            'night_sleep': 'avg_night_sleep_hours',
+            'naps': 'avg_naps_per_day',
+            'quality': None  # Special handling below
+        }
 
-        if 'night_sleep' in params['requested_metrics']:
-            summary["avg_night_sleep_hours"] = aggregated_data['avg_night_sleep_hours']
+        # Build summary with standard metrics
+        summary = ResultBuilder.build_summary_with_metrics(
+            base_summary,
+            aggregated_data,
+            params['requested_metrics'],
+            metric_mapping
+        )
 
-        if 'naps' in params['requested_metrics']:
-            summary["avg_naps_per_day"] = aggregated_data['avg_naps_per_day']
-
+        # Handle quality metrics separately due to multiple fields
         if 'quality' in params['requested_metrics']:
-            summary["sleep_quality_score"] = aggregated_data['sleep_quality_score']
-            summary["sleep_quality_rating"] = aggregated_data['sleep_quality_rating']
-            summary["sleep_quality_explanation"] = aggregated_data['sleep_quality_explanation']
-            summary["calculation_method"] = aggregated_data['calculation_method']
+            for quality_field in ['sleep_quality_score', 'sleep_quality_rating',
+                                'sleep_quality_explanation', 'calculation_method']:
+                if quality_field in aggregated_data:
+                    summary[quality_field] = aggregated_data[quality_field]
 
         result = {"summary": summary}
 
@@ -158,23 +173,24 @@ class SleepAnalyzer(ToolExecutor):
 
         return result
 
-    def _aggregate_metrics(
+    def _aggregate_metrics_using_common(
             self,
             all_patterns: Dict[int, Dict[str, Any]],
             successful_babies: List[int],
             requested_metrics: List[str]
     ) -> Dict[str, Any]:
-        """Aggregate only the requested metrics across all babies"""
-        # Get configuration values
-        config = self.config.get('configuration', {})
-        defaults = config.get('defaults', {})
-        messages = config.get('messages', {
-            'no_data_rating': 'No Data',
-            'no_quality_data': 'No sleep quality data available',
-            'calculation_method_na': 'N/A'
-        })
+        """
+        Aggregate metrics using common aggregation utilities.
 
-        # Initialize aggregation variables only for requested metrics
+        This method demonstrates how to use MetricAggregator for calculations
+        while maintaining tool-specific logic for quality score aggregation.
+        """
+        # FIX: self.config IS the configuration
+        config = self.config
+        messages = config.get('messages', {})
+        precision_config = config.get('precision', {})
+
+        # Initialize aggregation containers for requested metrics only
         aggregated = {}
         baby_count = len(successful_babies)
 
@@ -194,7 +210,7 @@ class SleepAnalyzer(ToolExecutor):
             aggregated['quality_ratings'] = []
             aggregated['calculation_methods'] = set()
 
-        # Collect data for requested metrics only
+        # Collect data for requested metrics
         for baby_id in successful_babies:
             patterns = all_patterns.get(baby_id, {})
             if patterns and 'summary' in patterns:
@@ -211,11 +227,11 @@ class SleepAnalyzer(ToolExecutor):
 
                 if 'quality' in requested_metrics:
                     quality_score = summary.get('sleep_quality_score', 0)
-                    if quality_score > 0:  # Valid score (not "No Data")
+                    if quality_score > 0:
                         aggregated['total_quality_scores'] += float(quality_score)
                         aggregated['babies_with_valid_scores'] += 1
 
-                        # Collect explanations, ratings, and methods for reference
+                        # Collect additional quality data
                         if 'sleep_quality_explanation' in summary:
                             aggregated['quality_explanations'].append(summary['sleep_quality_explanation'])
                         if 'sleep_quality_rating' in summary:
@@ -223,77 +239,108 @@ class SleepAnalyzer(ToolExecutor):
                         if 'calculation_method' in summary:
                             aggregated['calculation_methods'].add(summary['calculation_method'])
 
-        # Calculate averages with better precision handling
+        # Calculate averages using common aggregator
         result = {}
 
-        # Get precision settings from config
-        precision_settings = config.get('precision', {
-            'small_value_threshold': 0.1,
-            'small_value_decimals': 2,
-            'normal_decimals': 1
-        })
-
         if 'total_sleep' in requested_metrics:
-            avg_sleep = aggregated['total_sleep_hours'] / baby_count
-            # Use more precision for very small values, otherwise round to 1 decimal
-            threshold = precision_settings['small_value_threshold']
-            small_decimals = precision_settings['small_value_decimals']
-            normal_decimals = precision_settings['normal_decimals']
-            result['avg_total_sleep_hours'] = round(avg_sleep, small_decimals) if avg_sleep < threshold else round(
-                avg_sleep, normal_decimals)
+            result['avg_total_sleep_hours'] = MetricAggregator.calculate_average_with_precision(
+                aggregated['total_sleep_hours'],
+                baby_count,
+                precision_config,
+                'sleep'
+            )
 
         if 'night_sleep' in requested_metrics:
-            avg_night = aggregated['total_night_sleep_hours'] / baby_count
-            threshold = precision_settings['small_value_threshold']
-            small_decimals = precision_settings['small_value_decimals']
-            normal_decimals = precision_settings['normal_decimals']
-            result['avg_night_sleep_hours'] = round(avg_night, small_decimals) if avg_night < threshold else round(
-                avg_night, normal_decimals)
+            result['avg_night_sleep_hours'] = MetricAggregator.calculate_average_with_precision(
+                aggregated['total_night_sleep_hours'],
+                baby_count,
+                precision_config,
+                'sleep'
+            )
 
         if 'naps' in requested_metrics:
-            result['avg_naps_per_day'] = round(aggregated['total_naps'] / baby_count,
-                                               precision_settings['normal_decimals'])
+            result['avg_naps_per_day'] = MetricAggregator.calculate_average_with_precision(
+                aggregated['total_naps'],
+                baby_count,
+                precision_config,
+                'normal'
+            )
 
         if 'quality' in requested_metrics:
-            if aggregated['babies_with_valid_scores'] > 0:
-                avg_quality_score = aggregated['total_quality_scores'] / aggregated['babies_with_valid_scores']
-                result['sleep_quality_score'] = round(avg_quality_score, precision_settings['normal_decimals'])
+            result.update(self._aggregate_quality_metrics(
+                aggregated,
+                precision_config,
+                messages
+            ))
 
-                # Handle rating based on number of babies
-                if aggregated['babies_with_valid_scores'] == 1:
-                    # For single baby, use the original rating
-                    result['sleep_quality_rating'] = aggregated['quality_ratings'][0] if aggregated[
-                        'quality_ratings'] else messages['no_data_rating']
-                else:
-                    # For multiple babies, aggregate the ratings
-                    # Count occurrences of each rating
-                    rating_counts = {}
-                    for rating in aggregated['quality_ratings']:
-                        rating_counts[rating] = rating_counts.get(rating, 0) + 1
+        return result
 
-                    # Use the most common rating, or if tied, use the one that corresponds to the average score
-                    most_common_rating = max(rating_counts.items(), key=lambda x: x[1])[0]
-                    result['sleep_quality_rating'] = most_common_rating
+    def _aggregate_quality_metrics(
+            self,
+            aggregated: Dict[str, Any],
+            precision_config: Dict[str, Any],
+            messages: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Aggregate quality metrics with special handling for ratings and explanations.
 
-                # Handle explanation based on number of babies
-                methods_used = list(aggregated['calculation_methods'])
-                method_str = methods_used[0] if len(methods_used) == 1 else "Mixed"
+        This method demonstrates tool-specific aggregation logic that works
+        alongside common utilities.
+        """
+        result = {}
 
-                if aggregated['babies_with_valid_scores'] == 1:
-                    # For single baby, use the original detailed explanation
-                    result['sleep_quality_explanation'] = aggregated['quality_explanations'][0] if aggregated[
-                        'quality_explanations'] else f"{method_str} Score: {result['sleep_quality_score']}/100"
-                else:
-                    # For multiple babies, create aggregated explanation
-                    result[
-                        'sleep_quality_explanation'] = f"Average {method_str} Score: {result['sleep_quality_score']}/100 across {aggregated['babies_with_valid_scores']} babies"
+        if aggregated['babies_with_valid_scores'] > 0:
+            # Calculate average quality score
+            avg_quality_score = (aggregated['total_quality_scores'] /
+                               aggregated['babies_with_valid_scores'])
+            result['sleep_quality_score'] = round(
+                avg_quality_score,
+                precision_config.get('normal_decimals', 1)
+            )
 
-                result['calculation_method'] = method_str
+            # Handle rating aggregation
+            if aggregated['babies_with_valid_scores'] == 1:
+                # Single baby - use original rating
+                result['sleep_quality_rating'] = (
+                    aggregated['quality_ratings'][0]
+                    if aggregated['quality_ratings']
+                    else messages.get('no_data_rating', 'No Data')
+                )
             else:
-                result['sleep_quality_score'] = 0
-                result['sleep_quality_rating'] = messages['no_data_rating']
-                result['sleep_quality_explanation'] = messages['no_quality_data']
-                result['calculation_method'] = messages['calculation_method_na']
+                # Multiple babies - use most common rating
+                rating_counts = defaultdict(int)
+                for rating in aggregated['quality_ratings']:
+                    rating_counts[rating] += 1
+
+                most_common_rating = max(rating_counts.items(), key=lambda x: x[1])[0]
+                result['sleep_quality_rating'] = most_common_rating
+
+            # Handle explanation aggregation
+            methods_used = list(aggregated['calculation_methods'])
+            method_str = methods_used[0] if len(methods_used) == 1 else "Mixed"
+
+            if aggregated['babies_with_valid_scores'] == 1:
+                # Single baby - use original explanation
+                result['sleep_quality_explanation'] = (
+                    aggregated['quality_explanations'][0]
+                    if aggregated['quality_explanations']
+                    else f"{method_str} Score: {result['sleep_quality_score']}/100"
+                )
+            else:
+                # Multiple babies - create summary explanation
+                result['sleep_quality_explanation'] = (
+                    f"Average {method_str} Score: {result['sleep_quality_score']}/100 "
+                    f"across {aggregated['babies_with_valid_scores']} babies"
+                )
+
+            result['calculation_method'] = method_str
+        else:
+            # No valid scores - use default messages
+            result['sleep_quality_score'] = 0
+            result['sleep_quality_rating'] = messages.get('no_data_rating', 'No Data')
+            result['sleep_quality_explanation'] = messages.get('no_quality_data',
+                                                             'No sleep quality data available')
+            result['calculation_method'] = messages.get('calculation_method_na', 'N/A')
 
         return result
 
@@ -302,18 +349,23 @@ class SleepAnalyzer(ToolExecutor):
             pattern: Dict[str, Any],
             requested_metrics: List[str]
     ) -> Dict[str, Any]:
-        """Filter pattern data to include only requested metrics and avoid redundancy with summary"""
+        """
+        Filter pattern data to include only requested metrics.
+
+        This method shows how tool-specific filtering logic can work alongside
+        common utilities for more complex filtering scenarios.
+        """
         filtered = {}
 
         if 'summary' in pattern:
             filtered_summary = {}
             summary = pattern['summary']
 
-            # Always include these meta fields
+            # Always include meta fields
             filtered_summary['total_days_analyzed'] = summary.get('total_days_analyzed')
             filtered_summary['days_with_sleep_data'] = summary.get('days_with_sleep_data')
 
-            # For detailed patterns, include more granular data (minutes) but not the redundant hour calculations
+            # Include metric-specific fields (granular data for details)
             if 'total_sleep' in requested_metrics:
                 filtered_summary['avg_total_sleep_minutes'] = summary.get('avg_total_sleep_minutes')
 
@@ -324,66 +376,67 @@ class SleepAnalyzer(ToolExecutor):
                 filtered_summary['avg_naps_per_day'] = summary.get('avg_naps_per_day')
                 filtered_summary['avg_nap_duration_minutes'] = summary.get('avg_nap_duration_minutes')
 
-            if 'quality' in requested_metrics:
-                # Quality metrics are already in the summary level, no need to duplicate
-                pass
-
             filtered['summary'] = filtered_summary
 
-        # Include additional details based on metrics
-        if (
-                'total_sleep' in requested_metrics or 'night_sleep' in requested_metrics or 'naps' in requested_metrics) and 'daily_sleep' in pattern:
-            filtered['daily_sleep'] = pattern['daily_sleep']
+        # Include additional detail sections based on metrics
+        detail_mapping = {
+            'total_sleep': ['daily_sleep', 'by_location'],
+            'night_sleep': ['daily_sleep'],
+            'naps': ['daily_sleep']
+        }
 
-        if 'total_sleep' in requested_metrics and 'by_location' in pattern:
-            filtered['by_location'] = pattern['by_location']
+        for metric in requested_metrics:
+            if metric in detail_mapping:
+                for detail_section in detail_mapping[metric]:
+                    if detail_section in pattern and detail_section not in filtered:
+                        filtered[detail_section] = pattern[detail_section]
 
         return filtered
 
-    def _create_empty_result(
+    def _create_empty_result_using_common(
             self,
             days: int,
             requested_metrics: List[str],
             calculation_method: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Create an empty result with appropriate structure based on requested metrics"""
-        # Get configuration values
-        config = self.config.get('configuration', {})
-        messages = config.get('messages', {
-            'no_data_available': 'No sleep data available for the specified timeframe',
-            'no_data_rating': 'No Data',
-            'no_quality_data': 'No sleep quality data available',
-            'calculation_method_na': 'N/A'
-        })
+        """
+        Create empty result using common ResultBuilder.
 
-        precision_settings = config.get('precision', {
-            'normal_decimals': 1
-        })
+        This method demonstrates how to use the common empty result builder
+        with tool-specific metric defaults.
+        """
+        # FIX: self.config IS the configuration
+        config = self.config
+        messages = config.get('messages', {})
 
-        summary = {
-            "analysis_period_days": days,
-            "babies_analyzed": 0,
-            "metrics_analyzed": requested_metrics,
-            "message": messages['no_data_available']
-        }
+        # Define metric-specific default values
+        metric_defaults = {}
 
-        # Add zeros/defaults for requested metrics with consistent precision
         if 'total_sleep' in requested_metrics:
-            summary["avg_total_sleep_hours"] = 0.0
+            metric_defaults['avg_total_sleep_hours'] = 0.0
 
         if 'night_sleep' in requested_metrics:
-            summary["avg_night_sleep_hours"] = 0.0
+            metric_defaults['avg_night_sleep_hours'] = 0.0
 
         if 'naps' in requested_metrics:
-            summary["avg_naps_per_day"] = 0.0
+            metric_defaults['avg_naps_per_day'] = 0.0
 
         if 'quality' in requested_metrics:
-            summary["sleep_quality_score"] = 0
-            summary["sleep_quality_rating"] = messages['no_data_rating']
-            summary["sleep_quality_explanation"] = messages['no_quality_data']
-            summary["calculation_method"] = calculation_method if calculation_method else messages[
-                'calculation_method_na']
+            metric_defaults['sleep_quality_score'] = 0
+            metric_defaults['sleep_quality_rating'] = messages.get('no_data_rating', 'No Data')
+            metric_defaults['sleep_quality_explanation'] = messages.get('no_quality_data',
+                                                                      'No sleep quality data available')
+            metric_defaults['calculation_method'] = (
+                calculation_method if calculation_method
+                else messages.get('calculation_method_na', 'N/A')
+            )
             if calculation_method:
-                summary["calculation_method_used"] = calculation_method
+                metric_defaults['calculation_method_used'] = calculation_method
 
-        return {"summary": summary}
+        # Use common result builder
+        return ResultBuilder.create_empty_analysis_result(
+            days=days,
+            requested_metrics=requested_metrics,
+            config=config,
+            metric_defaults=metric_defaults
+        )
