@@ -9,15 +9,13 @@ from app.main.model.tool import ToolType
 from app.main.service.feeding_service import get_feedings_for_baby
 from app.main.service.tool.base.executor import ToolExecutor
 from app.main.service.tool.base.registry import ToolRegistry
-from app.main.service.tool.utils.common import (
-    ParameterValidator,
-    DateTimeUtils,
-    DataProcessor,
-    ResultBuilder,
-    MetricAggregator,
-    ClusterDetector,
-    EfficiencyCalculator
-)
+from app.main.service.tool.utils.EfficiencyCalculator import EfficiencyCalculator
+from app.main.service.tool.utils.ParameterValidator import ParameterValidator
+from app.main.service.tool.utils.DateTimeUtils import DateTimeUtils
+from app.main.service.tool.utils.DataProcessor import DataProcessor
+from app.main.service.tool.utils.ResultBuilder import ResultBuilder
+from app.main.service.tool.utils.MetricAggregator import MetricAggregator
+from app.main.service.tool.utils.ClusterDetector import ClusterDetector
 
 
 @ToolRegistry.register(ToolType.FEEDING_TRACKER)
