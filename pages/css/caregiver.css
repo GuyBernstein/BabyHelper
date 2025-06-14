@@ -1,0 +1,431 @@
+:root {
+    --default-font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--default-font-family);
+    background: #f5f5f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* Main Container */
+.main-container {
+    position: relative;
+    width: 612px;
+    height: 1241px;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Root container */
+.root {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+/* Top Background Layer */
+.top-background {
+    position: absolute;
+    width: 612px;
+    height: 96px;
+    top: 0;
+    left: 0;
+    background: linear-gradient(180deg, #f8f8f8 0%, #ffffff 100%);
+    z-index: 1;
+}
+
+/* Header Section */
+.header {
+    position: absolute;
+    width: 612px;
+    height: 95px;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    background: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.header-content {
+    position: relative;
+    width: 100%;
+    height: 71px;
+    margin-top: 5px;
+}
+
+/* BabyWise Logo and Title */
+.logo-section {
+    position: absolute;
+    left: 14px;
+    top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-icon {
+    width: 25px;
+    height: 32px;
+    background: url(https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-06-13/SLHrndbhWZ.png) no-repeat center;
+    background-size: cover;
+    border-radius: 4px;
+}
+
+.app-title {
+    font-size: 33.9px;
+    font-weight: 600;
+    color: #545454;
+    line-height: 41px;
+}
+
+/* Navigation Icons */
+.nav-icons {
+    position: absolute;
+    right: 20px;
+    top: 25px;
+    display: flex;
+    gap: 15px;
+}
+
+.nav-icon {
+    width: 29px;
+    height: 23px;
+    cursor: pointer;
+    transition: all 0.3s;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.nav-icon:nth-child(1) {
+    background-image: url(https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-06-13/F4E3WidSwZ.png);
+}
+
+.nav-icon:nth-child(2) {
+    background-image: url(https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-06-13/mv16xvkGV7.png);
+}
+
+.nav-icon:nth-child(3) {
+    background-image: url(https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-06-13/Rmc0G2oc6p.png);
+}
+
+.nav-icon:nth-child(4) {
+    background-image: url(https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-06-13/AnrZwZvFht.png);
+}
+
+.nav-icon:hover {
+    transform: scale(1.1);
+    filter: brightness(1.2);
+}
+
+/* Main Content Area */
+.main-content {
+    position: absolute;
+    top: 95px;
+    left: 0;
+    right: 0;
+    bottom: 94px;
+    background: #fefefe;
+    overflow-y: auto;
+}
+
+/* Title Section */
+.title-section {
+    position: relative;
+    width: 100%;
+    height: 154px;
+    padding: 20px 24px 32px;
+    background: #ffffff;
+    margin-bottom: 20px;
+}
+
+.page-title {
+    font-size: 44.9px;
+    font-weight: 600;
+    line-height: 49px;
+    color: #323232;
+    margin-bottom: 20px;
+}
+
+.add-button {
+    position: absolute;
+    right: 24px;
+    bottom: 32px;
+    width: 187px;
+    height: 92px;
+    padding: 4px;
+}
+
+.add-button-inner {
+    width: 100%;
+    height: 100%;
+    background: #101010;
+    border: 1px solid #323232;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.add-button-inner:hover {
+    background: #202020;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.add-button-text {
+    color: #b3b3b3;
+    font-size: 25.7px;
+    font-weight: 500;
+}
+
+/* Caregiver Cards */
+.caregiver-card {
+    position: relative;
+    width: calc(100% - 48px);
+    margin: 0 24px 20px;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.caregiver-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.caregiver-info {
+    flex: 1;
+}
+
+.caregiver-name {
+    font-size: 33.8px;
+    font-weight: 600;
+    color: #3e3e3e;
+    margin-bottom: 8px;
+}
+
+.caregiver-email {
+    font-size: 26.3px;
+    font-weight: 500;
+    color: #79797b;
+    margin-bottom: 15px;
+}
+
+.permission-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.permission-label {
+    font-size: 25px;
+    font-weight: 500;
+    color: #6a6a6c;
+}
+
+.permission-toggle {
+    width: 84px;
+    height: 43px;
+    background-image: url(https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-06-13/DxfJ5MNtSP.png);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 20.5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.permission-toggle.active {
+    background-image: url(https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-06-13/ciU7iA705o.png);
+}
+
+.remove-button {
+    width: 151px;
+    height: 57px;
+    padding: 4px;
+}
+
+.remove-button-inner {
+    width: 100%;
+    height: 100%;
+    background: #101010;
+    border: 1px solid #676767;
+    border-radius: 21px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.remove-button-inner:hover {
+    background: #d32f2f;
+    border-color: #d32f2f;
+}
+
+.remove-button-text {
+    color: #9e9e9e;
+    font-size: 23.3px;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.remove-button-inner:hover .remove-button-text {
+    color: white;
+}
+
+/* Shared Activities Section */
+.shared-activities {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.activities-title {
+    font-size: 25.5px;
+    font-weight: 600;
+    color: #494949;
+    margin-bottom: 20px;
+}
+
+.activities-grid {
+    display: flex;
+    gap: 15px;
+}
+
+.activity-item {
+    width: 85px;
+    height: 85px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* Activity icons for Sophia */
+.caregiver-card:nth-child(3) .activity-item:nth-child(1) {
+    background-image: url(https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-06-13/KP07BKJ1dz.png);
+}
+
+.caregiver-card:nth-child(3) .activity-item:nth-child(2) {
+    background-image: url(https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-06-13/FZgQU4TOGq.png);
+}
+
+.caregiver-card:nth-child(3) .activity-item:nth-child(3) {
+    background-image: url(https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-06-13/MOmGm4AnEB.png);
+}
+
+/* Activity icons for Michael */
+.caregiver-card:nth-child(2) .activity-item:nth-child(1) {
+    background-image: url(https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-06-13/ELX66yvvvw.png);
+}
+
+.caregiver-card:nth-child(2) .activity-item:nth-child(2) {
+    background-image: url(https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-06-13/VLGu8sKyti.png);
+}
+
+.caregiver-card:nth-child(2) .activity-item:nth-child(3) {
+    background-image: url(https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-06-13/kmG18tYvqP.png);
+}
+
+.activity-item:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 94px;
+    background: #ffffff;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 10;
+}
+
+.nav-item {
+    width: 53px;
+    height: 43px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.nav-item:nth-child(1) {
+    background-image: url(https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-06-13/i1zpt30ovo.png);
+}
+
+.nav-item:nth-child(2) {
+    background-image: url(https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-06-13/BPs8SE91ux.png);
+}
+
+.nav-item:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.2);
+}
+
+.nav-item.active {
+    background-color: #101010;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Decorative Elements */
+.top-decoration {
+    position: absolute;
+    width: 100%;
+    height: 13px;
+    top: 95px;
+    background-image: url(https://codia-f2c.s3.us-west-1.amazonaws.com/image/2025-06-13/N2cZOTamxC.png);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 5;
+}
+
+/* Responsive adjustments */
+@media (max-width: 650px) {
+    .main-container {
+        width: 100%;
+        max-width: 612px;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .main-content {
+        position: relative;
+        height: auto;
+        min-height: calc(100vh - 189px);
+    }
+}

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BabyWise - Caregiver Management</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&display=swap">
+    <link rel="stylesheet" href="../css/caregiver.css" />
+
+</head>
+<body>
+    <div class="main-container">
+        <div class="root">
+            <!-- Top Background Layer -->
+            <div class="top-background"></div>
+
+            <!-- Header -->
+            <div class="header">
+                <div class="header-content">
+                    <div class="logo-section">
+                        <div class="logo-icon"></div>
+                        <span class="app-title">BabyWise</span>
+                    </div>
+                    <div class="nav-icons">
+                        <div class="nav-icon"></div>
+                        <div class="nav-icon"></div>
+                        <div class="nav-icon"></div>
+                        <div class="nav-icon"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Decoration -->
+            <div class="top-decoration"></div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Title Section -->
+                <div class="title-section">
+                    <h1 class="page-title">Caregiver<br>Management</h1>
+                    <div class="add-button">
+                        <div class="add-button-inner">
+                            <span class="add-button-text">Add Caregiver</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Caregiver Card 1 - Sophia Williams -->
+                <div class="caregiver-card">
+                    <div class="caregiver-header">
+                        <div class="caregiver-info">
+                            <div class="caregiver-name">Sophia Williams</div>
+                            <div class="caregiver-email">sophia@example.com</div>
+                            <div class="permission-section">
+                                <span class="permission-label">Permission:</span>
+                                <div class="permission-toggle active"></div>
+                            </div>
+                        </div>
+                        <div class="remove-button">
+                            <div class="remove-button-inner">
+                                <span class="remove-button-text">Remove</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="shared-activities">
+                        <div class="activities-title">Shared Activities</div>
+                        <div class="activities-grid">
+                            <div class="activity-item"></div>
+                            <div class="activity-item"></div>
+                            <div class="activity-item"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Caregiver Card 2 - Michael Brown -->
+                <div class="caregiver-card">
+                    <div class="caregiver-header">
+                        <div class="caregiver-info">
+                            <div class="caregiver-name">Michael Brown</div>
+                            <div class="caregiver-email">michael@example.com</div>
+                            <div class="permission-section">
+                                <span class="permission-label">Permission:</span>
+                                <div class="permission-toggle"></div>
+                            </div>
+                        </div>
+                        <div class="remove-button">
+                            <div class="remove-button-inner">
+                                <span class="remove-button-text">Remove</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="shared-activities">
+                        <div class="activities-title">Shared Activities</div>
+                        <div class="activities-grid">
+                            <div class="activity-item"></div>
+                            <div class="activity-item"></div>
+                            <div class="activity-item"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Navigation -->
+            <div class="bottom-nav">
+                <div class="nav-item"></div>
+                <div class="nav-item"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle permission switches
+        document.querySelectorAll('.permission-toggle').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+        });
+
+        // Add caregiver button
+        document.querySelector('.add-button-inner').addEventListener('click', function() {
+            alert('Add new caregiver functionality would go here');
+        });
+
+        // Remove buttons
+        document.querySelectorAll('.remove-button-inner').forEach(button => {
+            button.addEventListener('click', function() {
+                if (confirm('Are you sure you want to remove this caregiver?')) {
+                    this.closest('.caregiver-card').remove();
+                }
+            });
+        });
+
+        // Activity items
+        document.querySelectorAll('.activity-item').forEach(item => {
+            item.addEventListener('click', function() {
+                alert('Activity details would be shown here');
+            });
+        });
+
+        // Navigation items
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

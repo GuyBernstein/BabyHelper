@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to BabyHelper - Onboarding</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pastel: {
+                            lightest: '#fdf6f0',
+                            light: '#ffe8d9',
+                            primary: '#ff8c69',
+                            primaryHover: '#ff7043',
+                            secondary: '#ffd8cc',
+                            accent1: '#ffb5a7',
+                            accent2: '#fec89a',
+                            text: '#6d5d52',
+                            textLight: '#938278',
+                            heading: '#5c4d44'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Nunito Sans', 'sans-serif'],
+                        serif: ['Lora', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Step transition animations */
+        .step-container {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+        .step-hidden {
+            display: none;
+        }
+        .step-inactive {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        .progress-segment {
+            transition: background-color 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-pastel-lightest font-sans text-pastel-text min-h-screen">
+    <!-- Header -->
+    <nav class="w-full py-4 px-4 md:px-8 bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="#" class="flex items-center space-x-2">
+                <div class="w-10 h-10 rounded-full bg-pastel-primary flex items-center justify-center text-white font-serif font-semibold text-xl">B</div>
+                <span class="font-serif text-pastel-heading text-xl">BabyHelper</span>
+            </a>
+            <div class="flex items-center space-x-4">
+                <img id="userPicture" src="https://via.placeholder.com/40" alt="User" class="w-10 h-10 rounded-full">
+                <button onclick="logout()" class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Onboarding Content -->
+    <div class="max-w-4xl mx-auto px-4 py-12">
+        <!-- Welcome Section -->
+        <div class="text-center mb-8">
+            <h1 class="font-serif text-4xl md:text-5xl font-medium text-pastel-heading mb-4">
+                Welcome to BabyHelper, <span id="userName" class="text-pastel-primary">Parent</span>!
+            </h1>
+            <p class="text-lg text-pastel-textLight">
+                Let's get your account set up. You can skip any step and complete it later in settings.
+            </p>
+            <p class="text-sm text-pastel-textLight mt-2">
+                Signed in as: <span id="userEmail" class="font-medium"></span>
+            </p>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-pastel-textLight">Step <span id="currentStepNumber">1</span> of 3</span>
+                <button onclick="skipAllSteps()" class="text-sm text-pastel-primary hover:text-pastel-primaryHover font-medium transition-colors">
+                    Skip All Steps →
+                </button>
+            </div>
+            <div class="w-full bg-pastel-light rounded-full h-2 flex space-x-1">
+                <div id="progress-1" class="progress-segment flex-1 bg-pastel-primary rounded-full"></div>
+                <div id="progress-2" class="progress-segment flex-1 bg-pastel-light rounded-full"></div>
+                <div id="progress-3" class="progress-segment flex-1 bg-pastel-light rounded-full"></div>
+            </div>
+        </div>
+
+        <!-- Step 1: Baby Information -->
+        <div id="step-1" class="step-container">
+            <div class="bg-white rounded-2xl shadow-lg p-8 border border-pastel-light">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 rounded-full bg-pastel-primary flex items-center justify-center text-white font-semibold text-lg">1</div>
+                        <h2 class="font-serif text-2xl text-pastel-heading ml-4">Add Your Baby's Information</h2>
+                    </div>
+                    <button onclick="skipCurrentStep()" class="text-sm text-pastel-textLight hover:text-pastel-text transition-colors">
+                        Skip This Step
+                    </button>
+                </div>
+
+                <form id="babyInfoForm" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-pastel-text mb-2">Baby's Name</label>
+                            <input type="text" id="babyName" placeholder="Emma"
+                                   class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-pastel-text mb-2">Date of Birth</label>
+                            <input type="date" id="babyDob"
+                                   class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-pastel-text mb-2">Gender</label>
+                            <select id="babyGender"
+                                    class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+                                <option value="">Select gender</option>
+                                <option value="girl">Girl</option>
+                                <option value="boy">Boy</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-pastel-text mb-2">Current Weight (kg)</label>
+                            <input type="number" id="babyWeight" step="0.1" placeholder="7.2"
+                                   class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-4 mt-8">
+                        <button type="button" onclick="nextStep()"
+                                class="px-8 py-3 bg-pastel-primary text-white font-semibold rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                            Next Step
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Step 2: Co-parenting Setup -->
+        <div id="step-2" class="step-container step-hidden">
+            <div class="bg-white rounded-2xl shadow-lg p-8 border border-pastel-light">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 rounded-full bg-pastel-accent2 flex items-center justify-center text-white font-semibold text-lg">2</div>
+                        <h2 class="font-serif text-2xl text-pastel-heading ml-4">Invite a Co-parent</h2>
+                    </div>
+                    <button onclick="skipCurrentStep()" class="text-sm text-pastel-textLight hover:text-pastel-text transition-colors">
+                        Skip This Step
+                    </button>
+                </div>
+
+                <!-- Benefits -->
+                <div class="bg-pastel-lightest rounded-lg p-4 mb-6">
+                    <h3 class="font-semibold text-pastel-heading mb-3">Benefits of Co-parenting</h3>
+                    <div class="space-y-2">
+                        <div class="flex items-start space-x-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-primary mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            <p class="text-sm text-pastel-text">Share baby care responsibilities with your partner</p>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-primary mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            <p class="text-sm text-pastel-text">Real-time syncing keeps everyone updated</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="coParentForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-pastel-text mb-2">Co-parent's Email</label>
+                        <div class="flex space-x-2">
+                            <input type="email" id="coParentEmail" placeholder="partner@example.com"
+                                   class="flex-1 px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+                            <button type="button" onclick="sendInvite()"
+                                    class="px-6 py-2 bg-pastel-secondary text-pastel-primary font-medium rounded-lg hover:bg-pastel-accent1 hover:text-white transition-colors">
+                                Send Invite
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Invited List -->
+                    <div id="invitedList" class="hidden">
+                        <h3 class="font-semibold text-pastel-heading mb-2">Pending Invitations</h3>
+                        <div id="invitationsList" class="space-y-2">
+                            <!-- Invitations will be dynamically added here -->
+                        </div>
+                    </div>
+                </form>
+
+                <div class="flex justify-between mt-8">
+                    <button type="button" onclick="previousStep()"
+                            class="px-6 py-3 border border-pastel-light text-pastel-text font-medium rounded-lg hover:bg-pastel-lightest transition-colors">
+                        Previous
+                    </button>
+                    <button type="button" onclick="nextStep()"
+                            class="px-8 py-3 bg-pastel-primary text-white font-semibold rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                        Next Step
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Check Co-parent Invitations -->
+        <div id="step-3" class="step-container step-hidden">
+            <div class="bg-white rounded-2xl shadow-lg p-8 border border-pastel-light">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 rounded-full bg-pastel-accent1 flex items-center justify-center text-white font-semibold text-lg">3</div>
+                        <h2 class="font-serif text-2xl text-pastel-heading ml-4">Co-parent Invitations</h2>
+                    </div>
+                    <button onclick="skipCurrentStep()" class="text-sm text-pastel-textLight hover:text-pastel-text transition-colors">
+                        Skip This Step
+                    </button>
+                </div>
+
+                <p class="text-pastel-text mb-6">
+                    Check if you have any pending invitations to be a co-parent for another user's baby.
+                </p>
+
+                <!-- Loading State -->
+                <div id="invitationsLoading" class="text-center py-8">
+                    <div class="inline-flex items-center space-x-2">
+                        <svg class="animate-spin h-5 w-5 text-pastel-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="text-pastel-textLight">Checking for invitations...</span>
+                    </div>
+                </div>
+
+                <!-- No Invitations State -->
+                <div id="noInvitations" class="hidden text-center py-8">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-pastel-light mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                    <p class="text-pastel-textLight">No pending invitations at this time.</p>
+                </div>
+
+                <!-- Invitations List -->
+                <div id="pendingInvitations" class="hidden space-y-4">
+                    <!-- Invitations will be dynamically loaded here -->
+                </div>
+
+                <div class="flex justify-between mt-8">
+                    <button type="button" onclick="previousStep()"
+                            class="px-6 py-3 border border-pastel-light text-pastel-text font-medium rounded-lg hover:bg-pastel-lightest transition-colors">
+                        Previous
+                    </button>
+                    <button type="button" onclick="completeOnboarding()"
+                            class="px-8 py-3 bg-pastel-primary text-white font-semibold rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                        Complete Setup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Preview -->
+    <div id="featuresPreview" class="bg-white py-16 mt-16">
+        <div class="max-w-6xl mx-auto px-4">
+            <h3 class="font-serif text-3xl text-pastel-heading text-center mb-12">
+                What You Can Do with BabyHelper
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="text-center">
+                    <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-pastel-lightest flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-pastel-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h4 class="font-semibold text-lg text-pastel-heading mb-2">Track Everything</h4>
+                    <p class="text-pastel-textLight">Log feedings, diaper changes, sleep times, and more with just a tap.</p>
+                </div>
+
+                <div class="text-center">
+                    <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-pastel-lightest flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-pastel-accent1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                    </div>
+                    <h4 class="font-semibold text-lg text-pastel-heading mb-2">View Insights</h4>
+                    <p class="text-pastel-textLight">See patterns and trends in your baby's routine to better understand their needs.</p>
+                </div>
+
+                <div class="text-center">
+                    <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-pastel-lightest flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-pastel-accent2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                    <h4 class="font-semibold text-lg text-pastel-heading mb-2">Share Care</h4>
+                    <p class="text-pastel-textLight">Collaborate with partners and caregivers for seamless baby care coordination.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Onboarding State Management
+         * Tracks current step, form data, and manages step transitions
+         */
+        const onboardingState = {
+            currentStep: 1,
+            totalSteps: 3,
+            data: {
+                babyInfo: {},
+                coParents: [],
+                acceptedInvitations: []
+            }
+        };
+
+        /**
+         * Initialize onboarding on page load
+         * Checks authentication and loads user data
+         */
+        window.addEventListener('DOMContentLoaded', function() {
+            // Check authentication
+            const idToken = sessionStorage.getItem('idToken');
+            const userEmail = sessionStorage.getItem('userEmail');
+            const userName = sessionStorage.getItem('userName');
+            const userPicture = sessionStorage.getItem('userPicture');
+
+            if (!idToken) {
+                window.location.href = '/';
+                return;
+            }
+
+            // Display user information
+            if (userName) document.getElementById('userName').textContent = userName;
+            if (userEmail) document.getElementById('userEmail').textContent = userEmail;
+            if (userPicture) document.getElementById('userPicture').src = userPicture;
+
+            window.authToken = idToken;
+
+            // Initialize first step
+            showStep(1);
+
+            // Load any saved progress from sessionStorage
+            loadSavedProgress();
+        });
+
+        /**
+         * Load saved onboarding progress from sessionStorage
+         * Allows users to resume where they left off
+         */
+        function loadSavedProgress() {
+            const savedProgress = sessionStorage.getItem('onboardingProgress');
+            if (savedProgress) {
+                const progress = JSON.parse(savedProgress);
+                onboardingState.data = progress;
+
+                // Pre-fill forms with saved data
+                if (progress.babyInfo) {
+                    document.getElementById('babyName').value = progress.babyInfo.name || '';
+                    document.getElementById('babyDob').value = progress.babyInfo.dob || '';
+                    document.getElementById('babyGender').value = progress.babyInfo.gender || '';
+                    document.getElementById('babyWeight').value = progress.babyInfo.weight || '';
+                }
+            }
+        }
+
+        /**
+         * Save current progress to sessionStorage
+         * Ensures users don't lose data if they navigate away
+         */
+        function saveProgress() {
+            sessionStorage.setItem('onboardingProgress', JSON.stringify(onboardingState.data));
+        }
+
+        /**
+         * Show specific step and hide others
+         * @param {number} stepNumber - The step to display (1-3)
+         */
+        function showStep(stepNumber) {
+            // Update state
+            onboardingState.currentStep = stepNumber;
+
+            // Update step number display
+            document.getElementById('currentStepNumber').textContent = stepNumber;
+
+            // Update progress bar
+            for (let i = 1; i <= onboardingState.totalSteps; i++) {
+                const segment = document.getElementById(`progress-${i}`);
+                if (i <= stepNumber) {
+                    segment.classList.add('bg-pastel-primary');
+                    segment.classList.remove('bg-pastel-light');
+                } else {
+                    segment.classList.remove('bg-pastel-primary');
+                    segment.classList.add('bg-pastel-light');
+                }
+            }
+
+            // Show/hide steps with animation
+            for (let i = 1; i <= onboardingState.totalSteps; i++) {
+                const step = document.getElementById(`step-${i}`);
+                if (i === stepNumber) {
+                    step.classList.remove('step-hidden', 'step-inactive');
+
+                    // Special handling for step 3 - load invitations
+                    if (i === 3) {
+                        loadPendingInvitations();
+                    }
+                } else {
+                    step.classList.add('step-hidden');
+                }
+            }
+        }
+
+        /**
+         * Navigate to the next step
+         * Saves current step data before proceeding
+         */
+        function nextStep() {
+            // Save current step data
+            if (onboardingState.currentStep === 1) {
+                saveBabyInfo();
+            }
+
+            if (onboardingState.currentStep < onboardingState.totalSteps) {
+                showStep(onboardingState.currentStep + 1);
+            }
+        }
+
+        /**
+         * Navigate to the previous step
+         */
+        function previousStep() {
+            if (onboardingState.currentStep > 1) {
+                showStep(onboardingState.currentStep - 1);
+            }
+        }
+
+        /**
+         * Skip the current step and move to the next
+         * If on last step, complete onboarding
+         */
+        function skipCurrentStep() {
+            if (onboardingState.currentStep < onboardingState.totalSteps) {
+                nextStep();
+            } else {
+                completeOnboarding();
+            }
+        }
+
+        /**
+         * Skip all remaining steps and complete onboarding
+         * Shows confirmation before proceeding
+         */
+        function skipAllSteps() {
+            if (confirm('Are you sure you want to skip all steps? You can complete these later in settings.')) {
+                completeOnboarding();
+            }
+        }
+
+        /**
+         * Save baby information from Step 1
+         */
+        function saveBabyInfo() {
+            onboardingState.data.babyInfo = {
+                name: document.getElementById('babyName').value,
+                dob: document.getElementById('babyDob').value,
+                gender: document.getElementById('babyGender').value,
+                weight: document.getElementById('babyWeight').value
+            };
+            saveProgress();
+        }
+
+        /**
+         * Send co-parent invitation
+         * Validates email and adds to invitation list
+         */
+        function sendInvite() {
+            const emailInput = document.getElementById('coParentEmail');
+            const email = emailInput.value.trim();
+
+            if (!email) {
+                alert('Please enter an email address');
+                return;
+            }
+
+            // Basic email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('Please enter a valid email address');
+                return;
+            }
+
+            // Check if already invited
+            if (onboardingState.data.coParents.includes(email)) {
+                alert('This person has already been invited');
+                return;
+            }
+
+            // Add to invitations
+            onboardingState.data.coParents.push(email);
+            saveProgress();
+
+            // Update UI
+            updateInvitationsList();
+            emailInput.value = '';
+
+            // Show success message
+            showToast('Invitation sent successfully!');
+        }
+
+        /**
+         * Update the displayed list of sent invitations
+         */
+        function updateInvitationsList() {
+            const listContainer = document.getElementById('invitedList');
+            const invitationsList = document.getElementById('invitationsList');
+
+            if (onboardingState.data.coParents.length > 0) {
+                listContainer.classList.remove('hidden');
+
+                invitationsList.innerHTML = onboardingState.data.coParents.map(email => `
+                    <div class="flex items-center justify-between p-3 bg-pastel-lightest rounded-lg">
+                        <span class="text-sm text-pastel-text">${email}</span>
+                        <button onclick="removeInvitation('${email}')" class="text-sm text-red-500 hover:text-red-700">
+                            Remove
+                        </button>
+                    </div>
+                `).join('');
+            } else {
+                listContainer.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Remove an invitation
+         * @param {string} email - Email to remove from invitations
+         */
+        function removeInvitation(email) {
+            onboardingState.data.coParents = onboardingState.data.coParents.filter(e => e !== email);
+            saveProgress();
+            updateInvitationsList();
+        }
+
+        /**
+         * Load pending co-parent invitations (Step 3)
+         * Simulates API call to check for invitations
+         */
+        async function loadPendingInvitations() {
+            const loadingEl = document.getElementById('invitationsLoading');
+            const noInvitationsEl = document.getElementById('noInvitations');
+            const invitationsEl = document.getElementById('pendingInvitations');
+
+            // Show loading state
+            loadingEl.classList.remove('hidden');
+            noInvitationsEl.classList.add('hidden');
+            invitationsEl.classList.add('hidden');
+
+            try {
+                // Simulate API call delay
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                // Mock data - in production, this would be an actual API call
+                const mockInvitations = Math.random() > 0.5 ? [
+                    {
+                        id: '1',
+                        fromUser: 'Sarah Johnson',
+                        fromEmail: 'sarah@example.com',
+                        babyName: 'Lucas',
+                        sentDate: '2025-06-10'
+                    },
+                    {
+                        id: '2',
+                        fromUser: 'Mike Smith',
+                        fromEmail: 'mike@example.com',
+                        babyName: 'Emma',
+                        sentDate: '2025-06-12'
+                    }
+                ] : [];
+
+                loadingEl.classList.add('hidden');
+
+                if (mockInvitations.length > 0) {
+                    invitationsEl.classList.remove('hidden');
+                    invitationsEl.innerHTML = mockInvitations.map(inv => `
+                        <div class="border border-pastel-light rounded-lg p-4 space-y-3">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <h4 class="font-semibold text-pastel-heading">${inv.fromUser}</h4>
+                                    <p class="text-sm text-pastel-textLight">${inv.fromEmail}</p>
+                                </div>
+                                <span class="text-xs text-pastel-textLight">${formatDate(inv.sentDate)}</span>
+                            </div>
+                            <p class="text-sm text-pastel-text">
+                                Invites you to be a co-parent for <span class="font-medium">${inv.babyName}</span>
+                            </p>
+                            <div class="flex space-x-2">
+                                <button onclick="acceptInvitation('${inv.id}')"
+                                        class="px-4 py-2 bg-pastel-primary text-white text-sm font-medium rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                                    Accept
+                                </button>
+                                <button onclick="declineInvitation('${inv.id}')"
+                                        class="px-4 py-2 border border-pastel-light text-pastel-text text-sm font-medium rounded-lg hover:bg-pastel-lightest transition-colors">
+                                    Decline
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    noInvitationsEl.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error loading invitations:', error);
+                loadingEl.classList.add('hidden');
+                noInvitationsEl.classList.remove('hidden');
+            }
+        }
+
+        /**
+         * Accept a co-parent invitation
+         * @param {string} invitationId - ID of the invitation to accept
+         */
+        function acceptInvitation(invitationId) {
+            onboardingState.data.acceptedInvitations.push(invitationId);
+            saveProgress();
+            showToast('Invitation accepted!');
+
+            // Reload invitations to update UI
+            loadPendingInvitations();
+        }
+
+        /**
+         * Decline a co-parent invitation
+         * @param {string} invitationId - ID of the invitation to decline
+         */
+        function declineInvitation(invitationId) {
+            if (confirm('Are you sure you want to decline this invitation?')) {
+                showToast('Invitation declined');
+                // Reload invitations to update UI
+                loadPendingInvitations();
+            }
+        }
+
+        /**
+         * Complete the onboarding process
+         * Saves all data and redirects to dashboard
+         */
+        async function completeOnboarding() {
+            try {
+                // In production, make API call to save all onboarding data
+                // await saveOnboardingData(onboardingState.data);
+
+                // Clear onboarding progress from sessionStorage
+                sessionStorage.removeItem('onboardingProgress');
+
+                // Mark onboarding as complete
+                sessionStorage.setItem('onboardingComplete', 'true');
+
+                // Show success message
+                alert('Welcome to BabyHelper! Your account is now set up.');
+
+                // Redirect to dashboard
+                // window.location.href = '/dashboard';
+            } catch (error) {
+                console.error('Error completing onboarding:', error);
+                alert('There was an error setting up your account. Please try again.');
+            }
+        }
+
+        /**
+         * Logout user and clear session
+         */
+        function logout() {
+            sessionStorage.clear();
+            window.location.href = '/';
+        }
+
+        /**
+         * Utility function to show toast notifications
+         * @param {string} message - Message to display
+         */
+        function showToast(message) {
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 bg-pastel-heading text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in';
+            toast.textContent = message;
+
+            document.body.appendChild(toast);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        /**
+         * Format date for display
+         * @param {string} dateStr - Date string to format
+         */
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+    </script>
+</body>
+</html>

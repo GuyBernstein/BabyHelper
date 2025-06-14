@@ -1,7 +1,9 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
-
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from .main.controller import (
     baby_controller, feeding_controller, sleep_controller, diaper_controller, health_controller,
@@ -65,53 +67,32 @@ def create_app():
     app.include_router(tool_router)
     app.include_router(query_router)
 
-    @app.get("/", response_class=HTMLResponse)
+    # Mount static files directory (this will serve all files in the pages directory)
+    if Path("pages").exists():
+        app.mount("/static", StaticFiles(directory="pages"), name="static")
+
+    @app.get("/")
     async def root():
-        """Root endpoint with OAuth login instructions"""
-        return """
-        <html>
-            <head>
-                <title>Babies App - Google OAuth</title>
-                <style>
-                    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-                    .container { border: 1px solid #ccc; padding: 20px; border-radius: 5px; }
-                    code { background-color: #f0f0f0; padding: 2px 4px; border-radius: 4px; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <h1>Baby App with Google OAuth</h1>
-                    <h2>Authentication Instructions</h2>
-                    <ol>
-                        <li>Go to <a href="/auth/login" target="_blank">/auth/login</a> endpoint</li>
-                        <li>Copy the <code>login_url</code> from the response</li>
-                        <li>Open that URL in your browser</li>
-                        <li>Log in with your Google account</li>
-                        <li>You'll be redirected back with an ID token</li>
-                        <li>Use this token as a Bearer token in the <a href="/docs" target="_blank">Swagger UI</a></li>
-                    </ol>
-                    <p>
-                        <a href="/docs" target="_blank">Go to Swagger UI</a>
-                    </p>
+        """Root endpoint serving static HTML file"""
+        # Construct the path to the HTML file
+        html_file_path = Path("pages/html/index.html")
 
-                    <h2>Co-Parenting Features</h2>
-                    <ul>
-                        <li>Add babies to your profile as the primary parent</li>
-                        <li>Invite other users to be co-parents for your babies</li>
-                        <li>Accept or reject co-parent invitations</li>
-                        <li>View and manage notifications</li>
-                    </ul>
+        # Check if file exists, if not return a 404 or fallback
+        if not html_file_path.exists():
+            return {"error": "HTML file not found at pages/html/index.html"}
 
-                    <h2>Tracking Features</h2>
-                    <ul>
-                        <li>Feeding: Track breastfeeding, bottle feeding, and solid foods</li>
-                        <li>Sleep: Record sleep patterns and quality</li>
-                        <li>Diaper: Monitor diaper changes and content</li>
-                        <li>Health: Track temperature, symptoms, and medications</li>
-                    </ul>
-                </div>
-            </body>
-        </html>
-        """
+        return FileResponse(html_file_path, media_type="text/html")
+
+    @app.get("/onboarding")
+    async def onboarding():
+        """Root endpoint serving static HTML file"""
+        # Construct the path to the HTML file
+        html_file_path = Path("pages/html/onboarding.html")
+
+        # Check if file exists, if not return a 404 or fallback
+        if not html_file_path.exists():
+            return {"error": "HTML file not found at pages/html/onboarding.html"}
+
+        return FileResponse(html_file_path, media_type="text/html")
 
     return app

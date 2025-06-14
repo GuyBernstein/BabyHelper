@@ -100,41 +100,81 @@ async def callback(code: str, db: Session = Depends(get_db)):
             """
             return HTMLResponse(content=html_content, status_code=403)
 
-        # Return a success page with the ID token for testing
-        is_admin = user.is_admin
-        admin_badge = "✅ Administrator Account" if is_admin else ""
-
-        html_content = f"""
+        # Store the token in sessionStorage and redirect to onboarding
+        response = HTMLResponse(content=f"""
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Authentication Successful</title>
+            <title>Redirecting...</title>
+            <meta http-equiv="refresh" content="2; url=/onboarding">
+            <script>
+                // Store the token and user info in sessionStorage for the onboarding page to use
+                sessionStorage.setItem('idToken', '{id_token}');
+                sessionStorage.setItem('userEmail', '{user.email}');
+                sessionStorage.setItem('userName', '{user.name or ""}');
+                sessionStorage.setItem('userPicture', '{user.picture or ""}');
+                sessionStorage.setItem('isAdmin', '{str(user.is_admin).lower()}');
+
+                // Redirect to onboarding
+                setTimeout(function() {{
+                    window.location.href = '/onboarding';
+                }}, 1000);
+            </script>
             <style>
-                body {{ font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }}
-                textarea {{ width: 100%; font-family: monospace; }}
-                .container {{ border: 1px solid #ccc; padding: 20px; border-radius: 5px; }}
-                .admin-badge {{ color: #28a745; font-weight: bold; }}
+                body {{ 
+                    font-family: Arial, sans-serif; 
+                    max-width: 800px; 
+                    margin: 0 auto; 
+                    padding: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-height: 100vh;
+                }}
+                .container {{ 
+                    text-align: center;
+                    padding: 40px;
+                    border-radius: 10px;
+                    background: #f9f9f9;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                }}
+                .spinner {{
+                    border: 3px solid #f3f3f3;
+                    border-top: 3px solid #ff8c69;
+                    border-radius: 50%;
+                    width: 40px;
+                    height: 40px;
+                    animation: spin 1s linear infinite;
+                    margin: 20px auto;
+                }}
+                @keyframes spin {{
+                    0% {{ transform: rotate(0deg); }}
+                    100% {{ transform: rotate(360deg); }}
+                }}
             </style>
         </head>
         <body>
             <div class="container">
-                <h1>Authentication Successful</h1>
-                <p>You are now logged in as <strong>{user.email}</strong> <span class="admin-badge">{admin_badge}</span></p>
-                <p>Your ID Token (use this as Bearer token in /docs):</p>
-                <textarea rows="8" cols="80" onclick="this.select()">{id_token}</textarea>
-                <p>To use this token in the Swagger UI:</p>
-                <ol>
-                    <li>Click the "Authorize" button at the top right of the <a href="/docs" target="_blank">Swagger UI</a></li>
-                    <li>In the "bearerAuth (HTTPBearer)" field, enter the token above (without quotes)</li>
-                    <li>Click "Authorize" and close the dialog</li>
-                    <li>Now you can use the protected endpoints</li>
-                </ol>
+                <h2>Authentication Successful!</h2>
+                <p>Welcome, <strong>{user.name or user.email}</strong></p>
+                <div class="spinner"></div>
+                <p>Redirecting to your dashboard...</p>
             </div>
         </body>
         </html>
-        """
+        """)
 
-        return HTMLResponse(content=html_content)
+        # Optionally set a secure HTTP-only cookie with the token
+        # response.set_cookie(
+        #     key="auth_token",
+        #     value=id_token,
+        #     httponly=True,
+        #     secure=True,  # Use only with HTTPS
+        #     samesite="lax",
+        #     max_age=3600  # 1 hour
+        # )
+
+        return response
 
     except Exception as e:
         # Log the error for debugging
