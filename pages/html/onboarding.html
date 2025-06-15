@@ -205,18 +205,18 @@
                 </div>
             </div>
 
-                <form id="coParentForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-pastel-text mb-2">Co-parent's Email</label>
-                        <div class="flex space-x-2">
-                            <input type="email" id="coParentEmail" placeholder="partner@example.com"
-                                   class="flex-1 px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
-                            <button type="button" onclick="nextStep()"
-                                    class="px-6 py-2 bg-pastel-secondary text-pastel-primary font-medium rounded-lg hover:bg-pastel-accent1 hover:text-white transition-colors">
-                                Send Invite
-                            </button>
-                        </div>
+            <form id="coParentForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Co-parent's Email</label>
+                    <div class="flex space-x-2">
+                        <input type="email" id="coParentEmail" placeholder="partner@example.com"
+                               class="flex-1 px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+                        <button type="button" onclick="nextStep()"
+                                class="px-6 py-2 bg-pastel-secondary text-pastel-primary font-medium rounded-lg hover:bg-pastel-accent1 hover:text-white transition-colors">
+                            Send Invite
+                        </button>
                     </div>
+                </div>
 
                 <!-- Invited List -->
                 <div id="invitedList" class="hidden">
@@ -673,11 +673,10 @@
         }
 
         const savedBaby = await response.json();
-        console.log('Baby saved successfully:', savedBaby); // Debug log
 
         // Save to onboarding state
         onboardingState.data.babyInfo = {
-            babyId: savedBaby.id,
+            baby_id: savedBaby.id,
             name: savedBaby.fullname,
             dob: savedBaby.birthdate,
             gender: savedBaby.sex,
@@ -713,9 +712,9 @@
      * Send co-parent invitation
      * Validates email and adds to invitation list
      */
-    function sendInvite() {
+    async function sendInvite() {
         // Check if baby info exists in the state object
-        if (!onboardingState?.data?.babyInfo) {
+        if (!onboardingState.data.babyInfo || Object.keys(onboardingState.data.babyInfo).length === 0) {
             throw new Error('To add co-parent to your baby, please enter your baby information in the previous step. Or skip this step.');
         }
 
@@ -724,20 +723,59 @@
 
         if (!email) {
             throw new Error('Please enter an email address');
-            return;
+        }
+        if (email === sessionStorage.getItem('userEmail')) {
+            throw new Error('Please enter an email address that is not yours');
         }
 
-        // Basic email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            throw new Error('Please enter a valid email address');
-            return;
+        // Gmail-only email validation
+        const gmailRegex = /^[a-zA-Z0-9.+_-]+@gmail\.com$/;
+        if (!gmailRegex.test(email)) {
+            throw new Error('Please enter a valid Gmail address');
         }
 
         // Check if already invited
         if (onboardingState.data.coParents.includes(email)) {
             throw new Error('This person has already been invited');
-            return;
+        }
+
+        const payload = {
+            baby_id: onboardingState.data.babyInfo.baby_id,
+            email: email
+        }
+
+        const response = await authenticatedFetch('/coparent/invite/', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            let errorMessage = 'Failed to send invitation';
+
+            try {
+                const errorData = await response.json();
+                console.error('Error response:', errorData); // Debug log
+
+                // Handle different error formats from FastAPI
+                if (errorData.detail) {
+                    if (typeof errorData.detail === 'string') {
+                        errorMessage = errorData.detail;
+                    } else if (Array.isArray(errorData.detail)) {
+                        // Validation errors from FastAPI
+                        errorMessage = errorData.detail.map(err => {
+                            const field = err.loc ? err.loc[err.loc.length - 1] : 'field';
+                            return `${field}: ${err.msg}`;
+                        }).join(', ');
+                    }
+                } else if (errorData.message) {
+                    errorMessage = errorData.message;
+                }
+            } catch (e) {
+                // If error response is not JSON
+                errorMessage = `HTTP ${response.status}: ${response.statusText[1]}`;
+            }
+
+            throw new Error(errorMessage);
         }
 
         // Add to invitations

@@ -59,8 +59,6 @@ async def invite_coparent(
         status_code = status.HTTP_400_BAD_REQUEST
         if result.get('message') == 'Baby not found':
             status_code = status.HTTP_404_NOT_FOUND
-        elif result.get('message') == 'Only the primary parent can send co-parent invitations':
-            status_code = status.HTTP_403_FORBIDDEN
 
         raise HTTPException(
             status_code=status_code,

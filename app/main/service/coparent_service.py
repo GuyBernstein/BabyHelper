@@ -21,13 +21,6 @@ def send_coparent_invitation(db: Session, baby_id: int, invitee_email: str, invi
             'message': 'Baby not found',
         }
 
-    # Only the primary parent can send invitations
-    if baby.parent_id != inviter_id:
-        return {
-            'status': 'fail',
-            'message': 'Only the primary parent can send co-parent invitations',
-        }
-
     # Check if the invitee exists
     invitee = db.query(User).filter(User.email == invitee_email).first()
     if not invitee:
