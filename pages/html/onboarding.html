@@ -823,104 +823,252 @@
         updateInvitationsList();
     }
 
+
+    // Constants for better maintainability
+    const INVITATION_STATES = {
+            LOADING: 'loading',
+            EMPTY: 'empty',
+            LOADED: 'loaded',
+            ERROR: 'error'
+        };
+
+
     /**
-     * Load pending co-parent invitations (Step 3)
-     * Simulates API call to check for invitations
+     * Load and display pending co-parent invitations (Step 3)
+     * @returns {Promise<void>}
      */
     async function loadPendingInvitations() {
-        const loadingEl = document.getElementById('invitationsLoading');
-        const noInvitationsEl = document.getElementById('noInvitations');
-        const invitationsEl = document.getElementById('pendingInvitations');
+        const elements = {
+            loading: document.getElementById('invitationsLoading'),
+            noInvitations: document.getElementById('noInvitations'),
+            invitations: document.getElementById('pendingInvitations')
+        };
 
-        // Show loading state
-        loadingEl.classList.remove('hidden');
-        noInvitationsEl.classList.add('hidden');
-        invitationsEl.classList.add('hidden');
+        // Validate required elements exist
+        if (!elements.loading || !elements.noInvitations || !elements.invitations) {
+            console.error('Required DOM elements not found');
+            return;
+        }
+
+        setInvitationState(elements, INVITATION_STATES.LOADING);
 
         try {
-            // Simulate API call delay
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            const invitations = await fetchPendingInvitations();
 
-            // Mock data - in production, this would be an actual API call
-            const mockInvitations = Math.random() > 0.5 ? [
-                {
-                    id: '1',
-                    fromUser: 'Sarah Johnson',
-                    fromEmail: 'sarah@example.com',
-                    babyName: 'Lucas',
-                    sentDate: '2025-06-10'
-                },
-                {
-                    id: '2',
-                    fromUser: 'Mike Smith',
-                    fromEmail: 'mike@example.com',
-                    babyName: 'Emma',
-                    sentDate: '2025-06-12'
-                }
-            ] : [];
-
-            loadingEl.classList.add('hidden');
-
-            if (mockInvitations.length > 0) {
-                invitationsEl.classList.remove('hidden');
-                invitationsEl.innerHTML = mockInvitations.map(inv => `
-                        <div class="border border-pastel-light rounded-lg p-4 space-y-3">
-                            <div class="flex items-start justify-between">
-                                <div>
-                                    <h4 class="font-semibold text-pastel-heading">${inv.fromUser}</h4>
-                                    <p class="text-sm text-pastel-textLight">${inv.fromEmail}</p>
-                                </div>
-                                <span class="text-xs text-pastel-textLight">${formatDate(inv.sentDate)}</span>
-                            </div>
-                            <p class="text-sm text-pastel-text">
-                                Invites you to be a co-parent for <span class="font-medium">${inv.babyName}</span>
-                            </p>
-                            <div class="flex space-x-2">
-                                <button onclick="acceptInvitation('${inv.id}')"
-                                        class="px-4 py-2 bg-pastel-primary text-white text-sm font-medium rounded-lg hover:bg-pastel-primaryHover transition-colors">
-                                    Accept
-                                </button>
-                                <button onclick="declineInvitation('${inv.id}')"
-                                        class="px-4 py-2 border border-pastel-light text-pastel-text text-sm font-medium rounded-lg hover:bg-pastel-lightest transition-colors">
-                                    Decline
-                                </button>
-                            </div>
-                        </div>
-                    `).join('');
+            if (invitations.length > 0) {
+                displayInvitations(elements.invitations, invitations);
+                setInvitationState(elements, INVITATION_STATES.LOADED);
             } else {
-                noInvitationsEl.classList.remove('hidden');
+                setInvitationState(elements, INVITATION_STATES.EMPTY);
             }
         } catch (error) {
             console.error('Error loading invitations:', error);
-            loadingEl.classList.add('hidden');
-            noInvitationsEl.classList.remove('hidden');
+            displayError(elements.noInvitations, error.message);
+            setInvitationState(elements, INVITATION_STATES.ERROR);
         }
     }
 
     /**
-     * Accept a co-parent invitation
-     * @param {string} invitationId - ID of the invitation to accept
+     * Fetch pending invitations from the API
+     * @returns {Promise<Array>}
      */
-    function acceptInvitation(invitationId) {
+    async function fetchPendingInvitations() {
+        // Add loading delay for better UX
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        const response = await authenticatedFetch('/coparent/invitations/', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(await parseErrorResponse(response));
+        }
+
+        return response.json();
+    }
+
+    /**
+     * Parse error response from API
+     * @param {Response} response
+     * @returns {Promise<string>}
+     */
+    async function parseErrorResponse(response) {
+        let errorMessage = `Failed to load invitations (${response.status})`;
+
+        try {
+            const errorData = await response.json();
+
+            if (errorData.detail) {
+                if (typeof errorData.detail === 'string') {
+                    errorMessage = errorData.detail;
+                } else if (Array.isArray(errorData.detail)) {
+                    errorMessage = errorData.detail
+                        .map(err => {
+                            const field = err.loc?.[err.loc.length - 1] || 'field';
+                            return `${field}: ${err.msg}`;
+                        })
+                        .join(', ');
+                }
+            } else if (errorData.message) {
+                errorMessage = errorData.message;
+            }
+        } catch (e) {
+            errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+
+        return errorMessage;
+    }
+
+    /**
+     * Update UI state based on invitation loading status
+     * @param {Object} elements
+     * @param {string} state
+     */
+    function setInvitationState(elements, state) {
+        // Hide all elements first
+        Object.values(elements).forEach(el => el.classList.add('hidden'));
+
+        // Show relevant element based on state
+        switch (state) {
+            case INVITATION_STATES.LOADING:
+                elements.loading.classList.remove('hidden');
+                break;
+            case INVITATION_STATES.EMPTY:
+            case INVITATION_STATES.ERROR:
+                elements.noInvitations.classList.remove('hidden');
+                break;
+            case INVITATION_STATES.LOADED:
+                elements.invitations.classList.remove('hidden');
+                break;
+        }
+    }
+
+    /**
+     * Display invitations in the UI
+     * @param {HTMLElement} container
+     * @param {Array} invitations
+     */
+    function displayInvitations(container, invitations) {
+        container.innerHTML = invitations
+            .map(inv => createInvitationHTML(inv))
+            .join('');
+    }
+
+    /**
+     * Create HTML for a single invitation
+     * @param {Object} invitation
+     * @returns {string}
+     */
+    function createInvitationHTML(invitation) {
+        // Sanitize data to prevent XSS
+        const safe = {
+            inviterName: escapeHtml(invitation.inviter_name || 'Unknown'),
+            inviterEmail: escapeHtml(invitation.inviter_email),
+            babyName: escapeHtml(invitation.baby_name),
+            createdAt: formatDate(invitation.created_at),
+            invitationId: parseInt(invitation.invitation_id, 10)
+        };
+
+        return `
+        <div class="border border-pastel-light rounded-lg p-4 space-y-3" data-invitation-id="${safe.invitationId}">
+            <div class="flex items-start justify-between">
+                <div>
+                    <h4 class="font-semibold text-pastel-heading">${safe.inviterName}</h4>
+                    <p class="text-sm text-pastel-textLight">${safe.inviterEmail}</p>
+                </div>
+                <span class="text-xs text-pastel-textLight">${safe.createdAt}</span>
+            </div>
+            <p class="text-sm text-pastel-text">
+                Invites you to be a co-parent for <span class="font-medium">${safe.babyName}</span>
+            </p>
+            <div class="flex space-x-2">
+                <button onclick="acceptInvitation(${safe.invitationId})"
+                        class="invitation-accept px-4 py-2 bg-pastel-primary text-white text-sm font-medium rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                    Accept
+                </button>
+                <button onclick="declineInvitation(${safe.invitationId})"
+                        class="invitation-decline px-4 py-2 border border-pastel-light text-pastel-text text-sm font-medium rounded-lg hover:bg-pastel-lightest transition-colors">
+                    Decline
+                </button>
+            </div>
+        </div>
+    `;
+    }
+
+    /**
+     * Display error message to user
+     * @param {HTMLElement} container
+     * @param {string} message
+     */
+    function displayError(container, message) {
+        container.innerHTML = `
+        <p class="text-pastel-textLight">Unable to load invitations</p>
+        <p class="text-sm text-red-500 mt-2">${escapeHtml(message)}</p>
+        <button onclick="loadPendingInvitations()"
+                class="mt-3 text-sm text-pastel-primary hover:underline">
+            Try again
+        </button>
+    `;
+    }
+
+    /**
+     * Format date for display
+     * @param {string} dateString
+     * @returns {string}
+     */
+    function formatDate(dateString) {
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        } catch (e) {
+            return 'Invalid date';
+        }
+    }
+
+    /**
+     * Escape HTML to prevent XSS attacks
+     * @param {string} unsafe
+     * @returns {string}
+     */
+    function escapeHtml(unsafe) {
+        const div = document.createElement('div');
+        div.textContent = unsafe;
+        return div.innerHTML;
+    }
+
+    /**
+     * Accept a co-parent invitation
+     * @param {string} invitationId - ID of the invitation to decline
+     */
+    async function acceptInvitation(invitationId) {
         onboardingState.data.acceptedInvitations.push(invitationId);
         saveProgress();
-        showToast('Invitation accepted!');
+        showToast('Invitation accepted! ' + invitationId);
 
         // Reload invitations to update UI
-        loadPendingInvitations();
+        await loadPendingInvitations();
+         // TODO: Implement accept logic
     }
 
     /**
      * Decline a co-parent invitation
      * @param {string} invitationId - ID of the invitation to decline
      */
-    function declineInvitation(invitationId) {
+    async function declineInvitation(invitationId) {
         if (confirm('Are you sure you want to decline this invitation?')) {
             showToast('Invitation declined');
             // Reload invitations to update UI
-            loadPendingInvitations();
-        }
+            await loadPendingInvitations();
+        }        // TODO: Implement decline logic
     }
+
 
     /**
      * Complete the onboarding process
@@ -928,9 +1076,6 @@
      */
     async function completeOnboarding() {
         try {
-            // In production, make API call to save all onboarding data
-            // await saveOnboardingData(onboardingState.data);
-
             // Clear onboarding progress from sessionStorage
             sessionStorage.removeItem('onboardingProgress');
 
@@ -975,14 +1120,6 @@
         }, 3000);
     }
 
-    /**
-     * Format date for display
-     * @param {string} dateStr - Date string to format
-     */
-    function formatDate(dateStr) {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
-    }
 </script>
 </body>
 </html>
