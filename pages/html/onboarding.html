@@ -826,11 +826,11 @@
 
     // Constants for better maintainability
     const INVITATION_STATES = {
-            LOADING: 'loading',
-            EMPTY: 'empty',
-            LOADED: 'loaded',
-            ERROR: 'error'
-        };
+        LOADING: 'loading',
+        EMPTY: 'empty',
+        LOADED: 'loaded',
+        ERROR: 'error'
+    };
 
 
     /**
@@ -877,10 +877,7 @@
         await new Promise(resolve => setTimeout(resolve, 1500));
 
         const response = await authenticatedFetch('/coparent/invitations/', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
+            method: 'GET'
         });
 
         if (!response.ok) {
@@ -985,11 +982,11 @@
                 Invites you to be a co-parent for <span class="font-medium">${safe.babyName}</span>
             </p>
             <div class="flex space-x-2">
-                <button onclick="acceptInvitation(${safe.invitationId})"
+                <button onclick="respondInvitation(${safe.invitationId}, true, '${safe.inviterEmail}', '${safe.babyName}')"
                         class="invitation-accept px-4 py-2 bg-pastel-primary text-white text-sm font-medium rounded-lg hover:bg-pastel-primaryHover transition-colors">
                     Accept
                 </button>
-                <button onclick="declineInvitation(${safe.invitationId})"
+                <button onclick="respondInvitation(${safe.invitationId}, false, '${safe.inviterEmail}', '${safe.babyName}')"
                         class="invitation-decline px-4 py-2 border border-pastel-light text-pastel-text text-sm font-medium rounded-lg hover:bg-pastel-lightest transition-colors">
                     Decline
                 </button>
@@ -1044,31 +1041,35 @@
     }
 
     /**
-     * Accept a co-parent invitation
-     * @param {string} invitationId - ID of the invitation to decline
+     * Accept or decline a co-parent invitation
+     * @param {int} invitationId - ID of the invitation to decline
+     * @param {boolean} respond - Accept or reject
+     * @param {string} inviterEmail - Email of the inviter
+     * @param {string} babyName - Baby name
      */
-    async function acceptInvitation(invitationId) {
+    async function respondInvitation(invitationId, respond, inviterEmail, babyName) {
+        const payload = {
+            invitation_id: invitationId,
+            accept: respond
+        };
+        const response = await authenticatedFetch('/coparent/invitations/' + invitationId, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+            throw new Error(await parseErrorResponse(response));
+        }
+
         onboardingState.data.acceptedInvitations.push(invitationId);
         saveProgress();
-        showToast('Invitation accepted! ' + invitationId);
+        if (respond)
+            showToast('Invitation from ' + inviterEmail + 'for baby ' + babyName + ' accepted!');
+        else
+            showToast('Invitation from ' + inviterEmail + 'for baby ' + babyName + ' declined!');
 
         // Reload invitations to update UI
         await loadPendingInvitations();
-         // TODO: Implement accept logic
     }
-
-    /**
-     * Decline a co-parent invitation
-     * @param {string} invitationId - ID of the invitation to decline
-     */
-    async function declineInvitation(invitationId) {
-        if (confirm('Are you sure you want to decline this invitation?')) {
-            showToast('Invitation declined');
-            // Reload invitations to update UI
-            await loadPendingInvitations();
-        }        // TODO: Implement decline logic
-    }
-
 
     /**
      * Complete the onboarding process
@@ -1108,7 +1109,7 @@
     function showToast(message) {
         // Create toast element
         const toast = document.createElement('div');
-        toast.className = 'fixed bottom-4 right-4 bg-pastel-heading text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in';
+        toast.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-pastel-heading text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in';
         toast.textContent = message;
 
         document.body.appendChild(toast);
