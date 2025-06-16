@@ -99,22 +99,20 @@ async def respond_to_coparent_invitation(
     return result
 
 
-@router.delete("/baby/{baby_id}/coparent/{coparent_id}", response_model=InvitationResponse)
+@router.delete("/baby/{baby_id}/coparent/", response_model=InvitationResponse)
 async def remove_baby_coparent(
         baby_id: int,
-        coparent_id: int,
+        coparent: str,
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
     """Remove a co-parent from a baby (requires being the primary parent)"""
-    result = remove_coparent(db, baby_id, coparent_id, current_user.id)
+    result = remove_coparent(db, baby_id, coparent_email=coparent, coparent_id=-1)
 
     if isinstance(result, dict) and result.get('status') == 'fail':
         status_code = status.HTTP_400_BAD_REQUEST
         if result.get('message') == 'Baby not found' or result.get('message') == 'User not found':
             status_code = status.HTTP_404_NOT_FOUND
-        elif result.get('message') == 'Only the primary parent can remove co-parents':
-            status_code = status.HTTP_403_FORBIDDEN
 
         raise HTTPException(
             status_code=status_code,

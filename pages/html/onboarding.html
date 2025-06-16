@@ -53,6 +53,53 @@
         .progress-segment {
             transition: background-color 0.3s ease;
         }
+
+        /* Toast animations */
+        .toast-enter {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast-exit {
+            animation: slideOut 0.3s ease-in;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translate(-50%, -100%);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+            to {
+                transform: translate(-50%, -100%);
+                opacity: 0;
+            }
+        }
+
+        /* Loading spinner */
+        .spinner {
+            border: 2px solid rgba(255, 140, 105, 0.2);
+            border-top-color: #ff8c69;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 <body class="bg-pastel-lightest font-sans text-pastel-text min-h-screen">
@@ -66,8 +113,8 @@
             <span class="font-serif text-pastel-heading text-xl">BabyHelper</span>
         </a>
         <div class="flex items-center space-x-4">
-            <img id="userPicture" class="w-10 h-10 rounded-full">
-            <button onclick="logout()"
+            <img id="userPicture" class="w-10 h-10 rounded-full" alt="User profile">
+            <button onclick="onboardingApp.logout()"
                     class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Logout
             </button>
         </div>
@@ -93,7 +140,7 @@
     <div class="mb-8">
         <div class="flex items-center justify-between mb-2">
             <span class="text-sm text-pastel-textLight">Step <span id="currentStepNumber">1</span> of 3</span>
-            <button onclick="skipAllSteps()"
+            <button onclick="onboardingApp.skipAllSteps()"
                     class="text-sm text-pastel-primary hover:text-pastel-primaryHover font-medium transition-colors">
                 Skip All Steps →
             </button>
@@ -115,49 +162,64 @@
                     </div>
                     <h2 class="font-serif text-2xl text-pastel-heading ml-4">Add Your Baby's Information</h2>
                 </div>
-                <button onclick="skipCurrentStep()"
+                <button onclick="onboardingApp.skipCurrentStep()"
                         class="text-sm text-pastel-textLight hover:text-pastel-text transition-colors">
                     Skip This Step
                 </button>
             </div>
 
+            <!-- Error container for step 1 -->
+            <div id="step1-error" class="hidden mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-red-700 text-sm"></p>
+            </div>
+
             <form id="babyInfoForm" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-medium text-pastel-text mb-2">Baby's Name</label>
-                        <input type="text" id="babyName" placeholder="Emma"
+                        <label for="babyName" class="block text-sm font-medium text-pastel-text mb-2">Baby's
+                            Name</label>
+                        <input type="text" id="babyName" placeholder="Emma" maxlength="100"
                                class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+                        <span class="text-xs text-red-500 mt-1 hidden" id="babyName-error"></span>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-pastel-text mb-2">Date of Birth</label>
+                        <label for="babyDob" class="block text-sm font-medium text-pastel-text mb-2">Date of
+                            Birth</label>
                         <input type="date" id="babyDob"
                                class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+                        <span class="text-xs text-red-500 mt-1 hidden" id="babyDob-error"></span>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-pastel-text mb-2">Gender</label>
+                        <label for="babyGender" class="block text-sm font-medium text-pastel-text mb-2">Gender</label>
                         <select id="babyGender"
                                 class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
                             <option value="">Select gender</option>
                             <option value="male">Male</option>
                             <option value="female">Female</option>
                         </select>
+                        <span class="text-xs text-red-500 mt-1 hidden" id="babyGender-error"></span>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-pastel-text mb-2">Current Weight (kg)</label>
-                        <input type="number" id="babyWeight" step="0.1" placeholder="3.2"
+                        <label for="babyWeight" class="block text-sm font-medium text-pastel-text mb-2">Current Weight
+                            (kg)</label>
+                        <input type="number" id="babyWeight" step="0.1" placeholder="3.2" min="0.5" max="50"
                                class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+                        <span class="text-xs text-red-500 mt-1 hidden" id="babyWeight-error"></span>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-pastel-text mb-2">Baby's Name</label>
-                        <input type="text" id="babyHeight" placeholder="49.2"
+                        <label for="babyHeight" class="block text-sm font-medium text-pastel-text mb-2">Current Height
+                            (cm)</label>
+                        <input type="number" id="babyHeight" step="0.1" placeholder="49.2" min="20" max="150"
                                class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+                        <span class="text-xs text-red-500 mt-1 hidden" id="babyHeight-error"></span>
                     </div>
                 </div>
 
                 <div class="flex justify-end space-x-4 mt-8">
-                    <button type="button" onclick="nextStep()"
-                            class="px-8 py-3 bg-pastel-primary text-white font-semibold rounded-lg hover:bg-pastel-primaryHover transition-colors">
-                        Next Step
+                    <button type="button" onclick="onboardingApp.nextStep()" id="step1-submit"
+                            class="px-8 py-3 bg-pastel-primary text-white font-semibold rounded-lg hover:bg-pastel-primaryHover transition-colors flex items-center space-x-2">
+                        <span>Next Step</span>
+                        <div class="spinner hidden"></div>
                     </button>
                 </div>
             </form>
@@ -174,7 +236,7 @@
                     </div>
                     <h2 class="font-serif text-2xl text-pastel-heading ml-4">Invite a Co-parent</h2>
                 </div>
-                <button onclick="skipCurrentStep()"
+                <button onclick="onboardingApp.skipCurrentStep()"
                         class="text-sm text-pastel-textLight hover:text-pastel-text transition-colors">
                     Skip This Step
                 </button>
@@ -205,17 +267,25 @@
                 </div>
             </div>
 
+            <!-- Error container for step 2 -->
+            <div id="step2-error" class="hidden mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-red-700 text-sm"></p>
+            </div>
+
             <form id="coParentForm" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-pastel-text mb-2">Co-parent's Email</label>
+                    <label for="coParentEmail" class="block text-sm font-medium text-pastel-text mb-2">Co-parent's
+                        Email</label>
                     <div class="flex space-x-2">
-                        <input type="email" id="coParentEmail" placeholder="partner@example.com"
+                        <input type="email" id="coParentEmail" placeholder="partner@example.com" maxlength="255"
                                class="flex-1 px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
-                        <button type="button" onclick="nextStep()"
-                                class="px-6 py-2 bg-pastel-secondary text-pastel-primary font-medium rounded-lg hover:bg-pastel-accent1 hover:text-white transition-colors">
-                            Send Invite
+                        <button type="button" onclick="onboardingApp.sendInvite()" id="invite-submit"
+                                class="px-6 py-2 bg-pastel-secondary text-pastel-primary font-medium rounded-lg hover:bg-pastel-accent1 hover:text-white transition-colors flex items-center space-x-2">
+                            <span>Send Invite</span>
+                            <div class="spinner hidden"></div>
                         </button>
                     </div>
+                    <span class="text-xs text-red-500 mt-1 hidden" id="coParentEmail-error"></span>
                 </div>
 
                 <!-- Invited List -->
@@ -228,11 +298,11 @@
             </form>
 
             <div class="flex justify-between mt-8">
-                <button type="button" onclick="previousStep()"
+                <button type="button" onclick="onboardingApp.previousStep()"
                         class="px-6 py-3 border border-pastel-light text-pastel-text font-medium rounded-lg hover:bg-pastel-lightest transition-colors">
                     Previous
                 </button>
-                <button type="button" onclick="skipCurrentStep()"
+                <button type="button" onclick="onboardingApp.nextStep()"
                         class="px-8 py-3 bg-pastel-primary text-white font-semibold rounded-lg hover:bg-pastel-primaryHover transition-colors">
                     Next Step
                 </button>
@@ -250,7 +320,7 @@
                     </div>
                     <h2 class="font-serif text-2xl text-pastel-heading ml-4">Co-parent Invitations</h2>
                 </div>
-                <button onclick="skipCurrentStep()"
+                <button onclick="onboardingApp.skipCurrentStep()"
                         class="text-sm text-pastel-textLight hover:text-pastel-text transition-colors">
                     Skip This Step
                 </button>
@@ -263,13 +333,7 @@
             <!-- Loading State -->
             <div id="invitationsLoading" class="text-center py-8">
                 <div class="inline-flex items-center space-x-2">
-                    <svg class="animate-spin h-5 w-5 text-pastel-primary" xmlns="http://www.w3.org/2000/svg" fill="none"
-                         viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                    <div class="spinner"></div>
                     <span class="text-pastel-textLight">Checking for invitations...</span>
                 </div>
             </div>
@@ -290,13 +354,14 @@
             </div>
 
             <div class="flex justify-between mt-8">
-                <button type="button" onclick="previousStep()"
+                <button type="button" onclick="onboardingApp.previousStep()"
                         class="px-6 py-3 border border-pastel-light text-pastel-text font-medium rounded-lg hover:bg-pastel-lightest transition-colors">
                     Previous
                 </button>
-                <button type="button" onclick="completeOnboarding()"
-                        class="px-8 py-3 bg-pastel-primary text-white font-semibold rounded-lg hover:bg-pastel-primaryHover transition-colors">
-                    Complete Setup
+                <button type="button" onclick="onboardingApp.completeOnboarding()" id="complete-button"
+                        class="px-8 py-3 bg-pastel-primary text-white font-semibold rounded-lg hover:bg-pastel-primaryHover transition-colors flex items-center space-x-2">
+                    <span>Complete Setup</span>
+                    <div class="spinner hidden"></div>
                 </button>
             </div>
         </div>
@@ -353,774 +418,1167 @@
     </div>
 </div>
 
+<!-- Toast Container -->
+<div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50"></div>
+
 <script>
     /**
-     * Onboarding State Management
-     * Tracks current step, form data, and manages step transitions
+     * BabyHelper Onboarding Application
+     *
+     * This Application implements:
+     * - Modular architecture with clear separation of concerns
+     * - Comprehensive error handling with user-friendly feedback
+     * - XSS prevention through consistent HTML escaping
+     * - Retry functionality for network operations
+     * - Input validation and sanitization
+     * - Reusable UI components and utilities
      */
-    const onboardingState = {
-        currentStep: 1,
-        totalSteps: 3,
-        data: {
-            babyInfo: {},
-            coParents: [],
-            acceptedInvitations: []
-        }
-    };
 
-    /**
-     * Initialize onboarding on page load
-     * Checks authentication and loads user data
-     */
-    window.addEventListener('DOMContentLoaded', function () {
-        // Check authentication
-        const idToken = sessionStorage.getItem('idToken');
-        const userEmail = sessionStorage.getItem('userEmail');
-        const userName = sessionStorage.getItem('userName');
-        const userPicture = sessionStorage.getItem('userPicture');
+        // Namespace for the application to avoid global scope pollution
+    const onboardingApp = (function () {
+            'use strict';
 
-        if (!idToken) {
-            window.location.href = '/';
-            return;
-        }
+            // ============================================================================
+            // Constants and Configuration
+            // ============================================================================
 
-        // Display user information
-        if (userName) document.getElementById('userName').textContent = userName;
-        if (userEmail) document.getElementById('userEmail').textContent = userEmail;
-        if (userPicture) document.getElementById('userPicture').src = userPicture;
+            const CONFIG = {
+                API_TIMEOUT: 30000, // 30 seconds
+                RETRY_ATTEMPTS: 3,
+                RETRY_DELAY: 1000, // 1 second
+                TOAST_DURATION: 3000, // 3 seconds
+                MIN_PASSWORD_LENGTH: 8,
+                MAX_NAME_LENGTH: 100,
+                MAX_EMAIL_LENGTH: 255,
+                BABY_WEIGHT_MIN: 0.5,
+                BABY_WEIGHT_MAX: 50,
+                BABY_HEIGHT_MIN: 20,
+                BABY_HEIGHT_MAX: 150
+            };
 
-        window.authToken = idToken;
+            const STATES = {
+                LOADING: 'loading',
+                EMPTY: 'empty',
+                LOADED: 'loaded',
+                ERROR: 'error',
+                SAVING: 'saving',
+                SAVED: 'saved'
+            };
 
-        // Initialize first step
-        showStep(1);
+            const MESSAGE_TYPES = {
+                SUCCESS: 'success',
+                ERROR: 'error',
+                WARNING: 'warning',
+                INFO: 'info'
+            };
 
-        // Load any saved progress from sessionStorage
-        loadSavedProgress();
-    });
+            // ============================================================================
+            // State Management
+            // ============================================================================
 
-    /**
-     * Load saved onboarding progress from sessionStorage
-     * Allows users to resume where they left off
-     */
-    function loadSavedProgress() {
-        const savedProgress = sessionStorage.getItem('onboardingProgress');
-        if (savedProgress) {
-            const progress = JSON.parse(savedProgress);
-            onboardingState.data = progress;
-
-            // Pre-fill forms with saved data
-            if (progress.babyInfo) {
-                document.getElementById('babyName').value = progress.babyInfo.name || '';
-                document.getElementById('babyDob').value = progress.babyInfo.dob || '';
-                document.getElementById('babyGender').value = progress.babyInfo.gender || '';
-                document.getElementById('babyWeight').value = progress.babyInfo.weight || '';
-                document.getElementById('babyHeight').value = progress.babyInfo.height || '';
-            }
-        }
-    }
-
-    /**
-     * Save current progress to sessionStorage
-     * Ensures users don't lose data if they navigate away
-     */
-    function saveProgress() {
-        sessionStorage.setItem('onboardingProgress', JSON.stringify(onboardingState.data));
-    }
-
-    /**
-     * Show specific step and hide others
-     * @param {number} stepNumber - The step to display (1-3)
-     */
-    function showStep(stepNumber) {
-        // Update state
-        onboardingState.currentStep = stepNumber;
-
-        // Update step number display
-        document.getElementById('currentStepNumber').textContent = stepNumber;
-
-        // Update progress bar
-        for (let i = 1; i <= onboardingState.totalSteps; i++) {
-            const segment = document.getElementById(`progress-${i}`);
-            if (i <= stepNumber) {
-                segment.classList.add('bg-pastel-primary');
-                segment.classList.remove('bg-pastel-light');
-            } else {
-                segment.classList.remove('bg-pastel-primary');
-                segment.classList.add('bg-pastel-light');
-            }
-        }
-
-        // Show/hide steps with animation
-        for (let i = 1; i <= onboardingState.totalSteps; i++) {
-            const step = document.getElementById(`step-${i}`);
-            if (i === stepNumber) {
-                step.classList.remove('step-hidden', 'step-inactive');
-
-                // Special handling for step 3 - load invitations
-                if (i === 3) {
-                    loadPendingInvitations();
+            const state = {
+                currentStep: 1,
+                totalSteps: 3,
+                isLoading: false,
+                retryCounters: {},
+                data: {
+                    babyInfo: {},
+                    coParents: [],
+                    acceptedInvitations: []
                 }
-            } else {
-                step.classList.add('step-hidden');
-            }
-        }
-    }
+            };
 
-    /**
-     * Navigate to the next step
-     * Saves current step data before proceeding
-     */
-    async function nextStep() {
-        // Early return if already at the last step
-        if (onboardingState.currentStep >= onboardingState.totalSteps) {
-            return;
-        }
+            // ============================================================================
+            // Utility Functions
+            // ============================================================================
 
-        // Save current step data based on step number
-        const saveOperations = {
-            1: saveBabyInfo,
-            2: sendInvite
-            // 3: savePreferences,
-        };
+            const utils = {
+                    /**
+                     * Escape HTML to prevent XSS attacks
+                     * @param {string} unsafe - Unsafe string
+                     * @returns {string} Safe HTML string
+                     */
+                    escapeHtml(unsafe) {
+                        if (typeof unsafe !== 'string') return '';
+                        const div = document.createElement('div');
+                        div.textContent = unsafe;
+                        return div.innerHTML;
+                    },
 
-        const saveFunction = saveOperations[onboardingState.currentStep];
+                    /**
+                     * Validate email format (Gmail only)
+                     * @param {string} email - Email to validate
+                     * @returns {boolean} Is valid Gmail address
+                     */
+                    isValidGmail(email) {
+                        const gmailRegex = /^[a-zA-Z0-9.+_-]+@gmail\.com$/;
+                        return gmailRegex.test(email);
+                    },
 
-        if (saveFunction) {
-            try {
-                await saveFunction();
-            } catch (error) {
-                // Handle different error types
-                const errorMessage = error.message || 'An error occurred while saving data';
+                    /**
+                     * Validate date is not in the future
+                     * @param {string} dateString - Date string
+                     * @returns {boolean} Is valid date
+                     */
+                    isValidBirthdate(dateString) {
+                        const date = new Date(dateString);
+                        if (isNaN(date.getTime())) return false;
 
-                alert(`Notice: ${errorMessage}`);
+                        // Get today in YYYY-MM-DD format for comparison
+                        const today = new Date();
+                        const todayStr = today.getFullYear() + '-' +
+                            String(today.getMonth() + 1).padStart(2, '0') + '-' +
+                            String(today.getDate()).padStart(2, '0');
 
-                // Log error for debugging
-                console.error('Save operation failed:', error);
+                        // Convert input date to YYYY-MM-DD format
+                        const inputDateStr = date.getFullYear() + '-' +
+                            String(date.getMonth() + 1).padStart(2, '0') + '-' +
+                            String(date.getDate()).padStart(2, '0');
 
-                // Exit early - don't proceed to next step
-                return;
-            }
-        }
+                        // Compare date strings to avoid timezone issues
+                        return inputDateStr <= todayStr;
+                    },
 
-        if (onboardingState.currentStep === 2) {
-            return;
-        }
-        // Only proceed if save was successful (or no save was needed, or not step 2)
-        showStep(onboardingState.currentStep + 1);
-    }
-
-    /**
-     * Navigate to the previous step
-     */
-    function previousStep() {
-        if (onboardingState.currentStep > 1) {
-            showStep(onboardingState.currentStep - 1);
-        }
-    }
-
-    /**
-     * Skip the current step and move to the next
-     * If on last step, complete onboarding
-     */
-    function skipCurrentStep() {
-        if (onboardingState.currentStep < onboardingState.totalSteps) {
-            showStep(onboardingState.currentStep + 1);
-        } else {
-            completeOnboarding();
-        }
-    }
-
-    /**
-     * Skip all remaining steps and complete onboarding
-     * Shows confirmation before proceeding
-     */
-    function skipAllSteps() {
-        if (confirm('Are you sure you want to skip all steps? You can complete these later in settings.')) {
-            completeOnboarding();
-        }
-    }
-
-
-    /**
-     * Get the authentication token from storage
-     * @returns {string|null} The authentication token or null if not found
-     */
-    function getAuthToken() {
-        return sessionStorage.getItem('idToken') || window.authToken || null;
-    }
-
-    /**
-     * Get default headers for API requests
-     * @returns {Object} Headers object with authentication
-     */
-    function getApiHeaders() {
-        const token = getAuthToken();
-        if (!token) {
-            throw new Error('No authentication token found');
-        }
-
-        return {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        };
-    }
-
-    /**
-     * Make an authenticated API request
-     * @param {string} url - The API endpoint
-     * @param {Object} options - Fetch options
-     * @returns {Promise<Response>} The fetch response
-     */
-    async function authenticatedFetch(url, options = {}) {
-        try {
-            const headers = getApiHeaders();
-            const response = await fetch(url, {
-                ...options,
-                headers: {
-                    ...headers,
-                    ...options.headers
-                }
-            });
-
-            // Handle 401/403 globally
-            if (response.status === 401 || response.status === 403) {
-                sessionStorage.clear();
-                window.location.href = '/auth/login';
-                throw new Error('Authentication expired. Redirecting to login...');
-            }
-
-            return response;
-        } catch (error) {
-            console.error('API request failed:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Format date to YYYY-MM-DD format expected by backend
-     * @param {string} dateString - Date in any format
-     * @returns {string} Date in YYYY-MM-DD format
-     */
-    function formatDateForAPI(dateString) {
-        const date = new Date(dateString);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-
-    /**
-     * Save baby data to the backend
-     */
-    async function saveBabyData(name, dob, gender, weight, height) {
-
-        // Format the date properly
-        const formattedDob = formatDateForAPI(dob);
-
-        // Prepare the payload
-        const payload = {
-            fullname: name.trim(),
-            birthdate: formattedDob,
-            sex: gender
-        };
-
-        // Only add weight and height if they have values
-        if (weight && !isNaN(parseFloat(weight))) {
-            payload.weight = parseFloat(weight);
-        }
-        if (height && !isNaN(parseFloat(height))) {
-            payload.height = parseFloat(height);
-        }
-
-        const response = await authenticatedFetch('/baby/', {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) {
-            let errorMessage = 'Failed to save baby information';
-
-            try {
-                const errorData = await response.json();
-                console.error('Error response:', errorData); // Debug log
-
-                // Handle different error formats from FastAPI
-                if (errorData.detail) {
-                    if (typeof errorData.detail === 'string') {
-                        errorMessage = errorData.detail;
-                    } else if (Array.isArray(errorData.detail)) {
-                        // Validation errors from FastAPI
-                        errorMessage = errorData.detail.map(err => {
-                            const field = err.loc ? err.loc[err.loc.length - 1] : 'field';
-                            return `${field}: ${err.msg}`;
-                        }).join(', ');
+                    /**
+                     * Format date to YYYY-MM-DD
+                     * @param {string} dateString - Date in any format
+                     * @returns {string} Formatted date
+                     */
+                    formatDateForAPI(dateString) {
+                        const date = new Date(dateString);
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        return `${year}-${month}-${day}`;
                     }
-                } else if (errorData.message) {
-                    errorMessage = errorData.message;
-                }
-            } catch (e) {
-                // If error response is not JSON
-                errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-            }
+                    ,
 
-            if (response.status === 409) {
-                throw new Error('Baby already exists with this name and birthdate');
-            } else if (response.status === 422) {
-                throw new Error(`Validation error: ${errorMessage}`);
-            } else {
-                throw new Error(errorMessage);
-            }
-        }
-
-        const savedBaby = await response.json();
-
-        // Save to onboarding state
-        onboardingState.data.babyInfo = {
-            baby_id: savedBaby.id,
-            name: savedBaby.fullname,
-            dob: savedBaby.birthdate,
-            gender: savedBaby.sex,
-            weight: savedBaby.weight,
-            height: savedBaby.height,
-        };
-        saveProgress();
-
-        return savedBaby;
-
-
-    }
-
-    /**
-     * Save baby information from Step 1
-     */
-    async function saveBabyInfo() {
-        const babyName = document.getElementById('babyName').value;
-        const babyDob = document.getElementById('babyDob').value;
-        const babyGender = document.getElementById('babyGender').value;
-        const babyWeight = document.getElementById('babyWeight').value;
-        const babyHeight = document.getElementById('babyHeight').value;
-        if (!babyName || !babyDob || !babyGender || !babyWeight || !babyHeight) {
-            throw new Error('All baby fields are not entered');
-        }
-
-        await saveBabyData(babyName, babyDob, babyGender, babyWeight, babyHeight);
-
-
-    }
-
-    /**
-     * Send co-parent invitation
-     * Validates email and adds to invitation list
-     */
-    async function sendInvite() {
-        // Check if baby info exists in the state object
-        if (!onboardingState.data.babyInfo || Object.keys(onboardingState.data.babyInfo).length === 0) {
-            throw new Error('To add co-parent to your baby, please enter your baby information in the previous step. Or skip this step.');
-        }
-
-        const emailInput = document.getElementById('coParentEmail');
-        const email = emailInput.value.trim();
-
-        if (!email) {
-            throw new Error('Please enter an email address');
-        }
-        if (email === sessionStorage.getItem('userEmail')) {
-            throw new Error('Please enter an email address that is not yours');
-        }
-
-        // Gmail-only email validation
-        const gmailRegex = /^[a-zA-Z0-9.+_-]+@gmail\.com$/;
-        if (!gmailRegex.test(email)) {
-            throw new Error('Please enter a valid Gmail address');
-        }
-
-        // Check if already invited
-        if (onboardingState.data.coParents.includes(email)) {
-            throw new Error('This person has already been invited');
-        }
-
-        const payload = {
-            baby_id: onboardingState.data.babyInfo.baby_id,
-            email: email
-        }
-
-        const response = await authenticatedFetch('/coparent/invite/', {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) {
-            let errorMessage = 'Failed to send invitation';
-
-            try {
-                const errorData = await response.json();
-                console.error('Error response:', errorData); // Debug log
-
-                // Handle different error formats from FastAPI
-                if (errorData.detail) {
-                    if (typeof errorData.detail === 'string') {
-                        errorMessage = errorData.detail;
-                    } else if (Array.isArray(errorData.detail)) {
-                        // Validation errors from FastAPI
-                        errorMessage = errorData.detail.map(err => {
-                            const field = err.loc ? err.loc[err.loc.length - 1] : 'field';
-                            return `${field}: ${err.msg}`;
-                        }).join(', ');
+                    /**
+                     * Format date for display
+                     * @param {string} dateString - Date string
+                     * @returns {string} Formatted date
+                     */
+                    formatDateForDisplay(dateString) {
+                        try {
+                            const date = new Date(dateString);
+                            return date.toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                            });
+                        } catch (e) {
+                            return 'Invalid date';
+                        }
                     }
-                } else if (errorData.message) {
-                    errorMessage = errorData.message;
+                    ,
+
+                    /**
+                     * Debounce function to limit execution frequency
+                     * @param {Function} func - Function to debounce
+                     * @param {number} wait - Wait time in milliseconds
+                     * @returns {Function} Debounced function
+                     */
+                    debounce(func, wait) {
+                        let timeout;
+                        return function executedFunction(...args) {
+                            const later = () => {
+                                clearTimeout(timeout);
+                                func(...args);
+                            };
+                            clearTimeout(timeout);
+                            timeout = setTimeout(later, wait);
+                        };
+                    }
+                    ,
+
+                    /**
+                     * Sleep for specified milliseconds
+                     * @param {number} ms - Milliseconds to sleep
+                     * @returns {Promise} Promise that resolves after delay
+                     */
+                    sleep(ms) {
+                        return new Promise(resolve => setTimeout(resolve, ms));
+                    }
                 }
-            } catch (e) {
-                // If error response is not JSON
-                errorMessage = `HTTP ${response.status}: ${response.statusText[1]}`;
-            }
+            ;
 
-            throw new Error(errorMessage);
-        }
+            // ============================================================================
+            // API Communication Layer
+            // ============================================================================
 
-        // Add to invitations
-        onboardingState.data.coParents.push(email);
-        saveProgress();
+            const api = {
+                /**
+                 * Get authentication token
+                 * @returns {string|null} Auth token
+                 */
+                getAuthToken() {
+                    return sessionStorage.getItem('idToken') || window.authToken || null;
+                },
 
-        // Update UI
-        updateInvitationsList();
-        emailInput.value = '';
+                /**
+                 * Get API headers with authentication
+                 * @returns {Object} Headers object
+                 */
+                getHeaders() {
+                    const token = this.getAuthToken();
+                    if (!token) {
+                        throw new Error('No authentication token found');
+                    }
+                    return {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    };
+                },
 
-        // Show success message
-        showToast('Invitation sent successfully!');
-    }
+                /**
+                 * Parse error response from API
+                 * @param {Response} response - Fetch response
+                 * @returns {Promise<string>} Error message
+                 */
+                async parseErrorResponse(response) {
+                    let errorMessage = `Request failed (${response.status})`;
 
-    /**
-     * Update the displayed list of sent invitations
-     */
-    function updateInvitationsList() {
-        const listContainer = document.getElementById('invitedList');
-        const invitationsList = document.getElementById('invitationsList');
+                    try {
+                        const errorData = await response.json();
 
-        if (onboardingState.data.coParents.length > 0) {
-            listContainer.classList.remove('hidden');
+                        if (errorData.detail) {
+                            if (typeof errorData.detail === 'string') {
+                                errorMessage = errorData.detail;
+                            } else if (Array.isArray(errorData.detail)) {
+                                errorMessage = errorData.detail
+                                    .map(err => {
+                                        const field = err.loc?.[err.loc.length - 1] || 'field';
+                                        return `${field}: ${err.msg}`;
+                                    })
+                                    .join(', ');
+                            }
+                        } else if (errorData.message) {
+                            errorMessage = errorData.message;
+                        }
+                    } catch (e) {
+                        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                    }
 
-            invitationsList.innerHTML = onboardingState.data.coParents.map(email => `
-                    <div class="flex items-center justify-between p-3 bg-pastel-lightest rounded-lg">
-                        <span class="text-sm text-pastel-text">${email}</span>
-                        <button onclick="removeInvitation('${email}')" class="text-sm text-red-500 hover:text-red-700">
-                            Remove
-                        </button>
+                    return errorMessage;
+                },
+
+                /**
+                 * Make authenticated API request with retry
+                 * @param {string} url - API endpoint
+                 * @param {Object} options - Fetch options
+                 * @returns {Promise<Response>} API response
+                 */
+                async request(url, options = {}) {
+                    const retryKey = `${options.method || 'GET'}_${url}`;
+                    state.retryCounters[retryKey] = state.retryCounters[retryKey] || 0;
+
+                    for (let attempt = 0; attempt < CONFIG.RETRY_ATTEMPTS; attempt++) {
+                        try {
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => controller.abort(), CONFIG.API_TIMEOUT);
+
+                            const response = await fetch(url, {
+                                ...options,
+                                headers: {
+                                    ...this.getHeaders(),
+                                    ...options.headers
+                                },
+                                signal: controller.signal
+                            });
+
+                            clearTimeout(timeoutId);
+
+                            // Handle authentication errors
+                            if (response.status === 401 || response.status === 403) {
+                                sessionStorage.clear();
+                                window.location.href = '/auth/login';
+                                throw new Error('Authentication expired');
+                            }
+
+                            // Reset retry counter on success
+                            if (response.ok) {
+                                state.retryCounters[retryKey] = 0;
+                            }
+
+                            return response;
+
+                        } catch (error) {
+                            state.retryCounters[retryKey]++;
+
+                            // Don't retry on authentication errors
+                            if (error.message === 'Authentication expired') {
+                                throw error;
+                            }
+
+                            // Last attempt or non-retryable error
+                            if (attempt === CONFIG.RETRY_ATTEMPTS - 1 ||
+                                error.name === 'AbortError') {
+                                throw error;
+                            }
+
+                            // Wait before retry with exponential backoff
+                            await utils.sleep(CONFIG.RETRY_DELAY * Math.pow(2, attempt));
+                        }
+                    }
+                },
+
+                /**
+                 * API endpoints
+                 */
+                endpoints: {
+                    async createBaby(data) {
+                        const response = await api.request('/baby/', {
+                            method: 'POST',
+                            body: JSON.stringify(data)
+                        });
+                        if (!response.ok) {
+                            const error = await api.parseErrorResponse(response);
+                            throw new Error(error);
+                        }
+                        return response.json();
+                    },
+
+                    async sendCoparentInvite(data) {
+                        const response = await api.request('/coparent/invite/', {
+                            method: 'POST',
+                            body: JSON.stringify(data)
+                        });
+                        if (!response.ok) {
+                            const error = await api.parseErrorResponse(response);
+                            throw new Error(error);
+                        }
+                        return response.json();
+                    },
+
+                    async getPendingInvitations() {
+                        const response = await api.request('/coparent/invitations/', {
+                            method: 'GET'
+                        });
+                        if (!response.ok) {
+                            const error = await api.parseErrorResponse(response);
+                            throw new Error(error);
+                        }
+                        return response.json();
+                    },
+
+                    async respondToInvitation(invitationId, accept) {
+                        const response = await api.request(`/coparent/invitations/${invitationId}`, {
+                            method: 'POST',
+                            body: JSON.stringify({invitation_id: invitationId, accept})
+                        });
+                        if (!response.ok) {
+                            const error = await api.parseErrorResponse(response);
+                            throw new Error(error);
+                        }
+                        return response.json();
+                    }
+                }
+            };
+
+            // ============================================================================
+            // UI Components and Updates
+            // ============================================================================
+
+            const ui = {
+                /**
+                 * Show loading state on button
+                 * @param {string} buttonId - Button element ID
+                 * @param {boolean} isLoading - Loading state
+                 */
+                setButtonLoading(buttonId, isLoading) {
+                    const button = document.getElementById(buttonId);
+                    if (!button) return;
+
+                    const spinner = button.querySelector('.spinner');
+                    const text = button.querySelector('span');
+
+                    if (isLoading) {
+                        button.disabled = true;
+                        if (spinner) spinner.classList.remove('hidden');
+                        if (text) text.textContent = 'Loading...';
+                    } else {
+                        button.disabled = false;
+                        if (spinner) spinner.classList.add('hidden');
+                        if (text) {
+                            // Reset to original text
+                            switch (buttonId) {
+                                case 'step1-submit':
+                                    text.textContent = 'Next Step';
+                                    break;
+                                case 'invite-submit':
+                                    text.textContent = 'Send Invite';
+                                    break;
+                                case 'complete-button':
+                                    text.textContent = 'Complete Setup';
+                                    break;
+                            }
+                        }
+                    }
+                },
+
+                /**
+                 * Show field error
+                 * @param {string} fieldId - Field element ID
+                 * @param {string} message - Error message
+                 */
+                showFieldError(fieldId, message) {
+                    const field = document.getElementById(fieldId);
+                    const errorEl = document.getElementById(`${fieldId}-error`);
+
+                    if (field) {
+                        field.classList.add('border-red-500');
+                        field.classList.remove('border-pastel-light');
+                    }
+
+                    if (errorEl) {
+                        errorEl.textContent = message;
+                        errorEl.classList.remove('hidden');
+                    }
+                },
+
+                /**
+                 * Clear field error
+                 * @param {string} fieldId - Field element ID
+                 */
+                clearFieldError(fieldId) {
+                    const field = document.getElementById(fieldId);
+                    const errorEl = document.getElementById(`${fieldId}-error`);
+
+                    if (field) {
+                        field.classList.remove('border-red-500');
+                        field.classList.add('border-pastel-light');
+                    }
+
+                    if (errorEl) {
+                        errorEl.classList.add('hidden');
+                        errorEl.textContent = '';
+                    }
+                },
+
+                /**
+                 * Clear all field errors in a form
+                 * @param {string} formId - Form element ID
+                 */
+                clearFormErrors(formId) {
+                    const form = document.getElementById(formId);
+                    if (!form) return;
+
+                    // Clear all field errors
+                    form.querySelectorAll('input, select').forEach(field => {
+                        this.clearFieldError(field.id);
+                    });
+
+                    // Clear step error
+                    const stepError = form.closest('.step-container')?.querySelector('[id$="-error"]');
+                    if (stepError) {
+                        stepError.classList.add('hidden');
+                        stepError.querySelector('p').textContent = '';
+                    }
+                },
+
+                /**
+                 * Show step error
+                 * @param {number} step - Step number
+                 * @param {string} message - Error message
+                 */
+                showStepError(step, message) {
+                    const errorEl = document.getElementById(`step${step}-error`);
+                    if (errorEl) {
+                        errorEl.querySelector('p').textContent = message;
+                        errorEl.classList.remove('hidden');
+                    }
+                },
+
+                /**
+                 * Show toast notification
+                 * @param {string} message - Message to display
+                 * @param {string} type - Message type (success, error, warning, info)
+                 */
+                showToast(message, type = MESSAGE_TYPES.SUCCESS) {
+                    const container = document.getElementById('toast-container');
+                    if (!container) return;
+
+                    const toast = document.createElement('div');
+                    const bgColors = {
+                        [MESSAGE_TYPES.SUCCESS]: 'bg-green-600',
+                        [MESSAGE_TYPES.ERROR]: 'bg-red-600',
+                        [MESSAGE_TYPES.WARNING]: 'bg-yellow-600',
+                        [MESSAGE_TYPES.INFO]: 'bg-pastel-primary'
+                    };
+
+                    toast.className = `${bgColors[type]} text-white px-6 py-3 rounded-lg shadow-lg mb-2 toast-enter`;
+                    toast.textContent = message;
+
+                    container.appendChild(toast);
+
+                    // Remove after duration
+                    setTimeout(() => {
+                        toast.classList.add('toast-exit');
+                        setTimeout(() => toast.remove(), 300);
+                    }, CONFIG.TOAST_DURATION);
+                },
+
+                /**
+                 * Update progress bar
+                 * @param {number} step - Current step
+                 */
+                updateProgressBar(step) {
+                    for (let i = 1; i <= state.totalSteps; i++) {
+                        const segment = document.getElementById(`progress-${i}`);
+                        if (segment) {
+                            if (i <= step) {
+                                segment.classList.add('bg-pastel-primary');
+                                segment.classList.remove('bg-pastel-light');
+                            } else {
+                                segment.classList.remove('bg-pastel-primary');
+                                segment.classList.add('bg-pastel-light');
+                            }
+                        }
+                    }
+                },
+
+                /**
+                 * Update invitation list display
+                 */
+                updateInvitationsList() {
+                    const listContainer = document.getElementById('invitedList');
+                    const invitationsList = document.getElementById('invitationsList');
+
+                    if (!listContainer || !invitationsList) return;
+
+                    if (state.data.coParents.length > 0) {
+                        listContainer.classList.remove('hidden');
+                        invitationsList.innerHTML = state.data.coParents
+                            .map(email => this.createInvitationItemHTML(email))
+                            .join('');
+                    } else {
+                        listContainer.classList.add('hidden');
+                    }
+                },
+
+                /**
+                 * Create HTML for invitation list item
+                 * @param {string} email - Invitee email
+                 * @returns {string} HTML string
+                 */
+                createInvitationItemHTML(email) {
+                    const safeEmail = utils.escapeHtml(email);
+                    return `
+                        <div class="p-3 bg-pastel-lightest rounded-lg">
+                            <span class="text-sm text-pastel-text">${safeEmail}</span>
+                        </div>
+                    `;
+                },
+
+                /**
+                 * Create HTML for pending invitation
+                 * @param {Object} invitation - Invitation data
+                 * @returns {string} HTML string
+                 */
+                createPendingInvitationHTML(invitation) {
+                    const safe = {
+                        inviterName: utils.escapeHtml(invitation.inviter_name || 'Unknown'),
+                        inviterEmail: utils.escapeHtml(invitation.inviter_email),
+                        babyName: utils.escapeHtml(invitation.baby_name),
+                        createdAt: utils.formatDateForDisplay(invitation.created_at),
+                        invitationId: parseInt(invitation.invitation_id, 10)
+                    };
+
+                    return `
+                    <div class="border border-pastel-light rounded-lg p-4 space-y-3"
+                         data-invitation-id="${safe.invitationId}">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-semibold text-pastel-heading">${safe.inviterName}</h4>
+                                <p class="text-sm text-pastel-textLight">${safe.inviterEmail}</p>
+                            </div>
+                            <span class="text-xs text-pastel-textLight">${safe.createdAt}</span>
+                        </div>
+                        <p class="text-sm text-pastel-text">
+                            Invites you to be a co-parent for
+                            <span class="font-medium">${safe.babyName}</span>
+                        </p>
+                        <div class="flex space-x-2">
+                            <button onclick="onboardingApp.respondToInvitation(${safe.invitationId}, true)"
+                                    class="invitation-accept px-4 py-2 bg-pastel-primary text-white text-sm font-medium rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                                Accept
+                            </button>
+                            <button onclick="onboardingApp.respondToInvitation(${safe.invitationId}, false)"
+                                    class="invitation-decline px-4 py-2 border border-pastel-light text-pastel-text text-sm font-medium rounded-lg hover:bg-pastel-lightest transition-colors">
+                                Decline
+                            </button>
+                        </div>
                     </div>
-                `).join('');
-        } else {
-            listContainer.classList.add('hidden');
-        }
-    }
+                `;
+                },
 
-    /**
-     * Remove an invitation
-     * @param {string} email - Email to remove from invitations
-     */
-    function removeInvitation(email) {
-        onboardingState.data.coParents = onboardingState.data.coParents.filter(e => e !== email);
-        saveProgress();
-        updateInvitationsList();
-    }
+                /**
+                 * Set invitation display state
+                 * @param {Object} elements - DOM elements
+                 * @param {string} displayState - Display state
+                 */
+                setInvitationState(elements, displayState) {
+                    Object.values(elements).forEach(el => el?.classList.add('hidden'));
 
-
-    // Constants for better maintainability
-    const INVITATION_STATES = {
-        LOADING: 'loading',
-        EMPTY: 'empty',
-        LOADED: 'loaded',
-        ERROR: 'error'
-    };
-
-
-    /**
-     * Load and display pending co-parent invitations (Step 3)
-     * @returns {Promise<void>}
-     */
-    async function loadPendingInvitations() {
-        const elements = {
-            loading: document.getElementById('invitationsLoading'),
-            noInvitations: document.getElementById('noInvitations'),
-            invitations: document.getElementById('pendingInvitations')
-        };
-
-        // Validate required elements exist
-        if (!elements.loading || !elements.noInvitations || !elements.invitations) {
-            console.error('Required DOM elements not found');
-            return;
-        }
-
-        setInvitationState(elements, INVITATION_STATES.LOADING);
-
-        try {
-            const invitations = await fetchPendingInvitations();
-
-            if (invitations.length > 0) {
-                displayInvitations(elements.invitations, invitations);
-                setInvitationState(elements, INVITATION_STATES.LOADED);
-            } else {
-                setInvitationState(elements, INVITATION_STATES.EMPTY);
-            }
-        } catch (error) {
-            console.error('Error loading invitations:', error);
-            displayError(elements.noInvitations, error.message);
-            setInvitationState(elements, INVITATION_STATES.ERROR);
-        }
-    }
-
-    /**
-     * Fetch pending invitations from the API
-     * @returns {Promise<Array>}
-     */
-    async function fetchPendingInvitations() {
-        // Add loading delay for better UX
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        const response = await authenticatedFetch('/coparent/invitations/', {
-            method: 'GET'
-        });
-
-        if (!response.ok) {
-            throw new Error(await parseErrorResponse(response));
-        }
-
-        return response.json();
-    }
-
-    /**
-     * Parse error response from API
-     * @param {Response} response
-     * @returns {Promise<string>}
-     */
-    async function parseErrorResponse(response) {
-        let errorMessage = `Failed to load invitations (${response.status})`;
-
-        try {
-            const errorData = await response.json();
-
-            if (errorData.detail) {
-                if (typeof errorData.detail === 'string') {
-                    errorMessage = errorData.detail;
-                } else if (Array.isArray(errorData.detail)) {
-                    errorMessage = errorData.detail
-                        .map(err => {
-                            const field = err.loc?.[err.loc.length - 1] || 'field';
-                            return `${field}: ${err.msg}`;
-                        })
-                        .join(', ');
+                    switch (displayState) {
+                        case STATES.LOADING:
+                            elements.loading?.classList.remove('hidden');
+                            break;
+                        case STATES.EMPTY:
+                        case STATES.ERROR:
+                            elements.noInvitations?.classList.remove('hidden');
+                            break;
+                        case STATES.LOADED:
+                            elements.invitations?.classList.remove('hidden');
+                            break;
+                    }
                 }
-            } else if (errorData.message) {
-                errorMessage = errorData.message;
-            }
-        } catch (e) {
-            errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        }
+            };
 
-        return errorMessage;
-    }
+            // ============================================================================
+            // Form Validation
+            // ============================================================================
 
-    /**
-     * Update UI state based on invitation loading status
-     * @param {Object} elements
-     * @param {string} state
-     */
-    function setInvitationState(elements, state) {
-        // Hide all elements first
-        Object.values(elements).forEach(el => el.classList.add('hidden'));
+            const validation = {
+                /**
+                 * Validate baby information form
+                 * @returns {Object} Validation result with isValid and errors
+                 */
+                validateBabyInfo() {
+                    const errors = {};
+                    let isValid = true;
 
-        // Show relevant element based on state
-        switch (state) {
-            case INVITATION_STATES.LOADING:
-                elements.loading.classList.remove('hidden');
-                break;
-            case INVITATION_STATES.EMPTY:
-            case INVITATION_STATES.ERROR:
-                elements.noInvitations.classList.remove('hidden');
-                break;
-            case INVITATION_STATES.LOADED:
-                elements.invitations.classList.remove('hidden');
-                break;
-        }
-    }
+                    // Clear previous errors
+                    ui.clearFormErrors('babyInfoForm');
 
-    /**
-     * Display invitations in the UI
-     * @param {HTMLElement} container
-     * @param {Array} invitations
-     */
-    function displayInvitations(container, invitations) {
-        container.innerHTML = invitations
-            .map(inv => createInvitationHTML(inv))
-            .join('');
-    }
+                    // Name validation
+                    const name = document.getElementById('babyName').value.trim();
+                    if (!name) {
+                        errors.babyName = 'Baby name is required';
+                        isValid = false;
+                    } else if (name.length > CONFIG.MAX_NAME_LENGTH) {
+                        errors.babyName = `Name must be less than ${CONFIG.MAX_NAME_LENGTH} characters`;
+                        isValid = false;
+                    } else if (!/^[a-zA-Z\s'-]+$/.test(name)) {
+                        errors.babyName = 'Name can only contain letters, spaces, hyphens, and apostrophes';
+                        isValid = false;
+                    }
 
-    /**
-     * Create HTML for a single invitation
-     * @param {Object} invitation
-     * @returns {string}
-     */
-    function createInvitationHTML(invitation) {
-        // Sanitize data to prevent XSS
-        const safe = {
-            inviterName: escapeHtml(invitation.inviter_name || 'Unknown'),
-            inviterEmail: escapeHtml(invitation.inviter_email),
-            babyName: escapeHtml(invitation.baby_name),
-            createdAt: formatDate(invitation.created_at),
-            invitationId: parseInt(invitation.invitation_id, 10)
-        };
+                    // Date of birth validation
+                    const dob = document.getElementById('babyDob').value;
+                    if (!dob) {
+                        errors.babyDob = 'Date of birth is required';
+                        isValid = false;
+                    } else if (!utils.isValidBirthdate(dob)) {
+                        errors.babyDob = 'Please enter a valid date not in the future';
+                        isValid = false;
+                    }
 
-        return `
-        <div class="border border-pastel-light rounded-lg p-4 space-y-3" data-invitation-id="${safe.invitationId}">
-            <div class="flex items-start justify-between">
-                <div>
-                    <h4 class="font-semibold text-pastel-heading">${safe.inviterName}</h4>
-                    <p class="text-sm text-pastel-textLight">${safe.inviterEmail}</p>
-                </div>
-                <span class="text-xs text-pastel-textLight">${safe.createdAt}</span>
-            </div>
-            <p class="text-sm text-pastel-text">
-                Invites you to be a co-parent for <span class="font-medium">${safe.babyName}</span>
-            </p>
-            <div class="flex space-x-2">
-                <button onclick="respondInvitation(${safe.invitationId}, true, '${safe.inviterEmail}', '${safe.babyName}')"
-                        class="invitation-accept px-4 py-2 bg-pastel-primary text-white text-sm font-medium rounded-lg hover:bg-pastel-primaryHover transition-colors">
-                    Accept
-                </button>
-                <button onclick="respondInvitation(${safe.invitationId}, false, '${safe.inviterEmail}', '${safe.babyName}')"
-                        class="invitation-decline px-4 py-2 border border-pastel-light text-pastel-text text-sm font-medium rounded-lg hover:bg-pastel-lightest transition-colors">
-                    Decline
-                </button>
-            </div>
-        </div>
-    `;
-    }
+                    // Gender validation
+                    const gender = document.getElementById('babyGender').value;
+                    if (!gender) {
+                        errors.babyGender = 'Please select a gender';
+                        isValid = false;
+                    }
 
-    /**
-     * Display error message to user
-     * @param {HTMLElement} container
-     * @param {string} message
-     */
-    function displayError(container, message) {
-        container.innerHTML = `
-        <p class="text-pastel-textLight">Unable to load invitations</p>
-        <p class="text-sm text-red-500 mt-2">${escapeHtml(message)}</p>
-        <button onclick="loadPendingInvitations()"
-                class="mt-3 text-sm text-pastel-primary hover:underline">
-            Try again
-        </button>
-    `;
-    }
+                    // Weight validation
+                    const weight = document.getElementById('babyWeight').value;
+                    if (!weight) {
+                        errors.babyWeight = 'Weight is required';
+                        isValid = false;
+                    } else if (isNaN(weight) || weight < CONFIG.BABY_WEIGHT_MIN || weight > CONFIG.BABY_WEIGHT_MAX) {
+                        errors.babyWeight = `Weight must be between ${CONFIG.BABY_WEIGHT_MIN} and ${CONFIG.BABY_WEIGHT_MAX} kg`;
+                        isValid = false;
+                    }
 
-    /**
-     * Format date for display
-     * @param {string} dateString
-     * @returns {string}
-     */
-    function formatDate(dateString) {
-        try {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-            });
-        } catch (e) {
-            return 'Invalid date';
-        }
-    }
+                    // Height validation
+                    const height = document.getElementById('babyHeight').value;
+                    if (!height) {
+                        errors.babyHeight = 'Height is required';
+                        isValid = false;
+                    } else if (isNaN(height) || height < CONFIG.BABY_HEIGHT_MIN || height > CONFIG.BABY_HEIGHT_MAX) {
+                        errors.babyHeight = `Height must be between ${CONFIG.BABY_HEIGHT_MIN} and ${CONFIG.BABY_HEIGHT_MAX} cm`;
+                        isValid = false;
+                    }
 
-    /**
-     * Escape HTML to prevent XSS attacks
-     * @param {string} unsafe
-     * @returns {string}
-     */
-    function escapeHtml(unsafe) {
-        const div = document.createElement('div');
-        div.textContent = unsafe;
-        return div.innerHTML;
-    }
+                    // Show errors
+                    Object.entries(errors).forEach(([field, message]) => {
+                        ui.showFieldError(field, message);
+                    });
 
-    /**
-     * Accept or decline a co-parent invitation
-     * @param {int} invitationId - ID of the invitation to decline
-     * @param {boolean} respond - Accept or reject
-     * @param {string} inviterEmail - Email of the inviter
-     * @param {string} babyName - Baby name
-     */
-    async function respondInvitation(invitationId, respond, inviterEmail, babyName) {
-        const payload = {
-            invitation_id: invitationId,
-            accept: respond
-        };
-        const response = await authenticatedFetch('/coparent/invitations/' + invitationId, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
-        if (!response.ok) {
-            throw new Error(await parseErrorResponse(response));
-        }
+                    return {isValid, errors};
+                },
 
-        onboardingState.data.acceptedInvitations.push(invitationId);
-        saveProgress();
-        if (respond)
-            showToast('Invitation from ' + inviterEmail + 'for baby ' + babyName + ' accepted!');
-        else
-            showToast('Invitation from ' + inviterEmail + 'for baby ' + babyName + ' declined!');
+                /**
+                 * Validate co-parent email
+                 * @returns {Object} Validation result
+                 */
+                validateCoparentEmail() {
+                    const email = document.getElementById('coParentEmail').value.trim();
+                    const userEmail = sessionStorage.getItem('userEmail');
 
-        // Reload invitations to update UI
-        await loadPendingInvitations();
-    }
+                    ui.clearFieldError('coParentEmail');
 
-    /**
-     * Complete the onboarding process
-     * Saves all data and redirects to dashboard
-     */
-    async function completeOnboarding() {
-        try {
-            // Clear onboarding progress from sessionStorage
-            sessionStorage.removeItem('onboardingProgress');
+                    if (!email) {
+                        const error = 'Please enter an email address';
+                        ui.showFieldError('coParentEmail', error);
+                        return {isValid: false, error};
+                    }
 
-            // Mark onboarding as complete
-            sessionStorage.setItem('onboardingComplete', 'true');
+                    if (email === userEmail) {
+                        const error = 'You cannot invite yourself';
+                        ui.showFieldError('coParentEmail', error);
+                        return {isValid: false, error};
+                    }
 
-            // Show success message
-            alert('Welcome to BabyHelper!');
+                    if (!utils.isValidGmail(email)) {
+                        const error = 'Please enter a valid Gmail address';
+                        ui.showFieldError('coParentEmail', error);
+                        return {isValid: false, error};
+                    }
 
-            // Redirect to dashboard
-            // window.location.href = '/dashboard';
-        } catch (error) {
-            console.error('Error completing onboarding:', error);
-            alert('There was an error setting up your account. Please try again.');
-        }
-    }
+                    if (state.data.coParents.includes(email)) {
+                        const error = 'This person has already been invited';
+                        ui.showFieldError('coParentEmail', error);
+                        return {isValid: false, error};
+                    }
 
-    /**
-     * Logout user and clear session
-     */
-    function logout() {
-        sessionStorage.clear();
-        window.location.href = '/';
-    }
+                    return {isValid: true};
+                }
+            };
 
-    /**
-     * Utility function to show toast notifications
-     * @param {string} message - Message to display
-     */
-    function showToast(message) {
-        // Create toast element
-        const toast = document.createElement('div');
-        toast.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-pastel-heading text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in';
-        toast.textContent = message;
+            // ============================================================================
+            // Step Management
+            // ============================================================================
 
-        document.body.appendChild(toast);
+            const steps = {
+                /**
+                 * Show specific step
+                 * @param {number} stepNumber - Step to show
+                 */
+                show(stepNumber) {
+                    state.currentStep = stepNumber;
+                    document.getElementById('currentStepNumber').textContent = stepNumber;
 
-        // Remove after 3 seconds
-        setTimeout(() => {
-            toast.classList.add('opacity-0', 'transition-opacity', 'duration-300');
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
-    }
+                    ui.updateProgressBar(stepNumber);
 
+                    // Show/hide steps
+                    for (let i = 1; i <= state.totalSteps; i++) {
+                        const step = document.getElementById(`step-${i}`);
+                        if (step) {
+                            if (i === stepNumber) {
+                                step.classList.remove('step-hidden', 'step-inactive');
+
+                                // Special handling for step 3
+                                if (i === 3) {
+                                    this.loadPendingInvitations();
+                                }
+                            } else {
+                                step.classList.add('step-hidden');
+                            }
+                        }
+                    }
+                },
+
+                /**
+                 * Save baby information
+                 */
+                async saveBabyInfo() {
+                    const validationResult = validation.validateBabyInfo();
+                    if (!validationResult.isValid) {
+                        throw new Error('Please correct the errors before continuing');
+                    }
+
+                    const formData = {
+                        fullname: document.getElementById('babyName').value.trim(),
+                        birthdate: utils.formatDateForAPI(document.getElementById('babyDob').value),
+                        sex: document.getElementById('babyGender').value,
+                        weight: parseFloat(document.getElementById('babyWeight').value),
+                        height: parseFloat(document.getElementById('babyHeight').value)
+                    };
+
+                    ui.setButtonLoading('step1-submit', true);
+
+                    try {
+                        const savedBaby = await api.endpoints.createBaby(formData);
+
+                        state.data.babyInfo = {
+                            baby_id: savedBaby.id,
+                            name: savedBaby.fullname,
+                            dob: savedBaby.birthdate,
+                            gender: savedBaby.sex,
+                            weight: savedBaby.weight,
+                            height: savedBaby.height
+                        };
+
+                        storage.saveProgress();
+                        ui.showToast('Baby information saved successfully!');
+
+                    } finally {
+                        ui.setButtonLoading('step1-submit', false);
+                    }
+                },
+
+                /**
+                 * Send co-parent invitation
+                 */
+                async sendCoparentInvite() {
+                    if (!state.data.babyInfo?.baby_id) {
+                        throw new Error('Please add baby information first or skip this step');
+                    }
+
+                    const validationResult = validation.validateCoparentEmail();
+                    if (!validationResult.isValid) {
+                        throw new Error(validationResult.error);
+                    }
+
+                    const email = document.getElementById('coParentEmail').value.trim();
+
+                    ui.setButtonLoading('invite-submit', true);
+
+                    try {
+                        await api.endpoints.sendCoparentInvite({
+                            baby_id: state.data.babyInfo.baby_id,
+                            email: email
+                        });
+
+                        state.data.coParents.push(email);
+                        storage.saveProgress();
+                        ui.updateInvitationsList();
+                        document.getElementById('coParentEmail').value = '';
+                        ui.showToast('Invitation sent successfully!');
+
+                    } finally {
+                        ui.setButtonLoading('invite-submit', false);
+                    }
+                },
+
+                /**
+                 * Load pending invitations
+                 */
+                async loadPendingInvitations() {
+                    const elements = {
+                        loading: document.getElementById('invitationsLoading'),
+                        noInvitations: document.getElementById('noInvitations'),
+                        invitations: document.getElementById('pendingInvitations')
+                    };
+
+                    ui.setInvitationState(elements, STATES.LOADING);
+
+                    try {
+                        // Add minimum loading time for better UX
+                        const [invitations] = await Promise.all([
+                            api.endpoints.getPendingInvitations(),
+                            utils.sleep(1000)
+                        ]);
+
+                        if (invitations.length > 0) {
+                            elements.invitations.innerHTML = invitations
+                                .map(inv => ui.createPendingInvitationHTML(inv))
+                                .join('');
+                            ui.setInvitationState(elements, STATES.LOADED);
+                        } else {
+                            ui.setInvitationState(elements, STATES.EMPTY);
+                        }
+
+                    } catch (error) {
+                        console.error('Error loading invitations:', error);
+                        elements.noInvitations.innerHTML = `
+                        <p class="text-pastel-textLight">Unable to load invitations</p>
+                        <p class="text-sm text-red-500 mt-2">${utils.escapeHtml(error.message)}</p>
+                        <button onclick="onboardingApp.loadPendingInvitations()"
+                                class="mt-3 text-sm text-pastel-primary hover:underline">
+                            Try again
+                        </button>
+                    `;
+                        ui.setInvitationState(elements, STATES.ERROR);
+                    }
+                }
+            };
+
+            // ============================================================================
+            // Storage Management
+            // ============================================================================
+
+            const storage = {
+                /**
+                 * Save progress to sessionStorage
+                 */
+                saveProgress() {
+                    sessionStorage.setItem('onboardingProgress', JSON.stringify(state.data));
+                },
+
+                /**
+                 * Load saved progress
+                 */
+                loadProgress() {
+                    const savedProgress = sessionStorage.getItem('onboardingProgress');
+                    if (savedProgress) {
+                        try {
+                            const progress = JSON.parse(savedProgress);
+                            state.data = progress;
+
+                            // Pre-fill forms
+                            if (progress.babyInfo) {
+                                const fields = {
+                                    babyName: progress.babyInfo.name,
+                                    babyDob: progress.babyInfo.dob,
+                                    babyGender: progress.babyInfo.gender,
+                                    babyWeight: progress.babyInfo.weight,
+                                    babyHeight: progress.babyInfo.height
+                                };
+
+                                Object.entries(fields).forEach(([id, value]) => {
+                                    const el = document.getElementById(id);
+                                    if (el && value) el.value = value;
+                                });
+                            }
+                        } catch (e) {
+                            console.error('Error loading saved progress:', e);
+                        }
+                    }
+                },
+
+                /**
+                 * Clear onboarding progress
+                 */
+                clearProgress() {
+                    sessionStorage.removeItem('onboardingProgress');
+                }
+            };
+
+            // ============================================================================
+            // Public API
+            // ============================================================================
+
+            return {
+                /**
+                 * Initialize the application
+                 */
+                init() {
+                    // Check authentication
+                    const idToken = sessionStorage.getItem('idToken');
+                    if (!idToken) {
+                        window.location.href = '/';
+                        return;
+                    }
+
+                    // Display user information
+                    const userInfo = {
+                        userName: sessionStorage.getItem('userName'),
+                        userEmail: sessionStorage.getItem('userEmail'),
+                        userPicture: sessionStorage.getItem('userPicture')
+                    };
+
+                    if (userInfo.userName) {
+                        document.getElementById('userName').textContent = userInfo.userName;
+                    }
+                    if (userInfo.userEmail) {
+                        document.getElementById('userEmail').textContent = userInfo.userEmail;
+                    }
+                    if (userInfo.userPicture) {
+                        document.getElementById('userPicture').src = userInfo.userPicture;
+                    }
+
+                    // Set global auth token
+                    window.authToken = idToken;
+
+                    // Initialize first step
+                    steps.show(1);
+
+                    // Load saved progress
+                    storage.loadProgress();
+
+                    // Add input event listeners for real-time validation
+                    this.attachValidationListeners();
+                },
+
+                /**
+                 * Attach validation listeners to form inputs
+                 */
+                attachValidationListeners() {
+                    // Baby info form
+                    ['babyName', 'babyDob', 'babyGender', 'babyWeight', 'babyHeight'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.addEventListener('input', utils.debounce(() => {
+                                ui.clearFieldError(id);
+                            }, 300));
+                        }
+                    });
+
+                    // Co-parent email
+                    const emailField = document.getElementById('coParentEmail');
+                    if (emailField) {
+                        emailField.addEventListener('input', utils.debounce(() => {
+                            ui.clearFieldError('coParentEmail');
+                        }, 300));
+                    }
+
+                    // Add form submit prevention
+                    const forms = ['babyInfoForm', 'coParentForm'];
+                    forms.forEach(formId => {
+                        const form = document.getElementById(formId);
+                        if (form) {
+                            form.addEventListener('submit', (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                return false;
+                            });
+                        }
+                    });
+                },
+
+                /**
+                 * Navigate to next step
+                 */
+                async nextStep() {
+                    if (state.currentStep >= state.totalSteps) return;
+
+                    try {
+                        switch (state.currentStep) {
+                            case 1:
+                                await steps.saveBabyInfo();
+                                steps.show(state.currentStep + 1);
+                                break;
+                            case 2:
+                                // Step 2 doesn't auto-advance, just move to next
+                                steps.show(state.currentStep + 1);
+                                break;
+                        }
+                    } catch (error) {
+                        ui.showStepError(state.currentStep, error.message);
+                        ui.showToast(error.message, MESSAGE_TYPES.ERROR);
+                    }
+                },
+
+                /**
+                 * Navigate to previous step
+                 */
+                previousStep() {
+                    if (state.currentStep > 1) {
+                        steps.show(state.currentStep - 1);
+                    }
+                },
+
+                /**
+                 * Skip current step
+                 */
+                skipCurrentStep() {
+                    if (state.currentStep < state.totalSteps) {
+                        steps.show(state.currentStep + 1);
+                    } else {
+                        this.completeOnboarding();
+                    }
+                },
+
+                /**
+                 * Skip all steps
+                 */
+                skipAllSteps() {
+                    if (confirm('Skip all setup steps? You can complete these later in settings.')) {
+                        this.completeOnboarding();
+                    }
+                },
+
+                /**
+                 * Send co-parent invitation
+                 */
+                async sendInvite() {
+                    try {
+                        await steps.sendCoparentInvite();
+                    } catch (error) {
+                        ui.showStepError(2, error.message);
+                        ui.showToast(error.message, MESSAGE_TYPES.ERROR);
+                    }
+                },
+
+
+                /**
+                 * Respond to pending invitation
+                 * @param {number} invitationId - Invitation ID
+                 * @param {boolean} accept - Accept or decline
+                 */
+                async respondToInvitation(invitationId, accept) {
+                    try {
+                        // Disable buttons during request
+                        const invCard = document.querySelector(`[data-invitation-id="${invitationId}"]`);
+                        if (invCard) {
+                            invCard.querySelectorAll('button').forEach(btn => btn.disabled = true);
+                        }
+
+                        await api.endpoints.respondToInvitation(invitationId, accept);
+
+                        state.data.acceptedInvitations.push(invitationId);
+                        storage.saveProgress();
+
+                        const message = accept ? 'Invitation accepted!' : 'Invitation declined';
+                        ui.showToast(message, MESSAGE_TYPES.SUCCESS);
+
+                        // Reload invitations
+                        await steps.loadPendingInvitations();
+
+                    } catch (error) {
+                        ui.showToast(error.message, MESSAGE_TYPES.ERROR);
+
+                        // Re-enable buttons on error
+                        const invCard = document.querySelector(`[data-invitation-id="${invitationId}"]`);
+                        if (invCard) {
+                            invCard.querySelectorAll('button').forEach(btn => btn.disabled = false);
+                        }
+                    }
+                },
+
+                /**
+                 * Reload pending invitations (exposed for retry button)
+                 */
+                async loadPendingInvitations() {
+                    await steps.loadPendingInvitations();
+                },
+
+                /**
+                 * Complete onboarding
+                 */
+                async completeOnboarding() {
+                    ui.setButtonLoading('complete-button', true);
+
+                    try {
+                        // Clear progress
+                        storage.clearProgress();
+
+                        // Mark as complete
+                        sessionStorage.setItem('onboardingComplete', 'true');
+
+                        // Show success
+                        ui.showToast('Welcome to BabyHelper! Redirecting...', MESSAGE_TYPES.SUCCESS);
+
+                        // Redirect after short delay
+                        setTimeout(() => {
+                            window.location.href = '/dashboard';
+                        }, 1500);
+
+                    } catch (error) {
+                        ui.setButtonLoading('complete-button', false);
+                        ui.showToast('Error completing setup. Please try again.', MESSAGE_TYPES.ERROR);
+                    }
+                },
+
+                /**
+                 * Logout user
+                 */
+                logout() {
+                    if (confirm('Are you sure you want to logout?')) {
+                        sessionStorage.clear();
+                        window.location.href = '/';
+                    }
+                }
+            };
+        })();
+
+    // Initialize on DOM ready
+    window.addEventListener('DOMContentLoaded', () => {
+        onboardingApp.init();
+    });
 </script>
 </body>
 </html>

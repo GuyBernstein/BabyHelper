@@ -153,7 +153,7 @@ def respond_to_invitation(db: Session, invitation_id: int, user_id: int, accept:
         }
 
 
-def remove_coparent(db: Session, baby_id: int, coparent_id: int, current_user_id: int) -> Dict[str, str]:
+def remove_coparent(db: Session, baby_id: int, coparent_id: int, coparent_email: str) -> Dict[str, str]:
     """Remove a co-parent from a baby"""
     # Check if the baby exists and the current user is the parent
     baby = db.query(Baby).filter(Baby.id == baby_id).first()
@@ -163,20 +163,22 @@ def remove_coparent(db: Session, baby_id: int, coparent_id: int, current_user_id
             'message': 'Baby not found',
         }
 
-    # Only the primary parent can remove co-parents
-    if baby.parent_id != current_user_id:
-        return {
-            'status': 'fail',
-            'message': 'Only the primary parent can remove co-parents',
-        }
-
-    # Check if the user to remove is actually a co-parent
-    coparent = db.query(User).filter(User.id == coparent_id).first()
-    if not coparent:
-        return {
-            'status': 'fail',
-            'message': 'User not found',
-        }
+    if coparent_id == -1:
+        # Check if the user to remove is actually a co-parent
+        coparent = db.query(User).filter(User.email == coparent_email).first()
+        if not coparent:
+            return {
+                'status': 'fail',
+                'message': 'User not found',
+            }
+    else:
+        # Check if the user to remove is actually a co-parent
+        coparent = db.query(User).filter(User.id == coparent_id).first()
+        if not coparent:
+            return {
+                'status': 'fail',
+                'message': 'User not found',
+            }
 
     # Remove the co-parent relationship
     if coparent in baby.coparents:
