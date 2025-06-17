@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_
 
 # Import Notification from the updated schema
-from app.main.model.parent_child_schema import Notification
+from app.main.model.parent_child_schema import Notification, CoParentInvitation
+
 
 def create_notification(db: Session, user_id: int, message: str, notification_type: str, reference_id: Optional[int] = None) -> Notification:
     """Create a new notification for a user"""
@@ -86,4 +87,42 @@ def mark_all_notifications_read(db: Session, user_id: int) -> Dict[str, str]:
     return {
         'status': 'success',
         'message': 'All notifications marked as read',
+    }
+
+
+def remove_sent_notification(db, notification_id, user_id=None):
+    # Get the notification
+    notification = db.query(Notification).filter(Notification.id == notification_id).first()
+
+    if not notification:
+        return {
+            'status': 'fail',
+            'message': 'Notification not found',
+        }
+
+    # Optional: Check if user is authorized (either the sender or receiver)
+    if user_id and notification.type == 'coparent_invitation' and notification.reference_id:
+        invitation = db.query(CoParentInvitation).filter(
+            CoParentInvitation.id == notification.reference_id
+        ).first()
+
+        if invitation and invitation.inviter_id != user_id:
+            return {
+                'status': 'fail',
+                'message': 'Not authorized to remove this invitation',
+            }
+
+    # If it's a coparent invitation notification, also delete the invitation
+    if notification.type == 'coparent_invitation' and notification.reference_id:
+        db.query(CoParentInvitation).filter(
+            CoParentInvitation.id == notification.reference_id
+        ).delete()
+
+    # Delete the notification
+    db.query(Notification).filter(Notification.id == notification_id).delete()
+    db.commit()
+
+    return {
+        'status': 'success',
+        'message': 'Notification and associated invitation have been deleted',
     }

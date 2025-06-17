@@ -771,6 +771,28 @@
                             throw new Error(error);
                         }
                         return response.json();
+                    },
+
+                    async removeNotification(notificationId) {
+                        const response = await api.request(`/notifications/${notificationId}`, {
+                            method: 'DELETE'
+                        });
+                        if (!response.ok) {
+                            const error = await api.parseErrorResponse(response);
+                            throw new Error(error);
+                        }
+                        return response.json();
+                    },
+
+                    async markNotificationAsRead(notificationId) {
+                        const response = await api.request(`/notifications/${notificationId}/read`, {
+                            method: 'PUT'
+                        });
+                        if (!response.ok) {
+                            const error = await api.parseErrorResponse(response);
+                            throw new Error(error);
+                        }
+                        return response.json();
                     }
                 }
             };
@@ -949,7 +971,13 @@
                     if (state.data.coParents.length > 0) {
                         listContainer.classList.remove('hidden');
                         invitationsList.innerHTML = state.data.coParents
-                            .map(email => this.createInvitationItemHTML(email))
+                            .map(item => {
+                                if (typeof item === 'string') {
+                                    // Handle legacy format
+                                    return this.createInvitationItemHTML(item, null);
+                                }
+                                return this.createInvitationItemHTML(item.email, item.notificationId);
+                            })
                             .join('');
                     } else {
                         listContainer.classList.add('hidden');
@@ -959,13 +987,22 @@
                 /**
                  * Create HTML for invitation list item
                  * @param {string} email - Invitee email
+                 * @param notificationId
                  * @returns {string} HTML string
                  */
-                createInvitationItemHTML(email) {
+                createInvitationItemHTML(email, notificationId) {
                     const safeEmail = utils.escapeHtml(email);
+                    const safeId = parseInt(notificationId, 10) || 0;
                     return `
-                        <div class="p-3 bg-pastel-lightest rounded-lg">
+                        <div class="p-3 bg-pastel-lightest rounded-lg flex justify-between items-center"
+                             data-notification-id="${safeId}">
                             <span class="text-sm text-pastel-text">${safeEmail}</span>
+                            ${safeId ? `
+                                <button onclick="onboardingApp.removeInvitation(${safeId})"
+                                        class="text-xs text-red-500 hover:text-red-700 font-medium transition-colors">
+                                    Remove
+                                </button>
+                            ` : ''}
                         </div>
                     `;
                 },
@@ -1237,12 +1274,18 @@
                     ui.setButtonLoading('invite-submit', true);
 
                     try {
-                        await api.endpoints.sendCoparentInvite({
+                        const result = await api.endpoints.sendCoparentInvite({
                             baby_id: state.data.babyInfo.baby_id,
                             email: email
                         });
+                        // Extract notification_id using regex
+                        const match = result.message.match(/notification: (\d+)$/);
+                        const notification_id = match ? parseInt(match[1]) : null;
 
-                        state.data.coParents.push(email);
+                        state.data.coParents.push({
+                            email: email,
+                            notificationId: notification_id
+                        });
                         storage.saveProgress();
                         ui.updateInvitationsList();
                         document.getElementById('coParentEmail').value = '';
@@ -1509,6 +1552,9 @@
 
                         await api.endpoints.respondToInvitation(invitationId, accept);
 
+                        await api.endpoints.markNotificationAsRead(invitationId);
+
+
                         state.data.acceptedInvitations.push(invitationId);
                         storage.saveProgress();
 
@@ -1525,6 +1571,44 @@
                         const invCard = document.querySelector(`[data-invitation-id="${invitationId}"]`);
                         if (invCard) {
                             invCard.querySelectorAll('button').forEach(btn => btn.disabled = false);
+                        }
+                    }
+                },
+
+                async removeInvitation(notificationId) {
+                    try {
+                        // Find and disable the remove button
+                        const invElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
+                        if (invElement) {
+                            const removeBtn = invElement.querySelector('button');
+                            if (removeBtn) {
+                                removeBtn.disabled = true;
+                                removeBtn.textContent = 'Removing...';
+                            }
+                        }
+
+                        await api.endpoints.removeNotification(notificationId);
+
+                        // Remove from state
+                        state.data.coParents = state.data.coParents.filter(
+                            item => (typeof item === 'string' ? false : item.notificationId !== notificationId)
+                        );
+
+                        storage.saveProgress();
+                        ui.updateInvitationsList();
+                        ui.showToast('Invitation removed successfully');
+
+                    } catch (error) {
+                        ui.showToast(error.message, MESSAGE_TYPES.ERROR);
+
+                        // Re-enable button on error
+                        const invElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
+                        if (invElement) {
+                            const removeBtn = invElement.querySelector('button');
+                            if (removeBtn) {
+                                removeBtn.disabled = false;
+                                removeBtn.textContent = 'Remove';
+                            }
                         }
                     }
                 },

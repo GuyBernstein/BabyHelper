@@ -67,7 +67,7 @@ async def invite_coparent(
 
     return {
         "status": "success",
-        "message": f"Invitation sent to {request.email}"
+        "message": f"Invitation sent to {request.email} with the notification: {result.notification_id}"
     }
 
 

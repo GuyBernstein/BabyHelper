@@ -67,7 +67,8 @@ def send_coparent_invitation(db: Session, baby_id: int, invitee_email: str, invi
     # Create a notification for the invitee
     inviter = db.query(User).filter(User.id == inviter_id).first()
     message = f"{inviter.name} has invited you to be a co-parent for {baby.fullname}"
-    create_notification(db, invitee.id, message, "coparent_invitation", invitation.id)
+    notification = create_notification(db, invitee.id, message, "coparent_invitation", invitation.id)
+    invitation.notification_id = notification.id
 
     return invitation
 

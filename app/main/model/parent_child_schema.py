@@ -28,6 +28,12 @@ class CoParentInvitation(Base):
     invitee = relationship("User", foreign_keys=[invitee_id], back_populates="received_invitations")
     baby = relationship("Baby", back_populates="invitations")
 
+    notifications = relationship("Notification",
+                                 foreign_keys="Notification.reference_id",
+                                 primaryjoin="and_(Notification.reference_id==CoParentInvitation.id, "
+                                             "Notification.type=='coparent_invitation')",
+                                 cascade="all, delete-orphan")
+
     def __repr__(self):
         return f"<CoParentInvitation '{self.inviter_id}' -> '{self.invitee_id}' for baby '{self.baby_id}'>"
 

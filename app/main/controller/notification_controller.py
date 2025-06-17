@@ -1,3 +1,4 @@
+from sqlalchemy import and_
 from typing import List, Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
@@ -5,11 +6,12 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.main import get_db
+from app.main.model import Notification
 from app.main.model.user import User
 from app.main.service.notification_service import (
     get_user_notifications,
     mark_notification_read,
-    mark_all_notifications_read
+    mark_all_notifications_read, remove_sent_notification
 )
 from app.main.service.oauth_service import get_current_user
 
@@ -67,3 +69,19 @@ async def mark_all_as_read(
 ):
     """Mark all notifications as read"""
     return mark_all_notifications_read(db, current_user.id)
+
+
+@router.delete("/{notification_id}", response_model=NotificationActionResponse)
+async def remove_notification(
+    notification_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Remove a notification"""
+    result = remove_sent_notification(db, notification_id, current_user.id)
+    if isinstance(result, dict) and result.get('status') == 'fail':
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=result.get('message', 'Notification not found')
+        )
+    return result
