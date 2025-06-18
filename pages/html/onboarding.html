@@ -100,6 +100,79 @@
                 transform: rotate(360deg);
             }
         }
+
+        /* Slide down animation for checkbox container */
+        .slide-down-enter {
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Modal animations */
+        .modal-enter {
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        .modal-enter .modal-content {
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        .modal-exit {
+            animation: modalFadeOut 0.2s ease-in;
+        }
+
+        .modal-exit .modal-content {
+            animation: modalSlideOut 0.2s ease-in;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes modalFadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes modalSlideOut {
+            from {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.95) translateY(10px);
+            }
+        }
     </style>
 </head>
 <body class="bg-pastel-lightest font-sans text-pastel-text min-h-screen">
@@ -138,13 +211,14 @@
 
     <!-- Progress Bar -->
     <div class="mb-8">
-        <div class="flex items-center justify-between mb-2">
-            <span class="text-sm text-pastel-textLight">Step <span id="currentStepNumber">1</span> of 3</span>
-            <button onclick="onboardingApp.skipAllSteps()"
-                    class="text-sm text-pastel-primary hover:text-pastel-primaryHover font-medium transition-colors">
-                Skip All Steps →
-            </button>
-        </div>
+        <button onclick="onboardingApp.handleSkipAllClick()"
+                class="text-sm text-pastel-primary hover:text-pastel-primaryHover font-medium transition-colors flex items-center space-x-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            </svg>
+            <span>Skip All Steps</span>
+        </button>
         <div class="w-full bg-pastel-light rounded-full h-2 flex space-x-1">
             <div id="progress-1" class="progress-segment flex-1 bg-pastel-primary rounded-full"></div>
             <div id="progress-2" class="progress-segment flex-1 bg-pastel-light rounded-full"></div>
@@ -414,6 +488,18 @@
                 <p class="text-pastel-textLight">Collaborate with partners and caregivers for seamless baby care
                     coordination.</p>
             </div>
+
+            <div class="text-center mt-8 text-sm text-pastel-textLight">
+                <p>Remember: You can always access these settings from your dashboard later.</p>
+                <p class="mt-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24"
+                         stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Tip: Check "Don't show this page again" above to skip onboarding in future visits.
+                </p>
+            </div>
         </div>
     </div>
 </div>
@@ -421,6 +507,81 @@
 <!-- Toast Container -->
 <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50"></div>
 
+<!-- Skip Modal -->
+<div id="skipModal" class="fixed inset-0 z-50 hidden">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onclick="onboardingApp.closeSkipModal()"></div>
+
+    <!-- Modal Content -->
+    <div class="fixed inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full transform transition-all">
+            <!-- Modal Header -->
+            <div class="p-6 border-b border-pastel-light">
+                <h3 class="font-serif text-2xl text-pastel-heading">Skip Setup?</h3>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6">
+                <p class="text-pastel-text mb-6">
+                    You can complete these setup steps later from your dashboard settings.
+                </p>
+
+                <!-- Skip Options -->
+                <div class="space-y-3">
+                    <!-- Skip Once Option -->
+                    <button onclick="onboardingApp.skipOnce()"
+                            class="w-full p-4 text-left border border-pastel-light rounded-lg hover:bg-pastel-lightest transition-colors group">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-5 h-5 rounded-full border-2 border-pastel-primary mt-0.5 group-hover:bg-pastel-primary group-hover:bg-opacity-20"></div>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-pastel-heading">Skip for now</h4>
+                                <p class="text-sm text-pastel-textLight mt-1">
+                                    You'll see this setup guide next time you log in
+                                </p>
+                            </div>
+                        </div>
+                    </button>
+
+                    <!-- Skip Forever Option -->
+                    <button onclick="onboardingApp.skipForever()"
+                            class="w-full p-4 text-left border border-pastel-light rounded-lg hover:bg-pastel-lightest transition-colors group">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-5 h-5 rounded-full border-2 border-pastel-primary mt-0.5 group-hover:bg-pastel-primary group-hover:bg-opacity-20"></div>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-pastel-heading">Don't show again</h4>
+                                <p class="text-sm text-pastel-textLight mt-1">
+                                    Skip onboarding and go directly to dashboard on future logins
+                                </p>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Info Note -->
+                <div class="mt-6 p-3 bg-pastel-lightest rounded-lg">
+                    <div class="flex items-start space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-primary mt-0.5 flex-shrink-0"
+                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p class="text-xs text-pastel-textLight">
+                            You can always access these settings from your dashboard under Profile Settings
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-6 border-t border-pastel-light flex justify-end">
+                <button onclick="onboardingApp.closeSkipModal()"
+                        class="px-6 py-2 text-pastel-text hover:text-pastel-heading transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 <script>
     /**
      * BabyHelper Onboarding Application
@@ -787,6 +948,18 @@
                     async markNotificationAsRead(notificationId) {
                         const response = await api.request(`/notifications/${notificationId}/read`, {
                             method: 'PUT'
+                        });
+                        if (!response.ok) {
+                            const error = await api.parseErrorResponse(response);
+                            throw new Error(error);
+                        }
+                        return response.json();
+                    },
+
+                    async updateUserPreference(data) {
+                        const response = await api.request('/auth/me/preferences', {
+                            method: 'PUT',
+                            body: JSON.stringify(data)
                         });
                         if (!response.ok) {
                             const error = await api.parseErrorResponse(response);
@@ -1174,7 +1347,12 @@
                         return {isValid: false, error};
                     }
 
-                    if (state.data.coParents.includes(email)) {
+                    // Check if already invited
+                    const alreadyInvited = state.data.coParents.some(item => {
+                        return typeof item === 'string' ? item === email : item.email === email;
+                    });
+
+                    if (alreadyInvited) {
                         const error = 'This person has already been invited';
                         ui.showFieldError('coParentEmail', error);
                         return {isValid: false, error};
@@ -1195,7 +1373,6 @@
                  */
                 show(stepNumber) {
                     state.currentStep = stepNumber;
-                    document.getElementById('currentStepNumber').textContent = stepNumber;
 
                     ui.updateProgressBar(stepNumber);
 
@@ -1401,6 +1578,13 @@
                 init() {
                     // Check authentication
                     const idToken = sessionStorage.getItem('idToken');
+                    const skipOnboarding = sessionStorage.getItem('skipOnboarding');
+
+                    // If user has skip preference, redirect to dashboard
+                    if (skipOnboarding === 'true') {
+                        window.location.href = '/dashboard';
+                        return;
+                    }
                     if (!idToken) {
                         window.location.href = '/';
                         return;
@@ -1431,6 +1615,11 @@
 
                     // Load saved progress
                     storage.loadProgress();
+
+                    // Update invitations list if we have coParents
+                    if (state.data.coParents.length > 0) {
+                        ui.updateInvitationsList();
+                    }
 
                     // Add input event listeners for real-time validation
                     this.attachValidationListeners();
@@ -1485,7 +1674,7 @@
                                 steps.show(state.currentStep + 1);
                                 break;
                             case 2:
-                                // Step 2 doesn't auto-advance, just move to next
+                                // Step 2 doesn't require validation, just move to next
                                 steps.show(state.currentStep + 1);
                                 break;
                         }
@@ -1516,11 +1705,107 @@
                 },
 
                 /**
-                 * Skip all steps
+                 * Handle skip all click - show modal
                  */
-                skipAllSteps() {
-                    if (confirm('Skip all setup steps? You can complete these later in settings.')) {
-                        this.completeOnboarding();
+                handleSkipAllClick() {
+                    this.showSkipModal();
+                },
+
+                /**
+                 * Show the skip modal
+                 */
+                showSkipModal() {
+                    const modal = document.getElementById('skipModal');
+                    if (modal) {
+                        modal.classList.remove('hidden');
+                        modal.classList.add('modal-enter');
+
+                        // Add content animation class
+                        const content = modal.querySelector('.bg-white');
+                        if (content) {
+                            content.classList.add('modal-content');
+                        }
+                    }
+                },
+
+                /**
+                 * Close the skip modal
+                 */
+                closeSkipModal() {
+                    const modal = document.getElementById('skipModal');
+                    if (modal) {
+                        modal.classList.add('modal-exit');
+
+                        setTimeout(() => {
+                            modal.classList.add('hidden');
+                            modal.classList.remove('modal-enter', 'modal-exit');
+                        }, 200);
+                    }
+                },
+
+                /**
+                 * Skip onboarding just for this session
+                 */
+                skipOnce() {
+                    this.closeSkipModal();
+
+                    // Clear progress and redirect
+                    storage.clearProgress();
+                    sessionStorage.setItem('onboardingComplete', 'true');
+
+                    ui.showToast('Skipping setup. You can complete it next time!', MESSAGE_TYPES.INFO);
+
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1000);
+                },
+
+                /**
+                 * Skip onboarding permanently
+                 */
+                async skipForever() {
+                    this.closeSkipModal();
+
+                    ui.showToast('Saving preference...', MESSAGE_TYPES.INFO);
+
+                    try {
+                        // Save preference to backend
+                        await api.endpoints.updateUserPreference({skip_onboarding: true});
+
+                        // Update session storage
+                        sessionStorage.setItem('skipOnboarding', 'true');
+
+                        // Clear progress and redirect
+                        storage.clearProgress();
+                        sessionStorage.setItem('onboardingComplete', 'true');
+
+                        ui.showToast('Setup skipped. Going to dashboard...', MESSAGE_TYPES.SUCCESS);
+
+                        setTimeout(() => {
+                            window.location.href = '/dashboard';
+                        }, 1000);
+
+                    } catch (error) {
+                        console.error('Failed to save preference:', error);
+                        ui.showToast('Failed to save preference, but continuing to dashboard', MESSAGE_TYPES.WARNING);
+
+                        // Continue to dashboard even if preference save fails
+                        setTimeout(() => {
+                            window.location.href = '/dashboard';
+                        }, 1500);
+                    }
+                },
+
+                /**
+                 * Save user preference to skip onboarding
+                 */
+                async saveSkipPreference() {
+                    try {
+                        await api.endpoints.updateUserPreference({skip_onboarding: true});
+                        sessionStorage.setItem('skipOnboarding', 'true');
+                    } catch (error) {
+                        console.error('Failed to save skip preference:', error);
+                        throw error;
                     }
                 },
 
@@ -1622,8 +1907,9 @@
 
                 /**
                  * Complete onboarding
+                 * @param {boolean} showToast - Whether to show completion toast
                  */
-                async completeOnboarding() {
+                async completeOnboarding(showToast = true) {
                     ui.setButtonLoading('complete-button', true);
 
                     try {
@@ -1633,13 +1919,15 @@
                         // Mark as complete
                         sessionStorage.setItem('onboardingComplete', 'true');
 
-                        // Show success
-                        ui.showToast('Welcome to BabyHelper! Redirecting...', MESSAGE_TYPES.SUCCESS);
+                        // Show success only if requested
+                        if (showToast) {
+                            ui.showToast('Welcome to BabyHelper! Redirecting...', MESSAGE_TYPES.SUCCESS);
+                        }
 
                         // Redirect after short delay
                         setTimeout(() => {
                             window.location.href = '/dashboard';
-                        }, 1500);
+                        }, showToast ? 1500 : 100);
 
                     } catch (error) {
                         ui.setButtonLoading('complete-button', false);

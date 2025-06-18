@@ -26,7 +26,8 @@ def create_user(db: Session, data: Dict[str, Any]) -> Union[User, Dict[str, str]
             picture=data.get('picture'),
             google_id=data.get('google_id'),
             is_active=True,
-            is_admin=is_superuser  # Set admin status based on email
+            is_admin=is_superuser,  # Set admin status based on email
+            skip_onboarding=False  # New users should see onboarding by default
         )
         db.add(new_user)
         db.commit()
@@ -43,10 +44,12 @@ def create_user(db: Session, data: Dict[str, Any]) -> Union[User, Dict[str, str]
             existing_user.is_admin = True
             existing_user.is_active = True
 
+        # Don't override skip_onboarding on login - preserve user preference
+        # existing_user.skip_onboarding remains unchanged
+
         db.commit()
         db.refresh(existing_user)
         return existing_user
-
 
 def get_user_by_email(db: Session, email: str) -> Optional[User]:
     """Get a user by email"""
@@ -81,3 +84,38 @@ def update_user_status(db: Session, user_id: int, is_active: bool) -> Union[User
     db.commit()
     db.refresh(user)
     return user
+
+
+def update_user_preference(db: Session, user_id: int, skip_onboarding: bool) -> Union[User, Dict[str, str]]:
+    """Update user's onboarding skip preference"""
+    user = get_user(db, user_id)
+    if not user:
+        return {
+            'status': 'fail',
+            'message': 'User not found',
+        }
+
+    user.skip_onboarding = skip_onboarding
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def update_user_preferences_bulk(db: Session, user_id: int, preferences: Dict[str, Any]) -> Union[User, Dict[str, str]]:
+    """Update multiple user preferences at once"""
+    user = get_user(db, user_id)
+    if not user:
+        return {
+            'status': 'fail',
+            'message': 'User not found',
+        }
+
+    # Update only allowed preference fields
+    allowed_fields = ['skip_onboarding']  # Add more preference fields as needed
+
+    for field, value in preferences.items():
+        if field in allowed_fields and hasattr(user, field):
+            setattr(user, field, value)
+
+    db.commit()
+    db.refresh(user)

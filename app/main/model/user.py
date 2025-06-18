@@ -10,6 +10,9 @@ from sqlalchemy.orm import relationship
 from app.main import Base
 from app.main.model.baby import BabyResponse
 
+class UserPreferenceUpdate(BaseModel):
+    skip_onboarding: bool
+
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -17,6 +20,7 @@ class UserBase(BaseModel):
     picture: Optional[str] = None
     is_active: Optional[bool] = True
     is_admin: Optional[bool] = False
+    skip_onboarding: Optional[bool] = False
 
 class UserCreate(UserBase):
     pass
@@ -57,6 +61,7 @@ class User(Base):
     picture = Column(String(500), nullable=True)
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
+    skip_onboarding = Column(Boolean, default=False, nullable=False)
     google_id = Column(String(255), unique=True, nullable=True, index=True)
 
     # Relationships
