@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BabyHelper Dashboard - Track Your Baby's Day</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=Lora:wght@400;500;600&display=swap"
+          rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pastel: {
+                            lightest: '#fdf6f0',
+                            light: '#ffe8d9',
+                            primary: '#ff8c69',
+                            primaryHover: '#ff7043',
+                            secondary: '#ffd8cc',
+                            accent1: '#ffb5a7',
+                            accent2: '#fec89a',
+                            text: '#6d5d52',
+                            textLight: '#938278',
+                            heading: '#5c4d44'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Nunito Sans', 'sans-serif'],
+                        serif: ['Lora', 'serif']
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'pulse-soft': 'pulseSoft 2s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': {transform: 'translateY(0)'},
+                            '50%': {transform: 'translateY(-10px)'},
+                        },
+                        slideUp: {
+                            '0%': {opacity: '0', transform: 'translateY(20px)'},
+                            '100%': {opacity: '1', transform: 'translateY(0)'},
+                        },
+                        fadeIn: {
+                            '0%': {opacity: '0'},
+                            '100%': {opacity: '1'},
+                        },
+                        pulseSoft: {
+                            '0%, 100%': {opacity: '0.8'},
+                            '50%': {opacity: '1'},
+                        }
+                    },
+                    boxShadow: {
+                        'pastel': '0 6px 12px rgba(180, 160, 150, 0.1)',
+                        'pastel-lg': '0 10px 25px rgba(180, 160, 150, 0.15)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Quick action button tap feedback */
+        .quick-action-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Photo carousel scrollbar */
+        .photo-carousel::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .photo-carousel::-webkit-scrollbar-track {
+            background: #ffe8d9;
+            border-radius: 3px;
+        }
+
+        .photo-carousel::-webkit-scrollbar-thumb {
+            background: #ff8c69;
+            border-radius: 3px;
+        }
+
+        /* Chat interface styles */
+        .chat-container {
+            height: 400px;
+        }
+
+        .chat-messages {
+            height: calc(100% - 80px);
+        }
+
+        /* Responsive grid adjustments */
+        @media (max-width: 640px) {
+            .quick-action-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body class="bg-pastel-lightest font-sans text-pastel-text">
+<!-- Navigation Header -->
+<nav class="bg-white shadow-pastel sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-pastel-primary flex items-center justify-center text-white font-serif font-semibold text-xl">
+                    B
+                </div>
+                <div>
+                    <h1 class="font-serif text-lg text-pastel-heading">Good Morning, Sarah!</h1>
+                    <p class="text-xs text-pastel-textLight">Emma is 6 months old today 🎉</p>
+                </div>
+            </div>
+            <button class="p-2 rounded-full hover:bg-pastel-light transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-text" fill="none" viewBox="0 0 24 24"
+                     stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</nav><!-- Main Dashboard Content -->
+<div class="max-w-7xl mx-auto px-4 py-6">
+    <!-- Today's Summary Cards -->
+    <section class="mb-8 animate-fade-in">
+        <h2 class="font-serif text-xl text-pastel-heading mb-4">Today's Summary</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- Feeding Card -->
+            <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-10 h-10 rounded-full bg-pastel-accent1 bg-opacity-20 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-primary" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs text-pastel-textLight">2h ago</span>
+                </div>
+                <p class="text-2xl font-semibold text-pastel-heading">5</p>
+                <p class="text-sm text-pastel-textLight">Feedings</p>
+            </div>
+
+            <!-- Sleep Card -->
+            <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-10 h-10 rounded-full bg-pastel-accent2 bg-opacity-20 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-accent1" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs text-pastel-textLight">Active</span>
+                </div>
+                <p class="text-2xl font-semibold text-pastel-heading">12h 30m</p>
+                <p class="text-sm text-pastel-textLight">Total Sleep</p>
+            </div>
+
+            <!-- Diaper Card -->
+            <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-10 h-10 rounded-full bg-pastel-secondary bg-opacity-50 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-primary" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs text-pastel-textLight">45m ago</span>
+                </div>
+                <p class="text-2xl font-semibold text-pastel-heading">7</p>
+                <p class="text-sm text-pastel-textLight">Diaper Changes</p>
+            </div>
+
+            <!-- Growth Card -->
+            <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-10 h-10 rounded-full bg-pastel-light bg-opacity-50 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-accent2" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs text-green-600">+0.2kg</span>
+                </div>
+                <p class="text-2xl font-semibold text-pastel-heading">7.2kg</p>
+                <p class="text-sm text-pastel-textLight">Current Weight</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="mb-8 animate-slide-up">
+        <h2 class="font-serif text-xl text-pastel-heading mb-4">Quick Actions</h2>
+        <div class="grid grid-cols-3 md:grid-cols-6 gap-4 quick-action-grid">
+            <!-- Feed Button -->
+            <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2">
+                <div class="w-12 h-12 rounded-full bg-pastel-primary bg-opacity-10 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-primary" fill="none"
+                         viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                </div>
+                <span class="text-sm font-medium text-pastel-heading">Feed</span>
+            </button>
+
+            <!-- Sleep Button -->
+            <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2">
+                <div class="w-12 h-12 rounded-full bg-pastel-accent1 bg-opacity-10 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-accent1" fill="none"
+                         viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                    </svg>
+                </div>
+                <span class="text-sm font-medium text-pastel-heading">Sleep</span>
+            </button>
+
+            <!-- Diaper Button -->
+            <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2">
+                <div class="w-12 h-12 rounded-full bg-pastel-accent2 bg-opacity-10 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-accent2" fill="none"
+                         viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                    </svg>
+                </div>
+                <span class="text-sm font-medium text-pastel-heading">Diaper</span>
+            </button>
+
+            <!-- Medicine Button -->
+            <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2">
+                <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none"
+                         viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                    </svg>
+                </div>
+                <span class="text-sm font-medium text-pastel-heading">Medicine</span>
+            </button>
+
+            <!-- Play Button -->
+            <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2">
+                <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600" fill="none"
+                         viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <span class="text-sm font-medium text-pastel-heading">Play</span>
+            </button>
+
+            <!-- Photo Button -->
+            <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2">
+                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none"
+                         viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </div>
+                <span class="text-sm font-medium text-pastel-heading">Photo</span>
+            </button>
+        </div>
+    </section>
+
+    <!-- Two Column Layout for Reminders and Photos -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Upcoming Reminders -->
+        <section class="animate-slide-up">
+            <h2 class="font-serif text-xl text-pastel-heading mb-4">Upcoming Reminders</h2>
+            <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4 space-y-3">
+                <!-- Doctor Visit Reminder -->
+                <div class="flex items-center space-x-4 p-3 bg-pastel-lightest rounded-lg border-l-4 border-pastel-primary">
+                    <div class="w-12 h-12 rounded-full bg-pastel-primary bg-opacity-10 flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-primary" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-semibold text-pastel-heading">6-Month Checkup</p>
+                        <p class="text-sm text-pastel-textLight">Tomorrow at 10:00 AM</p>
+                    </div>
+                    <button class="p-2 rounded-full hover:bg-pastel-light transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-text" viewBox="0 0 20 20"
+                             fill="currentColor">
+                            <path fill-rule="evenodd"
+                                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                  clip-rule="evenodd"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Medicine Reminder -->
+                <div class="flex items-center space-x-4 p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+                    <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-semibold text-pastel-heading">Vitamin D Drops</p>
+                        <p class="text-sm text-pastel-textLight">Today at 6:00 PM</p>
+                    </div>
+                    <span class="animate-pulse-soft text-xs bg-green-600 text-white px-2 py-1 rounded-full">Due Soon</span>
+                </div>
+
+                <!-- Feeding Reminder -->
+                <div class="flex items-center space-x-4 p-3 bg-pastel-lightest rounded-lg">
+                    <div class="w-12 h-12 rounded-full bg-pastel-accent1 bg-opacity-20 flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-primary" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-semibold text-pastel-heading">Next Feeding</p>
+                        <p class="text-sm text-pastel-textLight">Estimated in 1h 30m</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recent Photos -->
+        <section class="animate-slide-up">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="font-serif text-xl text-pastel-heading">Recent Photos</h2>
+                <button class="text-sm text-pastel-primary hover:text-pastel-primaryHover transition-colors">View All
+                </button>
+            </div>
+            <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4">
+                <div class="photo-carousel flex space-x-3 overflow-x-auto pb-2">
+                    <!-- Photo 1 -->
+                    <div class="flex-shrink-0">
+                        <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=150&h=150&fit=crop"
+                             alt="Baby photo"
+                             class="w-32 h-32 object-cover rounded-lg hover:opacity-90 transition-opacity cursor-pointer">
+                        <p class="text-xs text-pastel-textLight mt-1 text-center">2 hours ago</p>
+                    </div>
+                    <!-- Photo 2 -->
+                    <div class="flex-shrink-0">
+                        <img src="https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=150&h=150&fit=crop"
+                             alt="Baby photo"
+                             class="w-32 h-32 object-cover rounded-lg hover:opacity-90 transition-opacity cursor-pointer">
+                        <p class="text-xs text-pastel-textLight mt-1 text-center">Yesterday</p>
+                    </div>
+                    <!-- Photo 3 -->
+                    <div class="flex-shrink-0">
+                        <img src="https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=150&h=150&fit=crop"
+                             alt="Baby photo"
+                             class="w-32 h-32 object-cover rounded-lg hover:opacity-90 transition-opacity cursor-pointer">
+                        <p class="text-xs text-pastel-textLight mt-1 text-center">2 days ago</p>
+                    </div>
+                    <!-- Photo 4 -->
+                    <div class="flex-shrink-0">
+                        <img src="https://images.unsplash.com/photo-1519689680058-324335c77eba?w=150&h=150&fit=crop"
+                             alt="Baby photo"
+                             class="w-32 h-32 object-cover rounded-lg hover:opacity-90 transition-opacity cursor-pointer">
+                        <p class="text-xs text-pastel-textLight mt-1 text-center">3 days ago</p>
+                    </div>
+                    <!-- Add Photo Button -->
+                    <div class="flex-shrink-0">
+                        <button class="w-32 h-32 border-2 border-dashed border-pastel-light rounded-lg flex flex-col items-center justify-center hover:border-pastel-primary hover:bg-pastel-lightest transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-pastel-textLight mb-1"
+                                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M12 4v16m8-8H4"/>
+                            </svg>
+                            <span class="text-xs text-pastel-textLight">Add Photo</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- AI Assistant Section -->
+    <section class="mb-8 animate-slide-up">
+        <h2 class="font-serif text-xl text-pastel-heading mb-4">AI Baby Care Assistant</h2>
+        <div class="bg-white rounded-xl shadow-pastel border border-pastel-light overflow-hidden">
+            <div class="chat-container flex flex-col">
+                <!-- Chat Messages Area -->
+                <div class="chat-messages overflow-y-auto p-4 space-y-3">
+                    <!-- AI Message -->
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-pastel-primary flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                            AI
+                        </div>
+                        <div class="bg-pastel-lightest rounded-lg p-3 max-w-[80%]">
+                            <p class="text-sm text-pastel-text">Good morning! Emma slept well last night with 8 hours of
+                                continuous sleep. Based on her patterns, she might be ready for her morning feeding
+                                soon. Would you like me to set a reminder?</p>
+                        </div>
+                    </div>
+
+                    <!-- User Message -->
+                    <div class="flex items-start space-x-3 justify-end">
+                        <div class="bg-pastel-primary text-white rounded-lg p-3 max-w-[80%]">
+                            <p class="text-sm">Yes, please set a reminder for 30 minutes</p>
+                        </div>
+                    </div>
+
+                    <!-- AI Response -->
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-pastel-primary flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                            AI
+                        </div>
+                        <div class="bg-pastel-lightest rounded-lg p-3 max-w-[80%]">
+                            <p class="text-sm text-pastel-text">Perfect! I've set a feeding reminder for 8:30 AM. I also
+                                noticed Emma hasn't had tummy time yet today. Would you like some activity suggestions
+                                for her age?</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input Area -->
+                <div class="border-t border-pastel-light p-4">
+                    <div class="flex items-center space-x-2">
+                        <input type="text" placeholder="Ask about feeding, sleep, development..."
+                               class="flex-1 px-4 py-2 border border-pastel-light rounded-full focus:outline-none focus:border-pastel-primary transition-colors">
+                        <button class="p-2 bg-pastel-primary text-white rounded-full hover:bg-pastel-primaryHover transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
+                                 fill="currentColor">
+                                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <!-- Quick Suggestions -->
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        <button class="text-xs px-3 py-1 bg-pastel-lightest text-pastel-text rounded-full hover:bg-pastel-light transition-colors">
+                            Sleep tips
+                        </button>
+                        <button class="text-xs px-3 py-1 bg-pastel-lightest text-pastel-text rounded-full hover:bg-pastel-light transition-colors">
+                            Feeding schedule
+                        </button>
+                        <button class="text-xs px-3 py-1 bg-pastel-lightest text-pastel-text rounded-full hover:bg-pastel-light transition-colors">
+                            Growth milestones
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recent Activities Timeline -->
+    <section class="mb-8 animate-slide-up">
+        <h2 class="font-serif text-xl text-pastel-heading mb-4">Recent Activities</h2>
+        <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4">
+            <div class="space-y-4">
+                <!-- Activity Item -->
+                <div class="flex items-start space-x-3">
+                    <div class="w-2 h-2 bg-pastel-primary rounded-full mt-2 flex-shrink-0"></div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <p class="font-medium text-pastel-heading">Morning Feeding</p>
+                            <span class="text-xs text-pastel-textLight">6:30 AM</span>
+                        </div>
+                        <p class="text-sm text-pastel-textLight">Breast milk, 20 minutes, both sides</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start space-x-3">
+                    <div class="w-2 h-2 bg-pastel-accent1 rounded-full mt-2 flex-shrink-0"></div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <p class="font-medium text-pastel-heading">Diaper Change</p>
+                            <span class="text-xs text-pastel-textLight">5:45 AM</span>
+                        </div>
+                        <p class="text-sm text-pastel-textLight">Wet diaper</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start space-x-3">
+                    <div class="w-2 h-2 bg-pastel-accent2 rounded-full mt-2 flex-shrink-0"></div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <p class="font-medium text-pastel-heading">Wake Up</p>
+                            <span class="text-xs text-pastel-textLight">5:30 AM</span>
+                        </div>
+                        <p class="text-sm text-pastel-textLight">After 8 hours of sleep</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Floating Action Button for Quick Add -->
+<button class="fixed bottom-6 right-6 w-14 h-14 bg-pastel-primary text-white rounded-full shadow-lg hover:bg-pastel-primaryHover transition-all duration-200 flex items-center justify-center group">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+    </svg>
+    <span class="absolute right-full mr-3 bg-gray-800 text-white text-sm px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Quick Add Activity</span>
+</button>
+
+<script>
+    // Initialize dashboard interactions
+    document.addEventListener('DOMContentLoaded', function () {
+        // Quick action button animations
+        const quickActionBtns = document.querySelectorAll('.quick-action-btn');
+        quickActionBtns.forEach(btn => {
+            btn.addEventListener('click', function () {
+                // Visual feedback
+                this.classList.add('animate-pulse');
+                setTimeout(() => {
+                    this.classList.remove('animate-pulse');
+                }, 500);
+            });
+        });
+
+        // Photo carousel smooth scroll
+        const photoCarousel = document.querySelector('.photo-carousel');
+        if (photoCarousel) {
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            photoCarousel.addEventListener('mousedown', (e) => {
+                isDown = true;
+                startX = e.pageX - photoCarousel.offsetLeft;
+                scrollLeft = photoCarousel.scrollLeft;
+            });
+
+            photoCarousel.addEventListener('mouseleave', () => {
+                isDown = false;
+            });
+
+            photoCarousel.addEventListener('mouseup', () => {
+                isDown = false;
+            });
+
+            photoCarousel.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - photoCarousel.offsetLeft;
+                const walk = (x - startX) * 2;
+                photoCarousel.scrollLeft = scrollLeft - walk;
+            });
+        }
+
+        // Floating action button
+        const floatingBtn = document.querySelector('.fixed.bottom-6');
+        floatingBtn.addEventListener('click', function () {
+            // Add rotation animation
+            this.style.transform = 'rotate(45deg)';
+            setTimeout(() => {
+                this.style.transform = 'rotate(0deg)';
+            }, 300);
+        });
+    });
+</script>
+</body>
+</html>
