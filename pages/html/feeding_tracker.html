@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BabyHelper - Feeding Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=Lora:wght@400;500;600&display=swap"
+          rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        // Tailwind configuration with pastel theme
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pastel: {
+                            lightest: '#fdf6f0',
+                            light: '#ffe8d9',
+                            primary: '#ff8c69',
+                            primaryHover: '#ff7043',
+                            secondary: '#ffd8cc',
+                            accent1: '#ffb5a7',
+                            accent2: '#fec89a',
+                            text: '#6d5d52',
+                            textLight: '#938278',
+                            heading: '#5c4d44'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Nunito Sans', 'sans-serif'],
+                        serif: ['Lora', 'serif']
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'float-delayed': 'float 6s ease-in-out 2s infinite',
+                        'fade-in-up': 'fadeInUp 1s ease-out forwards',
+                        'fade-in-right': 'fadeInRight 1s ease-out forwards',
+                        'fade-in-left': 'fadeInLeft 1s ease-out forwards',
+                        'fade-in': 'fadeIn 1.2s ease-out forwards',
+                        'pulse-ring': 'pulseRing 1.5s ease-out infinite',
+                        'grow-circle': 'growCircle 1s ease-out forwards',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': {transform: 'translateY(0)'},
+                            '50%': {transform: 'translateY(-20px)'},
+                        },
+                        fadeInUp: {
+                            '0%': {opacity: '0', transform: 'translateY(20px)'},
+                            '100%': {opacity: '1', transform: 'translateY(0)'},
+                        },
+                        fadeInRight: {
+                            '0%': {opacity: '0', transform: 'translateX(-20px)'},
+                            '100%': {opacity: '1', transform: 'translateX(0)'},
+                        },
+                        fadeInLeft: {
+                            '0%': {opacity: '0', transform: 'translateX(20px)'},
+                            '100%': {opacity: '1', transform: 'translateX(0)'},
+                        },
+                        fadeIn: {
+                            '0%': {opacity: '0'},
+                            '100%': {opacity: '1'},
+                        },
+                        pulseRing: {
+                            '0%': {transform: 'scale(1)', opacity: '1'},
+                            '100%': {transform: 'scale(1.3)', opacity: '0'},
+                        },
+                        growCircle: {
+                            '0%': {transform: 'scale(1)'},
+                            '100%': {transform: 'scale(1.1)'},
+                        },
+                    },
+                    boxShadow: {
+                        'pastel': '0 6px 12px rgba(180, 160, 150, 0.1)',
+                        'pastel-lg': '0 10px 25px rgba(180, 160, 150, 0.15)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Blob animation styles */
+        .blob-animation {
+            animation: blob-move 15s infinite alternate;
+        }
+
+        @keyframes blob-move {
+            0% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+            }
+            33% {
+                transform: translate(30px, -50px) rotate(20deg) scale(1.1);
+            }
+            66% {
+                transform: translate(-20px, 20px) rotate(-10deg) scale(0.9);
+            }
+            100% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+            }
+        }
+
+        /* Button hover effect */
+        .btn-hover-effect:hover {
+            box-shadow: 0 0 15px rgba(255, 140, 105, 0.5);
+        }
+
+        /* Custom scrollbar for pastel theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #fdf6f0;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #ffb5a7;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff8c69;
+        }
+
+        /* Timer button styles */
+        .timer-button {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timer-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 140, 105, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .timer-button.active::before {
+            width: 120%;
+            height: 120%;
+        }
+
+        .timer-button.active::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            border: 2px solid rgba(255, 140, 105, 0.5);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulse-ring 1.5s ease-out infinite;
+        }
+
+        /* Segmented control styles */
+        .segmented-control {
+            position: relative;
+            background: #fdf6f0;
+            border-radius: 24px;
+            padding: 4px;
+        }
+
+        .segmented-control-indicator {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            height: calc(100% - 8px);
+            background: #ff8c69;
+            border-radius: 20px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .segmented-control input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .segmented-control label {
+            position: relative;
+            z-index: 1;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .segmented-control input[type="radio"]:checked + label {
+            color: white;
+        }
+
+        /* Auto-expanding textarea */
+        .auto-expand {
+            resize: none;
+            overflow: hidden;
+            min-height: 80px;
+        }
+
+        /* Emoji button styles */
+        .emoji-btn {
+            transition: transform 0.2s ease;
+        }
+
+        .emoji-btn:hover {
+            transform: scale(1.2);
+        }
+
+        /* Temperature indicator */
+        .temp-indicator {
+            transition: color 0.3s ease;
+        }
+
+        .temp-cold {
+            color: #60a5fa;
+        }
+
+        .temp-perfect {
+            color: #10b981;
+        }
+
+        .temp-warm {
+            color: #f59e0b;
+        }
+
+        .temp-hot {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body class="h-full bg-pastel-lightest font-sans text-pastel-text">
+<div class="flex h-full relative">
+    <!-- Background Decorative Elements -->
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-20 right-[10%] w-64 h-64 rounded-full bg-pastel-accent1 opacity-20 blur-3xl blob-animation"></div>
+        <div class="absolute bottom-40 left-[15%] w-80 h-80 rounded-full bg-pastel-accent2 opacity-20 blur-3xl blob-animation"
+             style="animation-delay: 2s;"></div>
+    </div>
+
+    <!-- Mobile Menu Button -->
+    <button id="mobileMenuBtn"
+            class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-full shadow-pastel-lg opacity-0 animate-fade-in"
+            style="animation-delay: 0.1s; animation-fill-mode: forwards;">
+        <i data-lucide="menu" class="h-5 w-5 text-pastel-primary"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <aside id="sidebar"
+           class="fixed lg:relative inset-y-0 left-0 z-40 w-64 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col gap-6 border-r border-pastel-light bg-white/80 backdrop-blur-lg p-6">
+        <!-- Logo and Brand -->
+        <div class="flex items-center space-x-2 opacity-0 animate-fade-in-right"
+             style="animation-delay: 0.2s; animation-fill-mode: forwards;">
+            <div class="w-10 h-10 rounded-full bg-pastel-primary flex items-center justify-center text-white font-serif font-semibold text-xl">
+                <i data-lucide="baby" class="h-6 w-6"></i>
+            </div>
+            <span class="font-serif text-pastel-heading text-xl">BabyHelper</span>
+        </div>
+
+        <!-- Quick Action Button -->
+        <button class="btn-hover-effect flex items-center justify-between gap-3 text-sm font-medium bg-pastel-primary text-white p-3 rounded-full shadow-pastel transition-all duration-300 hover:bg-pastel-primaryHover hover:transform hover:-translate-y-0.5 opacity-0 animate-fade-in-right"
+                style="animation-delay: 0.3s; animation-fill-mode: forwards;">
+                <span class="flex items-center gap-3">
+                    <i data-lucide="plus" class="h-4 w-4"></i>
+                    Add New Entry
+                </span>
+            <kbd class="text-xs text-white/80 hidden sm:block">⌘A</kbd>
+        </button>
+
+        <!-- Navigation -->
+        <nav class="flex flex-col gap-2 text-sm opacity-0 animate-fade-in-right"
+             style="animation-delay: 0.4s; animation-fill-mode: forwards;">
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="bar-chart-3" class="h-4 w-4"></i>
+                Insights & Analysis
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="moon" class="h-4 w-4"></i>
+                Sleep Tracking
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full bg-pastel-light text-pastel-primary font-medium">
+                <i data-lucide="utensils" class="h-4 w-4"></i>
+                <span class="flex-1">Feeding Log</span>
+                <span class="ml-auto text-xs bg-pastel-accent1/20 text-pastel-primary px-2 py-0.5 rounded-full font-medium">NOW</span>
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="heart" class="h-4 w-4"></i>
+                Health Records
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="calendar" class="h-4 w-4"></i>
+                Development Milestones
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="settings" class="h-4 w-4"></i>
+                Settings
+            </a>
+        </nav>
+
+        <!-- Premium Upgrade Card -->
+        <div class="mt-auto bg-gradient-to-br from-pastel-primary/10 to-pastel-accent1/10 p-4 rounded-2xl border border-pastel-light opacity-0 animate-fade-in-up"
+             style="animation-delay: 0.5s; animation-fill-mode: forwards;">
+            <p class="text-sm leading-relaxed text-pastel-text">
+                Upgrade to <span class="font-semibold text-pastel-primary">BabyHelper Pro</span> for advanced insights
+                and personalized recommendations!
+            </p>
+            <div class="flex items-center justify-between mt-4 text-sm">
+                <button class="hover:underline text-pastel-textLight">Maybe Later</button>
+                <button class="bg-pastel-primary hover:bg-pastel-primaryHover text-white px-4 py-1.5 rounded-full font-medium transition-colors">
+                    Go Premium
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Overlay for mobile -->
+    <div id="overlay" class="fixed inset-0 bg-black/30 backdrop-blur-sm z-30 lg:hidden hidden"></div>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden relative z-10">
+        <!-- Feature A: Header with Context -->
+        <header class="flex items-center justify-between gap-4 px-4 lg:px-6 py-4 border-b border-pastel-light bg-white/60 backdrop-blur-lg opacity-0 animate-fade-in"
+                style="animation-delay: 0.2s; animation-fill-mode: forwards;">
+            <div class="flex items-center gap-4">
+                <div class="lg:hidden w-8"></div>
+                <!-- Baby photo and name -->
+                <div class="flex items-center gap-3">
+                    <div class="h-12 w-12 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-white font-semibold overflow-hidden">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%23fff'/%3E%3Ccircle cx='35' cy='40' r='5' fill='%23333'/%3E%3Ccircle cx='65' cy='40' r='5' fill='%23333'/%3E%3Cpath d='M 30 60 Q 50 70 70 60' stroke='%23333' stroke-width='3' fill='none'/%3E%3C/svg%3E"
+                             alt="Emma" class="w-full h-full object-cover">
+                    </div>
+                    <div>
+                        <h1 class="text-base lg:text-lg font-serif font-medium text-pastel-heading">Emma's Feeding</h1>
+                        <p class="text-xs lg:text-sm text-pastel-textLight">
+                                <span id="sessionStatus" class="inline-flex items-center gap-1">
+                                    <span class="w-2 h-2 bg-pastel-primary rounded-full animate-pulse"></span>
+                                    Session Active
+                                </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <!-- Timer display -->
+            <div class="flex items-center gap-3">
+                <div id="mainTimer" class="text-2xl font-mono font-semibold text-pastel-heading hidden">
+                    <span id="timerDisplay">00:00</span>
+                </div>
+                <button class="relative hidden sm:block p-2 hover:bg-pastel-light rounded-full transition-colors">
+                    <i data-lucide="bell" class="h-5 w-5 text-pastel-text"></i>
+                    <span class="absolute top-1 right-1 h-2 w-2 rounded-full bg-pastel-primary"></span>
+                </button>
+                <button class="hidden sm:block p-2 hover:bg-pastel-light rounded-full transition-colors">
+                    <i data-lucide="help-circle" class="h-5 w-5 text-pastel-text"></i>
+                </button>
+                <div class="h-9 w-9 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-sm font-medium text-white shadow-pastel">
+                    JD
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <section class="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6">
+            <!-- Feature B: Input Method Selector -->
+            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 0.3s; animation-fill-mode: forwards;">
+                <h2 class="text-xl font-serif font-medium text-pastel-heading mb-4">Select Feeding Method</h2>
+                <div class="segmented-control relative h-12 flex items-center">
+                    <div id="segmentIndicator" class="segmented-control-indicator"
+                         style="width: calc(33.33% - 8px);"></div>
+                    <div class="flex flex-1 gap-2">
+                        <div class="flex-1">
+                            <input type="radio" name="feedingMethod" id="breast" value="breast" checked>
+                            <label for="breast"
+                                   class="flex items-center justify-center h-10 w-full text-sm font-medium text-pastel-text">
+                                <i data-lucide="baby" class="h-4 w-4 mr-2"></i>
+                                Breast
+                            </label>
+                        </div>
+                        <div class="flex-1">
+                            <input type="radio" name="feedingMethod" id="bottle" value="bottle">
+                            <label for="bottle"
+                                   class="flex items-center justify-center h-10 w-full text-sm font-medium text-pastel-text">
+                                <i data-lucide="milk" class="h-4 w-4 mr-2"></i>
+                                Bottle
+                            </label>
+                        </div>
+                        <div class="flex-1">
+                            <input type="radio" name="feedingMethod" id="solids" value="solids">
+                            <label for="solids"
+                                   class="flex items-center justify-center h-10 w-full text-sm font-medium text-pastel-text">
+                                <i data-lucide="apple" class="h-4 w-4 mr-2"></i>
+                                Solids
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature C: Breastfeeding Interface -->
+            <div id="breastfeedingInterface"
+                 class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 0.4s; animation-fill-mode: forwards;">
+                <h3 class="text-lg font-serif font-medium text-pastel-heading mb-6">Breastfeeding Session</h3>
+
+                <!-- Dual timer layout -->
+                <div class="flex items-center justify-around gap-4 mb-6">
+                    <!-- Left breast timer -->
+                    <div class="text-center">
+                        <p class="text-sm text-pastel-textLight mb-2">Left Breast</p>
+                        <button id="leftBreastTimer"
+                                class="timer-button w-24 h-24 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors flex flex-col items-center justify-center">
+                            <i data-lucide="play" class="h-8 w-8 text-pastel-primary mb-1"></i>
+                            <span class="text-xs font-mono font-semibold text-pastel-text">00:00</span>
+                        </button>
+                    </div>
+
+                    <!-- Switch button -->
+                    <button id="switchSide"
+                            class="w-10 h-10 rounded-full bg-pastel-accent1 hover:bg-pastel-primary transition-colors flex items-center justify-center disabled:opacity-50"
+                            disabled>
+                        <i data-lucide="repeat" class="h-5 w-5 text-white"></i>
+                    </button>
+
+                    <!-- Right breast timer -->
+                    <div class="text-center">
+                        <p class="text-sm text-pastel-textLight mb-2">Right Breast</p>
+                        <button id="rightBreastTimer"
+                                class="timer-button w-24 h-24 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors flex flex-col items-center justify-center">
+                            <i data-lucide="play" class="h-8 w-8 text-pastel-primary mb-1"></i>
+                            <span class="text-xs font-mono font-semibold text-pastel-text">00:00</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Session notes -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Session Notes</label>
+                    <textarea
+                            class="auto-expand w-full px-4 py-3 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors"
+                            placeholder="Add notes about the feeding session..."></textarea>
+                </div>
+
+                <!-- Control buttons -->
+                <div class="flex gap-3">
+                    <button id="pauseBreastfeeding"
+                            class="flex-1 px-4 py-3 rounded-full border border-pastel-primary text-pastel-primary hover:bg-pastel-light transition-colors font-medium disabled:opacity-50"
+                            disabled>
+                        <i data-lucide="pause" class="h-4 w-4 inline mr-2"></i>
+                        Pause
+                    </button>
+                    <button id="completeBreastfeeding"
+                            class="flex-1 px-4 py-3 rounded-full bg-pastel-primary text-white hover:bg-pastel-primaryHover transition-colors font-medium disabled:opacity-50"
+                            disabled>
+                        <i data-lucide="check" class="h-4 w-4 inline mr-2"></i>
+                        Complete
+                    </button>
+                </div>
+            </div>
+
+            <!-- Feature D: Bottle Feeding Interface -->
+            <div id="bottleInterface"
+                 class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 hidden">
+                <h3 class="text-lg font-serif font-medium text-pastel-heading mb-6">Bottle Feeding</h3>
+
+                <!-- Amount input -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Amount (oz)</label>
+                    <div class="flex items-center gap-4">
+                        <button id="decreaseAmount"
+                                class="w-12 h-12 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors flex items-center justify-center">
+                            <i data-lucide="minus" class="h-5 w-5 text-pastel-primary"></i>
+                        </button>
+                        <input type="number" id="bottleAmount" value="4.0" step="0.5" min="0" max="12"
+                               class="w-24 text-center text-2xl font-semibold text-pastel-heading border-b-2 border-pastel-light focus:border-pastel-primary outline-none">
+                        <button id="increaseAmount"
+                                class="w-12 h-12 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors flex items-center justify-center">
+                            <i data-lucide="plus" class="h-5 w-5 text-pastel-primary"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Fluid type -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Fluid Type</label>
+                    <select class="w-full px-4 py-3 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors">
+                        <option>Breast Milk</option>
+                        <option>Formula</option>
+                        <option>Mixed (Breast Milk + Formula)</option>
+                        <option>Water</option>
+                        <option>Juice</option>
+                    </select>
+                </div>
+
+                <!-- Temperature indicator -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Temperature</label>
+                    <div class="flex gap-2">
+                        <button class="temp-indicator temp-cold flex-1 p-3 rounded-xl border border-pastel-light hover:border-current transition-colors flex flex-col items-center gap-1">
+                            <i data-lucide="snowflake" class="h-5 w-5"></i>
+                            <span class="text-xs">Cold</span>
+                        </button>
+                        <button class="temp-indicator temp-perfect flex-1 p-3 rounded-xl border-2 border-current transition-colors flex flex-col items-center gap-1">
+                            <i data-lucide="thermometer" class="h-5 w-5"></i>
+                            <span class="text-xs">Perfect</span>
+                        </button>
+                        <button class="temp-indicator temp-warm flex-1 p-3 rounded-xl border border-pastel-light hover:border-current transition-colors flex flex-col items-center gap-1">
+                            <i data-lucide="sun" class="h-5 w-5"></i>
+                            <span class="text-xs">Warm</span>
+                        </button>
+                        <button class="temp-indicator temp-hot flex-1 p-3 rounded-xl border border-pastel-light hover:border-current transition-colors flex flex-col items-center gap-1">
+                            <i data-lucide="flame" class="h-5 w-5"></i>
+                            <span class="text-xs">Hot</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Optional timer -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Duration Timer (Optional)</label>
+                    <button id="bottleTimer"
+                            class="timer-button w-16 h-16 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors flex flex-col items-center justify-center">
+                        <i data-lucide="play" class="h-6 w-6 text-pastel-primary"></i>
+                        <span class="text-xs font-mono font-semibold text-pastel-text hidden">00:00</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Feature E: Solids Interface -->
+            <div id="solidsInterface"
+                 class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 hidden">
+                <h3 class="text-lg font-serif font-medium text-pastel-heading mb-6">Solid Foods</h3>
+
+                <!-- Food item selector -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Food Item</label>
+                    <div class="relative">
+                        <input type="text" placeholder="Search or select food..."
+                               class="w-full px-4 py-3 pr-10 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors">
+                        <i data-lucide="search" class="absolute right-3 top-3.5 h-5 w-5 text-pastel-textLight"></i>
+                    </div>
+                    <!-- Recent items -->
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        <button class="px-3 py-1.5 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors text-sm">
+                            Banana
+                        </button>
+                        <button class="px-3 py-1.5 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors text-sm">
+                            Avocado
+                        </button>
+                        <button class="px-3 py-1.5 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors text-sm">
+                            Sweet Potato
+                        </button>
+                        <button class="px-3 py-1.5 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors text-sm">
+                            Oatmeal
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Amount estimation -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Portion Size</label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button class="p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-colors flex flex-col items-center gap-1">
+                            <span class="text-xs">¼ cup</span>
+                            <div class="w-8 h-8 rounded-full bg-pastel-light"></div>
+                        </button>
+                        <button class="p-3 rounded-xl border-2 border-pastel-primary transition-colors flex flex-col items-center gap-1">
+                            <span class="text-xs">½ cup</span>
+                            <div class="w-10 h-10 rounded-full bg-pastel-secondary"></div>
+                        </button>
+                        <button class="p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-colors flex flex-col items-center gap-1">
+                            <span class="text-xs">¾ cup</span>
+                            <div class="w-12 h-12 rounded-full bg-pastel-light"></div>
+                        </button>
+                        <button class="p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-colors flex flex-col items-center gap-1">
+                            <span class="text-xs">1 cup</span>
+                            <div class="w-14 h-14 rounded-full bg-pastel-light"></div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Texture selector -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Texture</label>
+                    <select class="w-full px-4 py-3 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors">
+                        <option>Puree</option>
+                        <option>Mashed</option>
+                        <option>Chunky</option>
+                        <option>Finger Food</option>
+                        <option>Regular</option>
+                    </select>
+                </div>
+
+                <!-- Reaction notes with emoji -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Baby's Reaction</label>
+                    <div class="flex gap-2 mb-2">
+                        <button class="emoji-btn text-2xl">😍</button>
+                        <button class="emoji-btn text-2xl">😊</button>
+                        <button class="emoji-btn text-2xl">😐</button>
+                        <button class="emoji-btn text-2xl">🤔</button>
+                        <button class="emoji-btn text-2xl">😣</button>
+                        <button class="emoji-btn text-2xl">🤮</button>
+                    </div>
+                    <textarea
+                            class="w-full px-4 py-3 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors"
+                            rows="2" placeholder="How did it go?"></textarea>
+                </div>
+            </div>
+
+            <!-- Feature F: Quick Notes Section -->
+            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 0.5s; animation-fill-mode: forwards;">
+                <h3 class="text-lg font-serif font-medium text-pastel-heading mb-4">Quick Notes</h3>
+
+                <!-- Pre-defined tags -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                        😤 Fussy
+                    </button>
+                    <button class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                        😌 Content
+                    </button>
+                    <button class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                        😴 Sleepy
+                    </button>
+                    <button class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                        🤧 Congested
+                    </button>
+                    <button class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                        😊 Happy
+                    </button>
+                    <button class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                        🎯 Good Latch
+                    </button>
+                </div>
+
+                <!-- Custom note area -->
+                <textarea id="customNotes"
+                          class="auto-expand w-full px-4 py-3 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors mb-3"
+                          placeholder="Add any additional notes..."></textarea>
+
+                <!-- Photo attachment -->
+                <button class="flex items-center gap-2 text-sm text-pastel-primary hover:text-pastel-primaryHover transition-colors">
+                    <i data-lucide="camera" class="h-4 w-4"></i>
+                    Attach Photo
+                </button>
+            </div>
+
+            <!-- Feature G: Session Summary -->
+            <div id="sessionSummary"
+                 class="bg-gradient-to-br from-pastel-primary/10 to-pastel-accent1/10 rounded-2xl border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 0.6s; animation-fill-mode: forwards;">
+                <h3 class="text-lg font-serif font-medium text-pastel-heading mb-4">Session Summary</h3>
+
+                <div class="space-y-3 mb-6">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-pastel-text">Duration</span>
+                        <span id="summaryDuration" class="font-semibold text-pastel-heading">--:--</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-pastel-text">Method</span>
+                        <span id="summaryMethod" class="font-semibold text-pastel-heading">Breastfeeding</span>
+                    </div>
+                    <div id="summaryDetails" class="text-sm text-pastel-textLight">
+                        <!-- Dynamic content based on feeding method -->
+                    </div>
+                    <div id="summaryNotes" class="text-sm text-pastel-text italic hidden">
+                        <!-- Notes preview -->
+                    </div>
+                </div>
+
+                <!-- Save buttons -->
+                <button id="saveSession"
+                        class="w-full h-14 bg-pastel-primary hover:bg-pastel-primaryHover text-white rounded-full font-medium transition-colors mb-3 btn-hover-effect">
+                    Save Feeding Session
+                </button>
+                <button id="saveAndNext"
+                        class="w-full text-sm text-pastel-primary hover:text-pastel-primaryHover transition-colors">
+                    Save & Start Next Feeding
+                </button>
+            </div>
+
+            <!-- Feature H: Error/Warning Messages (hidden by default) -->
+            <div id="warningMessage"
+                 class="hidden bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-start gap-3">
+                <i data-lucide="alert-triangle" class="h-5 w-5 text-yellow-600 mt-0.5"></i>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-yellow-800">Long feeding session detected</p>
+                    <p class="text-xs text-yellow-700 mt-1">This feeding has exceeded 45 minutes. Is everything
+                        okay?</p>
+                </div>
+            </div>
+
+            <!-- Decorative floating elements -->
+            <div class="fixed bottom-20 right-10 w-32 h-32 rounded-full bg-pastel-accent1 opacity-10 animate-float pointer-events-none"></div>
+            <div class="fixed top-40 right-1/4 w-24 h-24 rounded-full bg-pastel-accent2 opacity-10 animate-float-delayed pointer-events-none"></div>
+        </section>
+
+        <!-- Bottom Navigation (Mobile) -->
+        <nav class="lg:hidden border-t border-pastel-light bg-white/80 backdrop-blur-lg">
+            <div class="grid grid-cols-4 gap-1">
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
+                    <i data-lucide="home" class="h-5 w-5"></i>
+                    <span class="text-xs">Home</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
+                    <i data-lucide="bar-chart-3" class="h-5 w-5"></i>
+                    <span class="text-xs">Insights</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-primary">
+                    <i data-lucide="plus-circle" class="h-5 w-5"></i>
+                    <span class="text-xs">Add</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
+                    <i data-lucide="user" class="h-5 w-5"></i>
+                    <span class="text-xs">Profile</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Mobile menu toggle functionality
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+
+        function toggleMobileMenu() {
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+        overlay.addEventListener('click', toggleMobileMenu);
+
+        // Feeding method selector
+        const feedingMethods = document.querySelectorAll('input[name="feedingMethod"]');
+        const segmentIndicator = document.getElementById('segmentIndicator');
+        const interfaces = {
+            breast: document.getElementById('breastfeedingInterface'),
+            bottle: document.getElementById('bottleInterface'),
+            solids: document.getElementById('solidsInterface')
+        };
+
+        feedingMethods.forEach((method, index) => {
+            method.addEventListener('change', (e) => {
+                // Update indicator position
+                segmentIndicator.style.transform = `translateX(${index * 100}%)`;
+
+                // Show/hide interfaces
+                Object.keys(interfaces).forEach(key => {
+                    interfaces[key].classList.toggle('hidden', key !== e.target.value);
+                });
+
+                // Update summary
+                document.getElementById('summaryMethod').textContent =
+                    e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1) + ' Feeding';
+            });
+        });
+
+        // Timer functionality
+        let timers = {
+            main: {interval: null, seconds: 0},
+            leftBreast: {interval: null, seconds: 0},
+            rightBreast: {interval: null, seconds: 0},
+            bottle: {interval: null, seconds: 0}
+        };
+
+        let activeBreastSide = null;
+        let sessionActive = false;
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateTimer(timerName, displayElement) {
+            timers[timerName].seconds++;
+            if (displayElement) {
+                displayElement.textContent = formatTime(timers[timerName].seconds);
+            }
+
+            // Warning for long sessions
+            if (timerName === 'main' && timers.main.seconds === 2700) { // 45 minutes
+                document.getElementById('warningMessage').classList.remove('hidden');
+            }
+        }
+
+        function startTimer(timerName, displayElement, buttonElement) {
+            if (!timers[timerName].interval) {
+                timers[timerName].interval = setInterval(() => {
+                    updateTimer(timerName, displayElement);
+                }, 1000);
+
+                if (buttonElement) {
+                    buttonElement.classList.add('active');
+                    const icon = buttonElement.querySelector('i');
+                    if (icon) {
+                        icon.setAttribute('data-lucide', 'pause');
+                        lucide.createIcons();
+                    }
+                }
+            }
+        }
+
+        function stopTimer(timerName, buttonElement) {
+            if (timers[timerName].interval) {
+                clearInterval(timers[timerName].interval);
+                timers[timerName].interval = null;
+
+                if (buttonElement) {
+                    buttonElement.classList.remove('active');
+                    const icon = buttonElement.querySelector('i');
+                    if (icon) {
+                        icon.setAttribute('data-lucide', 'play');
+                        lucide.createIcons();
+                    }
+                }
+            }
+        }
+
+        // Breastfeeding timers
+        const leftBreastBtn = document.getElementById('leftBreastTimer');
+        const rightBreastBtn = document.getElementById('rightBreastTimer');
+        const switchBtn = document.getElementById('switchSide');
+        const pauseBtn = document.getElementById('pauseBreastfeeding');
+        const completeBtn = document.getElementById('completeBreastfeeding');
+
+        function handleBreastTimer(side) {
+            const btn = side === 'left' ? leftBreastBtn : rightBreastBtn;
+            const timerSpan = btn.querySelector('span');
+            const timerName = side === 'left' ? 'leftBreast' : 'rightBreast';
+
+            if (!sessionActive) {
+                // Start session
+                sessionActive = true;
+                activeBreastSide = side;
+                startTimer('main', document.getElementById('timerDisplay'));
+                startTimer(timerName, timerSpan, btn);
+                document.getElementById('mainTimer').classList.remove('hidden');
+                document.getElementById('sessionStatus').innerHTML = '<span class="w-2 h-2 bg-pastel-primary rounded-full animate-pulse"></span> Session Active';
+                pauseBtn.disabled = false;
+                completeBtn.disabled = false;
+                switchBtn.disabled = false;
+            } else if (activeBreastSide === side) {
+                // Pause current side
+                stopTimer(timerName, btn);
+                activeBreastSide = null;
+                switchBtn.disabled = true;
+            } else {
+                // Switch sides
+                const otherSide = side === 'left' ? 'right' : 'left';
+                const otherBtn = side === 'left' ? rightBreastBtn : leftBreastBtn;
+                const otherTimerName = side === 'left' ? 'rightBreast' : 'leftBreast';
+
+                stopTimer(otherTimerName, otherBtn);
+                startTimer(timerName, timerSpan, btn);
+                activeBreastSide = side;
+            }
+        }
+
+        leftBreastBtn.addEventListener('click', () => handleBreastTimer('left'));
+        rightBreastBtn.addEventListener('click', () => handleBreastTimer('right'));
+
+        switchBtn.addEventListener('click', () => {
+            if (activeBreastSide) {
+                const newSide = activeBreastSide === 'left' ? 'right' : 'left';
+                handleBreastTimer(newSide);
+            }
+        });
+
+        pauseBtn.addEventListener('click', () => {
+            if (sessionActive) {
+                stopTimer('main');
+                stopTimer('leftBreast', leftBreastBtn);
+                stopTimer('rightBreast', rightBreastBtn);
+                activeBreastSide = null;
+                switchBtn.disabled = true;
+                pauseBtn.textContent = 'Resume';
+                pauseBtn.innerHTML = '<i data-lucide="play" class="h-4 w-4 inline mr-2"></i>Resume';
+                lucide.createIcons();
+            }
+        });
+
+        completeBtn.addEventListener('click', () => {
+            stopTimer('main');
+            stopTimer('leftBreast', leftBreastBtn);
+            stopTimer('rightBreast', rightBreastBtn);
+
+            // Update summary
+            const totalSeconds = timers.main.seconds;
+            document.getElementById('summaryDuration').textContent = formatTime(totalSeconds);
+            const leftTime = formatTime(timers.leftBreast.seconds);
+            const rightTime = formatTime(timers.rightBreast.seconds);
+            document.getElementById('summaryDetails').innerHTML = `
+            <div class="flex justify-between">
+                <span>Left: ${leftTime}</span>
+                <span>Right: ${rightTime}</span>
+            </div>
+        `;
+
+            // Reset for next session
+            sessionActive = false;
+            activeBreastSide = null;
+            pauseBtn.disabled = true;
+            completeBtn.disabled = true;
+            switchBtn.disabled = true;
+            document.getElementById('sessionStatus').innerHTML = 'Ready to start';
+        });
+
+        // Bottle feeding controls
+        const bottleAmount = document.getElementById('bottleAmount');
+        const decreaseBtn = document.getElementById('decreaseAmount');
+        const increaseBtn = document.getElementById('increaseAmount');
+
+        decreaseBtn.addEventListener('click', () => {
+            const current = parseFloat(bottleAmount.value);
+            if (current > 0) {
+                bottleAmount.value = (current - 0.5).toFixed(1);
+            }
+        });
+
+        increaseBtn.addEventListener('click', () => {
+            const current = parseFloat(bottleAmount.value);
+            if (current < 12) {
+                bottleAmount.value = (current + 0.5).toFixed(1);
+            }
+        });
+
+        // Temperature selector
+        document.querySelectorAll('.temp-indicator').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.temp-indicator').forEach(b => {
+                    b.classList.remove('border-2');
+                    b.classList.add('border');
+                });
+                btn.classList.remove('border');
+                btn.classList.add('border-2');
+            });
+        });
+
+        // Auto-expanding textareas
+        document.querySelectorAll('.auto-expand').forEach(textarea => {
+            textarea.addEventListener('input', function () {
+                this.style.height = 'auto';
+                this.style.height = this.scrollHeight + 'px';
+            });
+        });
+
+        // Quick note tags
+        const selectedTags = new Set();
+        document.querySelectorAll('.tag-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('bg-pastel-primary');
+                btn.classList.toggle('text-white');
+                btn.classList.toggle('border-pastel-primary');
+
+                const tag = btn.textContent.trim();
+                if (selectedTags.has(tag)) {
+                    selectedTags.delete(tag);
+                } else {
+                    selectedTags.add(tag);
+                }
+            });
+        });
+
+        // Emoji reactions
+        document.querySelectorAll('.emoji-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('ring-2', 'ring-pastel-primary'));
+                btn.classList.add('ring-2', 'ring-pastel-primary');
+            });
+        });
+
+        // Auto-save draft functionality
+        let autoSaveInterval = setInterval(() => {
+            if (sessionActive) {
+                console.log('Auto-saving draft...');
+                // In a real app, this would save to localStorage or backend
+            }
+        }, 30000); // Every 30 seconds
+
+        // Save session
+        document.getElementById('saveSession').addEventListener('click', () => {
+            console.log('Saving session...');
+            // In a real app, this would save to backend
+            alert('Feeding session saved successfully!');
+        });
+
+        document.getElementById('saveAndNext').addEventListener('click', () => {
+            console.log('Saving and starting next...');
+            // Save current session and reset form
+            alert('Session saved! Ready for next feeding.');
+            location.reload(); // Simple reset for demo
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Cmd/Ctrl + A to add new entry
+            if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
+                e.preventDefault();
+                console.log('Add new entry shortcut triggered');
+            }
+        });
+    });
+</script>
+</body>
+</html>
