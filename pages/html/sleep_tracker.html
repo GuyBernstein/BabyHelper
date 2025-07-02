@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BabyHelper Dashboard - Insights & Analysis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=Lora:wght@400;500;600&display=swap"
+          rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Tailwind configuration with pastel theme
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pastel: {
+                            lightest: '#fdf6f0',
+                            light: '#ffe8d9',
+                            primary: '#ff8c69',
+                            primaryHover: '#ff7043',
+                            secondary: '#ffd8cc',
+                            accent1: '#ffb5a7',
+                            accent2: '#fec89a',
+                            text: '#6d5d52',
+                            textLight: '#938278',
+                            heading: '#5c4d44'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Nunito Sans', 'sans-serif'],
+                        serif: ['Lora', 'serif']
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'float-delayed': 'float 6s ease-in-out 2s infinite',
+                        'fade-in-up': 'fadeInUp 1s ease-out forwards',
+                        'fade-in-right': 'fadeInRight 1s ease-out forwards',
+                        'fade-in-left': 'fadeInLeft 1s ease-out forwards',
+                        'fade-in': 'fadeIn 1.2s ease-out forwards',
+                        'pulse-soft': 'pulseSoft 2s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': {transform: 'translateY(0)'},
+                            '50%': {transform: 'translateY(-20px)'},
+                        },
+                        fadeInUp: {
+                            '0%': {opacity: '0', transform: 'translateY(20px)'},
+                            '100%': {opacity: '1', transform: 'translateY(0)'},
+                        },
+                        fadeInRight: {
+                            '0%': {opacity: '0', transform: 'translateX(-20px)'},
+                            '100%': {opacity: '1', transform: 'translateX(0)'},
+                        },
+                        fadeInLeft: {
+                            '0%': {opacity: '0', transform: 'translateX(20px)'},
+                            '100%': {opacity: '1', transform: 'translateX(0)'},
+                        },
+                        fadeIn: {
+                            '0%': {opacity: '0'},
+                            '100%': {opacity: '1'},
+                        },
+                        pulseSoft: {
+                            '0%, 100%': {opacity: '1'},
+                            '50%': {opacity: '0.7'},
+                        },
+                    },
+                    boxShadow: {
+                        'pastel': '0 6px 12px rgba(180, 160, 150, 0.1)',
+                        'pastel-lg': '0 10px 25px rgba(180, 160, 150, 0.15)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Blob animation styles */
+        .blob-animation {
+            animation: blob-move 15s infinite alternate;
+        }
+
+        @keyframes blob-move {
+            0% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+            }
+            33% {
+                transform: translate(30px, -50px) rotate(20deg) scale(1.1);
+            }
+            66% {
+                transform: translate(-20px, 20px) rotate(-10deg) scale(0.9);
+            }
+            100% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+            }
+        }
+
+        /* Button hover effect */
+        .btn-hover-effect:hover {
+            box-shadow: 0 0 15px rgba(255, 140, 105, 0.5);
+        }
+
+        /* Custom scrollbar for pastel theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #fdf6f0;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #ffb5a7;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff8c69;
+        }
+
+        /* Toggle switch styles */
+        .toggle-switch {
+            position: relative;
+            width: 56px;
+            height: 32px;
+            background-color: #ffe8d9;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background-color: #ff8c69;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 24px;
+            height: 24px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(24px);
+        }
+
+        /* Star rating styles */
+        .star-rating {
+            display: flex;
+            gap: 8px;
+        }
+
+        .star-rating button {
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            border: none;
+            background: none;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .star-rating button:hover {
+            transform: scale(1.1);
+        }
+
+        .star-rating button svg {
+            width: 100%;
+            height: 100%;
+            fill: #ffe8d9;
+            stroke: #ffb5a7;
+            stroke-width: 2;
+            transition: fill 0.3s ease;
+        }
+
+        .star-rating button.filled svg {
+            fill: #ff8c69;
+            stroke: #ff8c69;
+        }
+
+        /* Sleep timer styles */
+        .sleep-timer {
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body class="h-full bg-pastel-lightest font-sans text-pastel-text">
+<div class="flex h-full relative">
+    <!-- Background Decorative Elements -->
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-20 right-[10%] w-64 h-64 rounded-full bg-pastel-accent1 opacity-20 blur-3xl blob-animation"></div>
+        <div class="absolute bottom-40 left-[15%] w-80 h-80 rounded-full bg-pastel-accent2 opacity-20 blur-3xl blob-animation"
+             style="animation-delay: 2s;"></div>
+    </div>
+
+    <!-- Mobile Menu Button -->
+    <button id="mobileMenuBtn"
+            class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-full shadow-pastel-lg opacity-0 animate-fade-in"
+            style="animation-delay: 0.1s; animation-fill-mode: forwards;">
+        <i data-lucide="menu" class="h-5 w-5 text-pastel-primary"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <aside id="sidebar"
+           class="fixed lg:relative inset-y-0 left-0 z-40 w-64 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col gap-6 border-r border-pastel-light bg-white/80 backdrop-blur-lg p-6">
+        <!-- Logo and Brand -->
+        <div class="flex items-center space-x-2 opacity-0 animate-fade-in-right"
+             style="animation-delay: 0.2s; animation-fill-mode: forwards;">
+            <div class="w-10 h-10 rounded-full bg-pastel-primary flex items-center justify-center text-white font-serif font-semibold text-xl">
+                <i data-lucide="baby" class="h-6 w-6"></i>
+            </div>
+            <span class="font-serif text-pastel-heading text-xl">BabyHelper</span>
+        </div>
+
+        <!-- Quick Action Button -->
+        <button class="btn-hover-effect flex items-center justify-between gap-3 text-sm font-medium bg-pastel-primary text-white p-3 rounded-full shadow-pastel transition-all duration-300 hover:bg-pastel-primaryHover hover:transform hover:-translate-y-0.5 opacity-0 animate-fade-in-right"
+                style="animation-delay: 0.3s; animation-fill-mode: forwards;">
+                <span class="flex items-center gap-3">
+                    <i data-lucide="plus" class="h-4 w-4"></i>
+                    Add New Entry
+                </span>
+            <kbd class="text-xs text-white/80 hidden sm:block">⌘A</kbd>
+        </button>
+
+        <!-- Navigation -->
+        <nav class="flex flex-col gap-2 text-sm opacity-0 animate-fade-in-right"
+             style="animation-delay: 0.4s; animation-fill-mode: forwards;">
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full bg-pastel-light text-pastel-primary font-medium">
+                <i data-lucide="bar-chart-3" class="h-4 w-4"></i>
+                Insights & Analysis
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="moon" class="h-4 w-4"></i>
+                Sleep Tracking
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="utensils" class="h-4 w-4"></i>
+                <span class="flex-1">Feeding Log</span>
+                <span class="ml-auto text-xs bg-pastel-accent1/20 text-pastel-primary px-2 py-0.5 rounded-full font-medium">NEW</span>
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="heart" class="h-4 w-4"></i>
+                Health Records
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="calendar" class="h-4 w-4"></i>
+                Development Milestones
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="settings" class="h-4 w-4"></i>
+                Settings
+            </a>
+        </nav>
+
+        <!-- Premium Upgrade Card -->
+        <div class="mt-auto bg-gradient-to-br from-pastel-primary/10 to-pastel-accent1/10 p-4 rounded-2xl border border-pastel-light opacity-0 animate-fade-in-up"
+             style="animation-delay: 0.5s; animation-fill-mode: forwards;">
+            <p class="text-sm leading-relaxed text-pastel-text">
+                Upgrade to <span class="font-semibold text-pastel-primary">BabyHelper Pro</span> for advanced insights
+                and personalized recommendations!
+            </p>
+            <div class="flex items-center justify-between mt-4 text-sm">
+                <button class="hover:underline text-pastel-textLight">Maybe Later</button>
+                <button class="bg-pastel-primary hover:bg-pastel-primaryHover text-white px-4 py-1.5 rounded-full font-medium transition-colors">
+                    Go Premium
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Overlay for mobile -->
+    <div id="overlay" class="fixed inset-0 bg-black/30 backdrop-blur-sm z-30 lg:hidden hidden"></div>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden relative z-10">
+        <!-- Top bar -->
+        <header class="flex items-center justify-between gap-4 px-4 lg:px-6 py-4 border-b border-pastel-light bg-white/60 backdrop-blur-lg opacity-0 animate-fade-in"
+                style="animation-delay: 0.2s; animation-fill-mode: forwards;">
+            <div class="flex items-center gap-4">
+                <div class="lg:hidden w-8"></div>
+                <div>
+                    <h1 class="text-base lg:text-lg font-serif font-medium text-pastel-heading">Dashboard &
+                        Insights</h1>
+                    <p class="text-xs lg:text-sm text-pastel-textLight">Last updated: 2 hours ago • Emma, 8 months</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button class="relative hidden sm:block p-2 hover:bg-pastel-light rounded-full transition-colors">
+                    <i data-lucide="bell" class="h-5 w-5 text-pastel-text"></i>
+                    <span class="absolute top-1 right-1 h-2 w-2 rounded-full bg-pastel-primary"></span>
+                </button>
+                <button class="hidden sm:block p-2 hover:bg-pastel-light rounded-full transition-colors">
+                    <i data-lucide="help-circle" class="h-5 w-5 text-pastel-text"></i>
+                </button>
+                <div class="h-9 w-9 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-sm font-medium text-white shadow-pastel">
+                    JD
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <section class="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6">
+            <!-- Sleep Tracker Section -->
+            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 0.25s; animation-fill-mode: forwards;" id="sleepTrackerSection">
+                <h2 class="text-xl font-serif font-medium text-pastel-heading mb-6 flex items-center gap-2">
+                    <i data-lucide="moon" class="h-5 w-5 text-pastel-accent2"></i>
+                    Sleep Tracker
+                </h2>
+
+                <!-- Sleep Status Display -->
+                <div class="text-center mb-8">
+                    <div id="sleepStatusBg"
+                         class="inline-block p-8 rounded-full bg-pastel-light transition-colors duration-500">
+                        <div class="text-4xl font-serif font-semibold text-pastel-heading mb-2" id="sleepStatus">Awake
+                        </div>
+                        <div class="text-2xl font-mono sleep-timer text-pastel-text" id="sleepDuration">00:00:00</div>
+                    </div>
+                </div>
+
+                <!-- Start/Stop Controls -->
+                <div class="flex justify-center mb-8">
+                    <button id="sleepControlBtn"
+                            class="w-[120px] h-[120px] rounded-full bg-pastel-primary hover:bg-pastel-primaryHover text-white shadow-pastel-lg transition-all duration-300 hover:transform hover:scale-105 btn-hover-effect flex items-center justify-center">
+                        <i data-lucide="moon" class="h-12 w-12" id="sleepControlIcon"></i>
+                    </button>
+                </div>
+
+                <!-- Quick Location Selector -->
+                <div class="mb-6">
+                    <p class="text-sm text-pastel-textLight mb-3">Where is baby sleeping?</p>
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        <button class="location-btn px-4 py-2 rounded-full border border-pastel-light bg-white hover:bg-pastel-light transition-colors text-sm"
+                                data-location="crib">Crib
+                        </button>
+                        <button class="location-btn px-4 py-2 rounded-full border border-pastel-light bg-white hover:bg-pastel-light transition-colors text-sm"
+                                data-location="bassinet">Bassinet
+                        </button>
+                        <button class="location-btn px-4 py-2 rounded-full border border-pastel-light bg-white hover:bg-pastel-light transition-colors text-sm"
+                                data-location="car-seat">Car Seat
+                        </button>
+                        <button class="location-btn px-4 py-2 rounded-full border border-pastel-light bg-white hover:bg-pastel-light transition-colors text-sm"
+                                data-location="carrier">Carrier
+                        </button>
+                    </div>
+                    <input type="text" placeholder="Custom location..."
+                           class="w-full px-4 py-2 rounded-full border border-pastel-light focus:outline-none focus:ring-2 focus:ring-pastel-primary/30 text-sm"
+                           id="customLocationInput">
+                </div>
+
+                <!-- Environmental Factors -->
+                <div class="mb-6">
+                    <p class="text-sm text-pastel-textLight mb-3">Environmental factors</p>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                                <span class="flex items-center gap-2 text-sm">
+                                    <i data-lucide="volume-2" class="h-4 w-4 text-pastel-textLight"></i>
+                                    White Noise
+                                </span>
+                            <div class="toggle-switch" data-factor="white-noise"></div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                                <span class="flex items-center gap-2 text-sm">
+                                    <i data-lucide="baby" class="h-4 w-4 text-pastel-textLight"></i>
+                                    Pacifier
+                                </span>
+                            <div class="toggle-switch" data-factor="pacifier"></div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                                <span class="flex items-center gap-2 text-sm">
+                                    <i data-lucide="package" class="h-4 w-4 text-pastel-textLight"></i>
+                                    Swaddled
+                                </span>
+                            <div class="toggle-switch" data-factor="swaddled"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Post-Sleep Section (Hidden by default) -->
+                <div id="postSleepSection" class="hidden">
+                    <!-- Sleep Quality Input -->
+                    <div class="mb-6">
+                        <p class="text-sm text-pastel-textLight mb-3">How was the sleep quality?</p>
+                        <div class="star-rating" id="sleepQualityRating">
+                            <button data-rating="1"><i data-lucide="star" class="h-12 w-12"></i></button>
+                            <button data-rating="2"><i data-lucide="star" class="h-12 w-12"></i></button>
+                            <button data-rating="3"><i data-lucide="star" class="h-12 w-12"></i></button>
+                            <button data-rating="4"><i data-lucide="star" class="h-12 w-12"></i></button>
+                            <button data-rating="5"><i data-lucide="star" class="h-12 w-12"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Notes Section -->
+                    <div class="mb-6">
+                        <p class="text-sm text-pastel-textLight mb-3">How did baby fall asleep?</p>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <button class="sleep-method-btn px-3 py-1.5 rounded-full border border-pastel-light bg-white hover:bg-pastel-light transition-colors text-sm">
+                                Rocking
+                            </button>
+                            <button class="sleep-method-btn px-3 py-1.5 rounded-full border border-pastel-light bg-white hover:bg-pastel-light transition-colors text-sm">
+                                Feeding
+                            </button>
+                            <button class="sleep-method-btn px-3 py-1.5 rounded-full border border-pastel-light bg-white hover:bg-pastel-light transition-colors text-sm">
+                                Self-soothed
+                            </button>
+                            <button class="sleep-method-btn px-3 py-1.5 rounded-full border border-pastel-light bg-white hover:bg-pastel-light transition-colors text-sm">
+                                Singing
+                            </button>
+                        </div>
+
+                        <p class="text-sm text-pastel-textLight mb-3">Any interruptions?</p>
+                        <div class="space-y-2 mb-4">
+                            <label class="flex items-center gap-2 text-sm cursor-pointer">
+                                <input type="checkbox"
+                                       class="w-4 h-4 text-pastel-primary rounded border-pastel-light focus:ring-pastel-primary/30">
+                                <span>Woke up crying</span>
+                            </label>
+                            <label class="flex items-center gap-2 text-sm cursor-pointer">
+                                <input type="checkbox"
+                                       class="w-4 h-4 text-pastel-primary rounded border-pastel-light focus:ring-pastel-primary/30">
+                                <span>Needed feeding</span>
+                            </label>
+                            <label class="flex items-center gap-2 text-sm cursor-pointer">
+                                <input type="checkbox"
+                                       class="w-4 h-4 text-pastel-primary rounded border-pastel-light focus:ring-pastel-primary/30">
+                                <span>Diaper change</span>
+                            </label>
+                        </div>
+
+                        <textarea placeholder="Additional notes..." rows="3"
+                                  class="w-full px-4 py-3 rounded-2xl border border-pastel-light focus:outline-none focus:ring-2 focus:ring-pastel-primary/30 text-sm resize-none"></textarea>
+                    </div>
+
+                    <button id="saveSleepSession"
+                            class="w-full bg-pastel-primary hover:bg-pastel-primaryHover text-white py-3 rounded-full font-medium transition-colors">
+                        Save Sleep Session
+                    </button>
+                </div>
+
+                <!-- Recent Sleep Patterns -->
+                <div class="mt-8 pt-6 border-t border-pastel-light">
+                    <p class="text-sm font-medium text-pastel-heading mb-4">Recent Sleep Sessions</p>
+                    <div class="space-y-3" id="recentSleepList">
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-pastel-lightest hover:bg-pastel-light transition-colors cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="moon" class="h-4 w-4 text-pastel-textLight"></i>
+                                <div>
+                                    <p class="text-sm font-medium">Today, 2:30 PM</p>
+                                    <p class="text-xs text-pastel-textLight">Duration: 1h 45m • Quality: ★★★★☆</p>
+                                </div>
+                            </div>
+                            <i data-lucide="chevron-right" class="h-4 w-4 text-pastel-textLight"></i>
+                        </div>
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-pastel-lightest hover:bg-pastel-light transition-colors cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="moon" class="h-4 w-4 text-pastel-textLight"></i>
+                                <div>
+                                    <p class="text-sm font-medium">Today, 9:00 AM</p>
+                                    <p class="text-xs text-pastel-textLight">Duration: 2h 15m • Quality: ★★★★★</p>
+                                </div>
+                            </div>
+                            <i data-lucide="chevron-right" class="h-4 w-4 text-pastel-textLight"></i>
+                        </div>
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-pastel-lightest hover:bg-pastel-light transition-colors cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="moon" class="h-4 w-4 text-pastel-textLight"></i>
+                                <div>
+                                    <p class="text-sm font-medium">Yesterday, 8:30 PM</p>
+                                    <p class="text-xs text-pastel-textLight">Duration: 9h 30m • Quality: ★★★★☆</p>
+                                </div>
+                            </div>
+                            <i data-lucide="chevron-right" class="h-4 w-4 text-pastel-textLight"></i>
+                        </div>
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-pastel-lightest hover:bg-pastel-light transition-colors cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="moon" class="h-4 w-4 text-pastel-textLight"></i>
+                                <div>
+                                    <p class="text-sm font-medium">Yesterday, 2:00 PM</p>
+                                    <p class="text-xs text-pastel-textLight">Duration: 1h 30m • Quality: ★★★☆☆</p>
+                                </div>
+                            </div>
+                            <i data-lucide="chevron-right" class="h-4 w-4 text-pastel-textLight"></i>
+                        </div>
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-pastel-lightest hover:bg-pastel-light transition-colors cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="moon" class="h-4 w-4 text-pastel-textLight"></i>
+                                <div>
+                                    <p class="text-sm font-medium">2 days ago, 7:45 PM</p>
+                                    <p class="text-xs text-pastel-textLight">Duration: 10h 15m • Quality: ★★★★★</p>
+                                </div>
+                            </div>
+                            <i data-lucide="chevron-right" class="h-4 w-4 text-pastel-textLight"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Insights Card -->
+            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 0.3s; animation-fill-mode: forwards;">
+                <h2 class="text-xl font-serif font-medium text-pastel-heading mb-4 flex items-center gap-2">
+                    <i data-lucide="lightbulb" class="h-5 w-5 text-pastel-accent2"></i>
+                    Key Insights
+                </h2>
+                <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light">
+                    <p class="text-pastel-text leading-relaxed">
+                        Emma has shown an improved sleep pattern over the last week, with an average of
+                        <span class="font-semibold text-pastel-primary">8 hours of sleep</span> per night.
+                        <span class="text-pastel-accent1 font-medium">That's wonderful progress! 🌙</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4 opacity-0 animate-fade-in-up"
+                     style="animation-delay: 0.4s; animation-fill-mode: forwards;">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-pastel-textLight">Avg Sleep/Night</p>
+                            <p class="text-2xl font-semibold text-pastel-heading font-serif">8.2 hrs</p>
+                            <p class="text-xs text-pastel-primary mt-1">↑ 12% vs last week</p>
+                        </div>
+                        <div class="h-10 w-10 bg-pastel-secondary rounded-full flex items-center justify-center">
+                            <i data-lucide="moon" class="h-5 w-5 text-pastel-primary"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4 opacity-0 animate-fade-in-up"
+                     style="animation-delay: 0.5s; animation-fill-mode: forwards;">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-pastel-textLight">Daily Feedings</p>
+                            <p class="text-2xl font-semibold text-pastel-heading font-serif">6</p>
+                            <p class="text-xs text-pastel-textLight mt-1">On schedule</p>
+                        </div>
+                        <div class="h-10 w-10 bg-pastel-accent1/20 rounded-full flex items-center justify-center">
+                            <i data-lucide="baby-bottle" class="h-5 w-5 text-pastel-accent1"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4 opacity-0 animate-fade-in-up"
+                     style="animation-delay: 0.6s; animation-fill-mode: forwards;">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-pastel-textLight">Activity Level</p>
+                            <p class="text-2xl font-semibold text-pastel-heading font-serif">High</p>
+                            <p class="text-xs text-pastel-accent2 mt-1">Very active today</p>
+                        </div>
+                        <div class="h-10 w-10 bg-pastel-accent2/20 rounded-full flex items-center justify-center">
+                            <i data-lucide="zap" class="h-5 w-5 text-pastel-accent2"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4 opacity-0 animate-fade-in-up"
+                     style="animation-delay: 0.7s; animation-fill-mode: forwards;">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-pastel-textLight">Mood Score</p>
+                            <p class="text-2xl font-semibold text-pastel-heading font-serif">9/10</p>
+                            <p class="text-xs text-pastel-primary mt-1">Happy baby! 😊</p>
+                        </div>
+                        <div class="h-10 w-10 bg-pastel-primary/20 rounded-full flex items-center justify-center">
+                            <i data-lucide="smile" class="h-5 w-5 text-pastel-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Behavioral Trends Section -->
+            <div class="grid lg:grid-cols-2 gap-6">
+                <!-- Sleep Trends Chart -->
+                <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-left"
+                     style="animation-delay: 0.8s; animation-fill-mode: forwards;">
+                    <h2 class="text-lg font-serif font-medium text-pastel-heading mb-4 flex items-center gap-2">
+                        <i data-lucide="trending-up" class="h-5 w-5 text-pastel-accent2"></i>
+                        Sleep Trends
+                    </h2>
+                    <div class="h-48 mb-4">
+                        <canvas id="sleepChart"></canvas>
+                    </div>
+                    <p class="text-sm text-pastel-textLight">
+                        Observing a consistent improvement in uninterrupted sleep patterns.
+                    </p>
+                </div>
+
+                <!-- Feeding Habits Chart -->
+                <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-right"
+                     style="animation-delay: 0.9s; animation-fill-mode: forwards;">
+                    <h2 class="text-lg font-serif font-medium text-pastel-heading mb-4 flex items-center gap-2">
+                        <i data-lucide="utensils" class="h-5 w-5 text-pastel-accent1"></i>
+                        Feeding Habits
+                    </h2>
+                    <div class="h-48 mb-4">
+                        <canvas id="feedingChart"></canvas>
+                    </div>
+                    <p class="text-sm text-pastel-textLight">
+                        Regular feeding times have been established successfully.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Personalized Recommendations -->
+            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 1.0s; animation-fill-mode: forwards;">
+                <h2 class="text-xl font-serif font-medium text-pastel-heading mb-4 flex items-center gap-2">
+                    <i data-lucide="sparkles" class="h-5 w-5 text-pastel-accent2"></i>
+                    Personalized Recommendations
+                </h2>
+                <div class="grid gap-3">
+                    <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light flex items-start gap-3 hover:shadow-pastel transition-shadow">
+                        <i data-lucide="check-circle" class="h-5 w-5 text-pastel-primary mt-0.5"></i>
+                        <p class="text-pastel-text">Maintain the current bedtime routine to support sleep quality.</p>
+                    </div>
+                    <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light flex items-start gap-3 hover:shadow-pastel transition-shadow">
+                        <i data-lucide="info" class="h-5 w-5 text-pastel-accent1 mt-0.5"></i>
+                        <p class="text-pastel-text">Introduce new foods gradually to diversify diet.</p>
+                    </div>
+                    <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light flex items-start gap-3 hover:shadow-pastel transition-shadow">
+                        <i data-lucide="sun" class="h-5 w-5 text-pastel-accent2 mt-0.5"></i>
+                        <p class="text-pastel-text">Consider incorporating more outdoor playtime for vitamin D.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Decorative floating elements -->
+            <div class="fixed bottom-20 right-10 w-32 h-32 rounded-full bg-pastel-accent1 opacity-10 animate-float pointer-events-none"></div>
+            <div class="fixed top-40 right-1/4 w-24 h-24 rounded-full bg-pastel-accent2 opacity-10 animate-float-delayed pointer-events-none"></div>
+        </section>
+
+        <!-- Bottom Navigation (Mobile) -->
+        <nav class="lg:hidden border-t border-pastel-light bg-white/80 backdrop-blur-lg">
+            <div class="grid grid-cols-4 gap-1">
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
+                    <i data-lucide="home" class="h-5 w-5"></i>
+                    <span class="text-xs">Home</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-primary">
+                    <i data-lucide="bar-chart-3" class="h-5 w-5"></i>
+                    <span class="text-xs">Insights</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
+                    <i data-lucide="plus-circle" class="h-5 w-5"></i>
+                    <span class="text-xs">Add</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
+                    <i data-lucide="user" class="h-5 w-5"></i>
+                    <span class="text-xs">Profile</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Mobile menu toggle functionality
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+
+        function toggleMobileMenu() {
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+        overlay.addEventListener('click', toggleMobileMenu);
+
+        // Sleep Tracker Functionality
+        let sleepTimer = null;
+        let sleepStartTime = null;
+        let isSleeping = false;
+        let selectedLocation = null;
+        let sleepQuality = 0;
+        let selectedSleepMethod = null;
+
+        const sleepControlBtn = document.getElementById('sleepControlBtn');
+        const sleepControlIcon = document.getElementById('sleepControlIcon');
+        const sleepStatus = document.getElementById('sleepStatus');
+        const sleepStatusBg = document.getElementById('sleepStatusBg');
+        const sleepDuration = document.getElementById('sleepDuration');
+        const postSleepSection = document.getElementById('postSleepSection');
+        const saveSleepSessionBtn = document.getElementById('saveSleepSession');
+
+        // Update sleep timer display
+        function updateSleepTimer() {
+            if (!sleepStartTime) return;
+
+            const now = new Date();
+            const elapsed = Math.floor((now - sleepStartTime) / 1000);
+            const hours = Math.floor(elapsed / 3600);
+            const minutes = Math.floor((elapsed % 3600) / 60);
+            const seconds = elapsed % 60;
+
+            sleepDuration.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Toggle sleep state
+        function toggleSleep() {
+            isSleeping = !isSleeping;
+
+            if (isSleeping) {
+                // Start sleep
+                sleepStartTime = new Date();
+                sleepStatus.textContent = 'Sleeping';
+                sleepStatusBg.classList.add('bg-pastel-primary/20', 'animate-pulse-soft');
+                sleepStatusBg.classList.remove('bg-pastel-light');
+                sleepControlIcon.setAttribute('data-lucide', 'sun');
+                postSleepSection.classList.add('hidden');
+
+                // Start timer
+                sleepTimer = setInterval(updateSleepTimer, 1000);
+
+                // Provide haptic feedback if available
+                if ('vibrate' in navigator) {
+                    navigator.vibrate(100);
+                }
+            } else {
+                // End sleep
+                clearInterval(sleepTimer);
+                sleepStatus.textContent = 'Awake';
+                sleepStatusBg.classList.remove('bg-pastel-primary/20', 'animate-pulse-soft');
+                sleepStatusBg.classList.add('bg-pastel-light');
+                sleepControlIcon.setAttribute('data-lucide', 'moon');
+                postSleepSection.classList.remove('hidden');
+
+                // Provide haptic feedback if available
+                if ('vibrate' in navigator) {
+                    navigator.vibrate([100, 50, 100]);
+                }
+            }
+
+            // Re-render the icon
+            lucide.createIcons();
+        }
+
+        sleepControlBtn.addEventListener('click', toggleSleep);
+
+        // Location selector
+        const locationBtns = document.querySelectorAll('.location-btn');
+        const customLocationInput = document.getElementById('customLocationInput');
+
+        locationBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active state from all buttons
+                locationBtns.forEach(b => {
+                    b.classList.remove('bg-pastel-primary', 'text-white');
+                    b.classList.add('bg-white', 'text-pastel-text');
+                });
+
+                // Set active state
+                btn.classList.remove('bg-white', 'text-pastel-text');
+                btn.classList.add('bg-pastel-primary', 'text-white');
+                selectedLocation = btn.dataset.location;
+                customLocationInput.value = '';
+            });
+        });
+
+        customLocationInput.addEventListener('input', () => {
+            if (customLocationInput.value) {
+                // Remove active state from all buttons when custom location is entered
+                locationBtns.forEach(b => {
+                    b.classList.remove('bg-pastel-primary', 'text-white');
+                    b.classList.add('bg-white', 'text-pastel-text');
+                });
+                selectedLocation = customLocationInput.value;
+            }
+        });
+
+        // Environmental factors toggle switches
+        const toggleSwitches = document.querySelectorAll('.toggle-switch');
+
+        toggleSwitches.forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                toggle.classList.toggle('active');
+            });
+        });
+
+        // Sleep quality rating
+        const starButtons = document.querySelectorAll('#sleepQualityRating button');
+
+        starButtons.forEach((btn, index) => {
+            btn.addEventListener('click', () => {
+                sleepQuality = parseInt(btn.dataset.rating);
+
+                // Update star display
+                starButtons.forEach((star, starIndex) => {
+                    if (starIndex < sleepQuality) {
+                        star.classList.add('filled');
+                    } else {
+                        star.classList.remove('filled');
+                    }
+                });
+
+                // Re-render icons to update star fill
+                lucide.createIcons();
+            });
+        });
+
+        // Sleep method buttons
+        const sleepMethodBtns = document.querySelectorAll('.sleep-method-btn');
+
+        sleepMethodBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active state from all buttons
+                sleepMethodBtns.forEach(b => {
+                    b.classList.remove('bg-pastel-primary', 'text-white');
+                    b.classList.add('bg-white', 'text-pastel-text');
+                });
+
+                // Set active state
+                btn.classList.remove('bg-white', 'text-pastel-text');
+                btn.classList.add('bg-pastel-primary', 'text-white');
+                selectedSleepMethod = btn.textContent;
+            });
+        });
+
+        // Save sleep session
+        saveSleepSessionBtn.addEventListener('click', () => {
+            // Reset form
+            sleepDuration.textContent = '00:00:00';
+            sleepStartTime = null;
+            selectedLocation = null;
+            sleepQuality = 0;
+            selectedSleepMethod = null;
+
+            // Reset UI elements
+            locationBtns.forEach(btn => {
+                btn.classList.remove('bg-pastel-primary', 'text-white');
+                btn.classList.add('bg-white', 'text-pastel-text');
+            });
+            customLocationInput.value = '';
+
+            toggleSwitches.forEach(toggle => {
+                toggle.classList.remove('active');
+            });
+
+            starButtons.forEach(btn => {
+                btn.classList.remove('filled');
+            });
+
+            sleepMethodBtns.forEach(btn => {
+                btn.classList.remove('bg-pastel-primary', 'text-white');
+                btn.classList.add('bg-white', 'text-pastel-text');
+            });
+
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+
+            document.querySelector('textarea').value = '';
+
+            postSleepSection.classList.add('hidden');
+
+            // Show success message (would typically save to database)
+            alert('Sleep session saved successfully!');
+        });
+
+        // Chart.js configuration for pastel theme
+        Chart.defaults.color = '#938278'; // pastel.textLight
+        Chart.defaults.borderColor = '#ffe8d9'; // pastel.light
+        Chart.defaults.font.family = "'Nunito Sans', sans-serif";
+
+        // Sleep Trends Chart
+        const sleepCtx = document.getElementById('sleepChart').getContext('2d');
+        new Chart(sleepCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Sleep Hours',
+                    data: [7.5, 7.8, 8.2, 7.9, 8.5, 8.8, 8.7],
+                    borderColor: '#ff8c69', // pastel.primary
+                    backgroundColor: 'rgba(255, 140, 105, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#ff8c69',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }, {
+                    label: 'Recommended',
+                    data: [8, 8, 8, 8, 8, 8, 8],
+                    borderColor: '#ffb5a7', // pastel.accent1
+                    backgroundColor: 'transparent',
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    tension: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15,
+                            font: {
+                                family: "'Nunito Sans', sans-serif",
+                                size: 12
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: 6,
+                        max: 10,
+                        ticks: {
+                            callback: function (value) {
+                                return value + 'h';
+                            },
+                            font: {
+                                family: "'Nunito Sans', sans-serif"
+                            }
+                        },
+                        grid: {
+                            color: '#ffe8d9'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: '#ffe8d9'
+                        },
+                        ticks: {
+                            font: {
+                                family: "'Nunito Sans', sans-serif"
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Feeding Habits Chart
+        const feedingCtx = document.getElementById('feedingChart').getContext('2d');
+        new Chart(feedingCtx, {
+            type: 'bar',
+            data: {
+                labels: ['6am', '9am', '12pm', '3pm', '6pm', '9pm'],
+                datasets: [{
+                    label: 'Feeding Amount (oz)',
+                    data: [6, 5, 6, 4, 6, 5],
+                    backgroundColor: '#ffb5a7', // pastel.accent1
+                    borderRadius: 8,
+                    borderWidth: 2,
+                    borderColor: '#ffd8cc' // pastel.secondary
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {display: false}
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 8,
+                        ticks: {
+                            callback: function (value) {
+                                return value + ' oz';
+                            },
+                            font: {
+                                family: "'Nunito Sans', sans-serif"
+                            }
+                        },
+                        grid: {
+                            color: '#ffe8d9'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                family: "'Nunito Sans', sans-serif"
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Cmd/Ctrl + A to add new entry
+            if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
+                e.preventDefault();
+                console.log('Add new entry shortcut triggered');
+                // Future implementation: Show add entry modal
+            }
+        });
+
+        // Add smooth scroll behavior
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({behavior: 'smooth'});
+                }
+            });
+        });
+
+        // Re-render icons when mobile menu is toggled
+        const observer = new MutationObserver(() => {
+            lucide.createIcons();
+        });
+        observer.observe(sidebar, {attributes: true, attributeFilter: ['class']});
+    });
+</script>
+</body>
+</html>
