@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BabyHelper Dashboard - AI Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=Lora:wght@400;500;600&display=swap"
+          rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Tailwind configuration with pastel theme
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pastel: {
+                            lightest: '#fdf6f0',
+                            light: '#ffe8d9',
+                            primary: '#ff8c69',
+                            primaryHover: '#ff7043',
+                            secondary: '#ffd8cc',
+                            accent1: '#ffb5a7',
+                            accent2: '#fec89a',
+                            text: '#6d5d52',
+                            textLight: '#938278',
+                            heading: '#5c4d44'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Nunito Sans', 'sans-serif'],
+                        serif: ['Lora', 'serif']
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'float-delayed': 'float 6s ease-in-out 2s infinite',
+                        'fade-in-up': 'fadeInUp 1s ease-out forwards',
+                        'fade-in-right': 'fadeInRight 1s ease-out forwards',
+                        'fade-in-left': 'fadeInLeft 1s ease-out forwards',
+                        'fade-in': 'fadeIn 1.2s ease-out forwards',
+                        'pulse-soft': 'pulseSoft 2s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': {transform: 'translateY(0)'},
+                            '50%': {transform: 'translateY(-20px)'},
+                        },
+                        fadeInUp: {
+                            '0%': {opacity: '0', transform: 'translateY(20px)'},
+                            '100%': {opacity: '1', transform: 'translateY(0)'},
+                        },
+                        fadeInRight: {
+                            '0%': {opacity: '0', transform: 'translateX(-20px)'},
+                            '100%': {opacity: '1', transform: 'translateX(0)'},
+                        },
+                        fadeInLeft: {
+                            '0%': {opacity: '0', transform: 'translateX(20px)'},
+                            '100%': {opacity: '1', transform: 'translateX(0)'},
+                        },
+                        fadeIn: {
+                            '0%': {opacity: '0'},
+                            '100%': {opacity: '1'},
+                        },
+                        pulseSoft: {
+                            '0%, 100%': {opacity: '0.6'},
+                            '50%': {opacity: '1'},
+                        },
+                    },
+                    boxShadow: {
+                        'pastel': '0 6px 12px rgba(180, 160, 150, 0.1)',
+                        'pastel-lg': '0 10px 25px rgba(180, 160, 150, 0.15)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Blob animation styles */
+        .blob-animation {
+            animation: blob-move 15s infinite alternate;
+        }
+
+        @keyframes blob-move {
+            0% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+            }
+            33% {
+                transform: translate(30px, -50px) rotate(20deg) scale(1.1);
+            }
+            66% {
+                transform: translate(-20px, 20px) rotate(-10deg) scale(0.9);
+            }
+            100% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+            }
+        }
+
+        /* Button hover effect */
+        .btn-hover-effect:hover {
+            box-shadow: 0 0 15px rgba(255, 140, 105, 0.5);
+        }
+
+        /* Custom scrollbar for pastel theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #fdf6f0;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #ffb5a7;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff8c69;
+        }
+
+        /* Chat-specific styles */
+        .chat-container {
+            height: calc(100vh - 8rem);
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+
+        @media (max-width: 640px) {
+            .message-bubble {
+                max-width: 85%;
+            }
+
+            .chat-container {
+                height: calc(100vh - 12rem);
+            }
+        }
+
+        .auto-expand-textarea {
+            min-height: 40px;
+            max-height: 96px;
+            resize: none;
+            overflow-y: auto;
+        }
+
+        /* Chart container styles */
+        .chart-message {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .chart-canvas-container {
+            position: relative;
+            height: 250px;
+            margin: 1rem 0;
+        }
+
+        /* Typing indicator animation */
+        .typing-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #938278;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.5;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body class="h-full bg-pastel-lightest font-sans text-pastel-text">
+<div class="flex h-full relative">
+    <!-- Background Decorative Elements -->
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-20 right-[10%] w-64 h-64 rounded-full bg-pastel-accent1 opacity-20 blur-3xl blob-animation"></div>
+        <div class="absolute bottom-40 left-[15%] w-80 h-80 rounded-full bg-pastel-accent2 opacity-20 blur-3xl blob-animation"
+             style="animation-delay: 2s;"></div>
+    </div>
+
+    <!-- Mobile Menu Button -->
+    <button id="mobileMenuBtn"
+            class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-full shadow-pastel-lg opacity-0 animate-fade-in"
+            style="animation-delay: 0.1s; animation-fill-mode: forwards;">
+        <i data-lucide="menu" class="h-5 w-5 text-pastel-primary"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <aside id="sidebar"
+           class="fixed lg:relative inset-y-0 left-0 z-40 w-64 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col gap-6 border-r border-pastel-light bg-white/80 backdrop-blur-lg p-6">
+        <!-- Logo and Brand -->
+        <div class="flex items-center space-x-2 opacity-0 animate-fade-in-right"
+             style="animation-delay: 0.2s; animation-fill-mode: forwards;">
+            <div class="w-10 h-10 rounded-full bg-pastel-primary flex items-center justify-center text-white font-serif font-semibold text-xl">
+                <i data-lucide="baby" class="h-6 w-6"></i>
+            </div>
+            <span class="font-serif text-pastel-heading text-xl">BabyHelper</span>
+        </div>
+
+        <!-- Quick Action Button -->
+        <button class="btn-hover-effect flex items-center justify-between gap-3 text-sm font-medium bg-pastel-primary text-white p-3 rounded-full shadow-pastel transition-all duration-300 hover:bg-pastel-primaryHover hover:transform hover:-translate-y-0.5 opacity-0 animate-fade-in-right"
+                style="animation-delay: 0.3s; animation-fill-mode: forwards;">
+                <span class="flex items-center gap-3">
+                    <i data-lucide="plus" class="h-4 w-4"></i>
+                    Add New Entry
+                </span>
+            <kbd class="text-xs text-white/80 hidden sm:block">⌘A</kbd>
+        </button>
+
+        <!-- Navigation -->
+        <nav class="flex flex-col gap-2 text-sm opacity-0 animate-fade-in-right"
+             style="animation-delay: 0.4s; animation-fill-mode: forwards;">
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full bg-pastel-light text-pastel-primary font-medium">
+                <i data-lucide="message-square" class="h-4 w-4"></i>
+                AI Assistant
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="moon" class="h-4 w-4"></i>
+                Sleep Tracking
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="utensils" class="h-4 w-4"></i>
+                <span class="flex-1">Feeding Log</span>
+                <span class="ml-auto text-xs bg-pastel-accent1/20 text-pastel-primary px-2 py-0.5 rounded-full font-medium">NEW</span>
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="heart" class="h-4 w-4"></i>
+                Health Records
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="calendar" class="h-4 w-4"></i>
+                Development Milestones
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="settings" class="h-4 w-4"></i>
+                Settings
+            </a>
+        </nav>
+
+        <!-- Premium Upgrade Card -->
+        <div class="mt-auto bg-gradient-to-br from-pastel-primary/10 to-pastel-accent1/10 p-4 rounded-2xl border border-pastel-light opacity-0 animate-fade-in-up"
+             style="animation-delay: 0.5s; animation-fill-mode: forwards;">
+            <p class="text-sm leading-relaxed text-pastel-text">
+                Upgrade to <span class="font-semibold text-pastel-primary">BabyHelper Pro</span> for advanced insights
+                and personalized recommendations!
+            </p>
+            <div class="flex items-center justify-between mt-4 text-sm">
+                <button class="hover:underline text-pastel-textLight">Maybe Later</button>
+                <button class="bg-pastel-primary hover:bg-pastel-primaryHover text-white px-4 py-1.5 rounded-full font-medium transition-colors">
+                    Go Premium
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Overlay for mobile -->
+    <div id="overlay" class="fixed inset-0 bg-black/30 backdrop-blur-sm z-30 lg:hidden hidden"></div>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden relative z-10">
+        <!-- Top bar -->
+        <header class="flex items-center justify-between gap-4 px-4 lg:px-6 py-4 border-b border-pastel-light bg-white/60 backdrop-blur-lg opacity-0 animate-fade-in"
+                style="animation-delay: 0.2s; animation-fill-mode: forwards;">
+            <div class="flex items-center gap-4">
+                <div class="lg:hidden w-8"></div>
+                <div>
+                    <h1 class="text-base lg:text-lg font-serif font-medium text-pastel-heading">AI Assistant</h1>
+                    <p class="text-xs lg:text-sm text-pastel-textLight">Ask anything about Emma's data</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button class="relative hidden sm:block p-2 hover:bg-pastel-light rounded-full transition-colors">
+                    <i data-lucide="bell" class="h-5 w-5 text-pastel-text"></i>
+                    <span class="absolute top-1 right-1 h-2 w-2 rounded-full bg-pastel-primary"></span>
+                </button>
+                <button class="hidden sm:block p-2 hover:bg-pastel-light rounded-full transition-colors">
+                    <i data-lucide="help-circle" class="h-5 w-5 text-pastel-text"></i>
+                </button>
+                <div class="h-9 w-9 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-sm font-medium text-white shadow-pastel">
+                    JD
+                </div>
+            </div>
+        </header>
+
+        <!-- Chat Container -->
+        <div class="flex-1 flex flex-col chat-container">
+            <!-- Messages Area -->
+            <div id="messagesArea" class="flex-1 overflow-y-auto p-4 lg:p-6 space-y-4">
+                <!-- Welcome Message -->
+                <div class="flex items-start gap-3 opacity-0 animate-fade-in-up"
+                     style="animation-delay: 0.3s; animation-fill-mode: forwards;">
+                    <div class="w-8 h-8 rounded-full bg-pastel-secondary flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="sparkles" class="h-4 w-4 text-pastel-primary"></i>
+                    </div>
+                    <div class="message-bubble">
+                        <div class="bg-white rounded-2xl p-4 shadow-pastel border border-pastel-light">
+                            <p class="text-pastel-heading font-medium mb-2">Hello! I'm your AI Assistant 👋</p>
+                            <p class="text-pastel-text">I can help you understand Emma's patterns and provide insights
+                                about her sleep, feeding, and development. What would you like to know?</p>
+                        </div>
+                        <p class="text-xs text-pastel-textLight mt-1">Just now</p>
+                    </div>
+                </div>
+
+                <!-- Sample User Message -->
+                <div class="flex items-start gap-3 justify-end opacity-0 animate-fade-in-up"
+                     style="animation-delay: 0.4s; animation-fill-mode: forwards;">
+                    <div class="message-bubble">
+                        <div class="bg-pastel-primary text-white rounded-2xl p-4 shadow-pastel">
+                            <p>How has Emma's sleep been this week?</p>
+                        </div>
+                        <p class="text-xs text-pastel-textLight mt-1 text-right">2 min ago</p>
+                    </div>
+                </div>
+
+                <!-- AI Response with Chart -->
+                <div class="flex items-start gap-3 opacity-0 animate-fade-in-up"
+                     style="animation-delay: 0.5s; animation-fill-mode: forwards;">
+                    <div class="w-8 h-8 rounded-full bg-pastel-secondary flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="sparkles" class="h-4 w-4 text-pastel-primary"></i>
+                    </div>
+                    <div class="message-bubble chart-message">
+                        <div class="bg-white rounded-2xl p-4 shadow-pastel border border-pastel-light">
+                            <p class="text-pastel-text mb-3">Emma's sleep has shown great improvement this week! She's
+                                averaging <span class="font-semibold text-pastel-primary">8.2 hours</span> per night,
+                                which is a 12% increase from last week.</p>
+
+                            <!-- Inline Chart -->
+                            <div class="chart-canvas-container bg-pastel-lightest rounded-xl p-3 border border-pastel-light">
+                                <canvas id="inlineSleepChart"></canvas>
+                            </div>
+
+                            <p class="text-pastel-text mt-3">The longest uninterrupted sleep was on Saturday with 8.8
+                                hours. I notice she tends to sleep better on weekends - this might be due to a more
+                                relaxed morning routine.</p>
+
+                            <!-- Export Button -->
+                            <button class="mt-3 flex items-center gap-2 text-sm text-pastel-primary hover:text-pastel-primaryHover transition-colors">
+                                <i data-lucide="download" class="h-4 w-4"></i>
+                                Export Chart
+                            </button>
+                        </div>
+                        <p class="text-xs text-pastel-textLight mt-1">1 min ago</p>
+                    </div>
+                </div>
+
+                <!-- Typing Indicator (hidden by default) -->
+                <div id="typingIndicator" class="hidden flex items-start gap-3 opacity-0 animate-fade-in">
+                    <div class="w-8 h-8 rounded-full bg-pastel-secondary flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="sparkles" class="h-4 w-4 text-pastel-primary"></i>
+                    </div>
+                    <div class="bg-white rounded-2xl px-4 py-3 shadow-pastel border border-pastel-light">
+                        <div class="flex gap-1">
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suggested Questions -->
+            <div id="suggestedQuestions"
+                 class="px-4 lg:px-6 py-3 border-t border-pastel-light bg-white/60 backdrop-blur-lg">
+                <p class="text-xs text-pastel-textLight mb-2">Suggested questions:</p>
+                <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    <button class="suggestion-chip flex-shrink-0 px-3 py-1.5 bg-pastel-lightest border border-pastel-light rounded-full text-sm text-pastel-text hover:bg-pastel-light hover:text-pastel-primary transition-all">
+                        💤 Compare sleep patterns
+                    </button>
+                    <button class="suggestion-chip flex-shrink-0 px-3 py-1.5 bg-pastel-lightest border border-pastel-light rounded-full text-sm text-pastel-text hover:bg-pastel-light hover:text-pastel-primary transition-all">
+                        🍼 Feeding schedule analysis
+                    </button>
+                    <button class="suggestion-chip flex-shrink-0 px-3 py-1.5 bg-pastel-lightest border border-pastel-light rounded-full text-sm text-pastel-text hover:bg-pastel-light hover:text-pastel-primary transition-all">
+                        📈 Growth trends
+                    </button>
+                    <button class="suggestion-chip flex-shrink-0 px-3 py-1.5 bg-pastel-lightest border border-pastel-light rounded-full text-sm text-pastel-text hover:bg-pastel-light hover:text-pastel-primary transition-all">
+                        🎯 Today's summary
+                    </button>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="px-4 lg:px-6 py-4 border-t border-pastel-light bg-white/80 backdrop-blur-lg">
+                <form id="chatForm" class="flex gap-3 items-end">
+                    <div class="flex-1 relative">
+                            <textarea
+                                    id="messageInput"
+                                    class="auto-expand-textarea w-full px-4 py-2.5 bg-pastel-lightest border border-pastel-light rounded-2xl text-pastel-text placeholder-pastel-textLight focus:outline-none focus:border-pastel-primary transition-colors"
+                                    placeholder="Ask about Emma's patterns, trends, or get recommendations..."
+                                    rows="1"
+                            ></textarea>
+                    </div>
+                    <button
+                            id="sendButton"
+                            type="submit"
+                            class="p-2.5 bg-pastel-primary text-white rounded-full hover:bg-pastel-primaryHover transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                            disabled
+                    >
+                        <i data-lucide="send" class="h-5 w-5"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation (Mobile) -->
+        <nav class="lg:hidden border-t border-pastel-light bg-white/80 backdrop-blur-lg">
+            <div class="grid grid-cols-4 gap-1">
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
+                    <i data-lucide="home" class="h-5 w-5"></i>
+                    <span class="text-xs">Home</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-primary">
+                    <i data-lucide="message-square" class="h-5 w-5"></i>
+                    <span class="text-xs">AI Chat</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
+                    <i data-lucide="plus-circle" class="h-5 w-5"></i>
+                    <span class="text-xs">Add</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
+                    <i data-lucide="user" class="h-5 w-5"></i>
+                    <span class="text-xs">Profile</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Mobile menu toggle functionality
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+
+        function toggleMobileMenu() {
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+        overlay.addEventListener('click', toggleMobileMenu);
+
+        // Chart.js configuration for pastel theme
+        Chart.defaults.color = '#938278';
+        Chart.defaults.borderColor = '#ffe8d9';
+        Chart.defaults.font.family = "'Nunito Sans', sans-serif";
+
+        // Sample inline chart
+        const inlineCtx = document.getElementById('inlineSleepChart').getContext('2d');
+        new Chart(inlineCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Sleep Hours',
+                    data: [7.5, 7.8, 8.2, 7.9, 8.5, 8.8, 8.7],
+                    borderColor: '#ff8c69',
+                    backgroundColor: 'rgba(255, 140, 105, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#ff8c69',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {display: false}
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: 6,
+                        max: 10,
+                        ticks: {
+                            callback: function (value) {
+                                return value + 'h';
+                            }
+                        },
+                        grid: {
+                            color: '#ffe8d9'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: '#ffe8d9'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Chat functionality
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const chatForm = document.getElementById('chatForm');
+        const messagesArea = document.getElementById('messagesArea');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const suggestionChips = document.querySelectorAll('.suggestion-chip');
+
+        // Auto-expand textarea
+        messageInput.addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 96) + 'px';
+
+            // Enable/disable send button
+            sendButton.disabled = this.value.trim() === '';
+        });
+
+        // Handle form submission
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, 'user');
+
+            // Clear input
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            sendButton.disabled = true;
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            // Simulate AI response
+            setTimeout(() => {
+                hideTypingIndicator();
+                generateAIResponse(message);
+            }, 1500);
+        });
+
+        // Handle suggestion chip clicks
+        suggestionChips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                messageInput.value = chip.textContent.trim().substring(2); // Remove emoji
+                messageInput.dispatchEvent(new Event('input'));
+                messageInput.focus();
+            });
+        });
+
+        // Add message to chat
+        function addMessage(content, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex items-start gap-3 ${type === 'user' ? 'justify-end' : ''} opacity-0 animate-fade-in-up`;
+
+            if (type === 'user') {
+                messageDiv.innerHTML = `
+                <div class="message-bubble">
+                    <div class="bg-pastel-primary text-white rounded-2xl p-4 shadow-pastel">
+                        <p>${content}</p>
+                    </div>
+                    <p class="text-xs text-pastel-textLight mt-1 text-right">Just now</p>
+                </div>
+            `;
+            } else {
+                messageDiv.innerHTML = `
+                <div class="w-8 h-8 rounded-full bg-pastel-secondary flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="sparkles" class="h-4 w-4 text-pastel-primary"></i>
+                </div>
+                <div class="message-bubble">
+                    <div class="bg-white rounded-2xl p-4 shadow-pastel border border-pastel-light">
+                        ${content}
+                    </div>
+                    <p class="text-xs text-pastel-textLight mt-1">Just now</p>
+                </div>
+            `;
+            }
+
+            messagesArea.insertBefore(messageDiv, typingIndicator);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+
+            // Re-initialize icons for new elements
+            setTimeout(() => lucide.createIcons(), 100);
+        }
+
+        // Generate AI response based on query
+        function generateAIResponse(query) {
+            const lowerQuery = query.toLowerCase();
+            let response = '';
+
+            if (lowerQuery.includes('sleep') || lowerQuery.includes('compare')) {
+                response = `
+                <p class="text-pastel-text mb-3">I've analyzed Emma's sleep patterns for you. Here's what I found:</p>
+                <div class="chart-canvas-container bg-pastel-lightest rounded-xl p-3 border border-pastel-light">
+                    <canvas id="dynamicChart${Date.now()}"></canvas>
+                </div>
+                <p class="text-pastel-text mt-3">Key insights:</p>
+                <ul class="list-disc list-inside text-pastel-text space-y-1 ml-2">
+                    <li>Average sleep increased by 30 minutes</li>
+                    <li>More consistent bedtime routine</li>
+                    <li>Weekend sleep is notably better</li>
+                </ul>
+                <button class="mt-3 flex items-center gap-2 text-sm text-pastel-primary hover:text-pastel-primaryHover transition-colors">
+                    <i data-lucide="download" class="h-4 w-4"></i>
+                    Export Analysis
+                </button>
+            `;
+            } else if (lowerQuery.includes('feeding') || lowerQuery.includes('eat')) {
+                response = `
+                <p class="text-pastel-text mb-3">Emma's feeding schedule has been very consistent! She's averaging <span class="font-semibold text-pastel-primary">6 feedings</span> per day.</p>
+                <div class="bg-pastel-lightest rounded-xl p-3 border border-pastel-light">
+                    <p class="text-sm font-medium text-pastel-heading mb-2">Today's Schedule:</p>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-pastel-text">6:00 AM</span>
+                            <span class="text-pastel-primary font-medium">6 oz</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-pastel-text">9:00 AM</span>
+                            <span class="text-pastel-primary font-medium">5 oz</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-pastel-text">12:00 PM</span>
+                            <span class="text-pastel-primary font-medium">6 oz</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-pastel-text mt-3">She seems to prefer morning feedings and is taking appropriate amounts for her age.</p>
+            `;
+            } else if (lowerQuery.includes('growth') || lowerQuery.includes('weight')) {
+                response = `
+                <p class="text-pastel-text mb-3">Emma's growth is tracking beautifully! She's in the <span class="font-semibold text-pastel-primary">75th percentile</span> for her age.</p>
+                <div class="grid grid-cols-2 gap-3 my-3">
+                    <div class="bg-pastel-lightest rounded-xl p-3 border border-pastel-light text-center">
+                        <p class="text-xs text-pastel-textLight">Current Weight</p>
+                        <p class="text-lg font-semibold text-pastel-heading">18.5 lbs</p>
+                    </div>
+                    <div class="bg-pastel-lightest rounded-xl p-3 border border-pastel-light text-center">
+                        <p class="text-xs text-pastel-textLight">Height</p>
+                        <p class="text-lg font-semibold text-pastel-heading">27.5 in</p>
+                    </div>
+                </div>
+                <p class="text-pastel-text">Based on her current trajectory, she's developing perfectly within healthy ranges.</p>
+            `;
+            } else {
+                response = `
+                <p class="text-pastel-text">I'd be happy to help you understand Emma's data better! I can analyze:</p>
+                <ul class="list-disc list-inside text-pastel-text space-y-1 ml-2 mt-2">
+                    <li>Sleep patterns and quality</li>
+                    <li>Feeding schedules and amounts</li>
+                    <li>Growth and development milestones</li>
+                    <li>Daily activity summaries</li>
+                </ul>
+                <p class="text-pastel-text mt-3">What specific information would you like to explore?</p>
+            `;
+            }
+
+            addMessage(response, 'ai');
+
+            // Create dynamic chart if needed
+            setTimeout(() => {
+                const dynamicChartElement = document.querySelector(`#dynamicChart${Date.now()}`);
+                if (dynamicChartElement) {
+                    createDynamicChart(dynamicChartElement);
+                }
+            }, 100);
+        }
+
+        // Create dynamic chart
+        function createDynamicChart(canvas) {
+            new Chart(canvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [{
+                        label: 'Average Sleep Hours',
+                        data: [7.2, 7.5, 7.9, 8.2],
+                        backgroundColor: '#ffb5a7',
+                        borderRadius: 8,
+                        borderWidth: 2,
+                        borderColor: '#ffd8cc'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {display: false}
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10,
+                            ticks: {
+                                callback: function (value) {
+                                    return value + 'h';
+                                }
+                            },
+                            grid: {
+                                color: '#ffe8d9'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Show/hide typing indicator
+        function showTypingIndicator() {
+            typingIndicator.classList.remove('hidden');
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            typingIndicator.classList.add('hidden');
+        }
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Cmd/Ctrl + A to add new entry
+            if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
+                e.preventDefault();
+                console.log('Add new entry shortcut triggered');
+            }
+
+            // Focus input on '/'
+            if (e.key === '/' && document.activeElement !== messageInput) {
+                e.preventDefault();
+                messageInput.focus();
+            }
+        });
+
+        // Re-render icons when mobile menu is toggled
+        const observer = new MutationObserver(() => {
+            lucide.createIcons();
+        });
+        observer.observe(sidebar, {attributes: true, attributeFilter: ['class']});
+    });
+</script>
+</body>
+</html>
