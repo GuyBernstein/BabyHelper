@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BabyHelper - Diaper Change Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=Lora:wght@400;500;600&display=swap"
+          rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        // Tailwind configuration with pastel theme
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pastel: {
+                            lightest: '#fdf6f0',
+                            light: '#ffe8d9',
+                            primary: '#ff8c69',
+                            primaryHover: '#ff7043',
+                            secondary: '#ffd8cc',
+                            accent1: '#ffb5a7',
+                            accent2: '#fec89a',
+                            text: '#6d5d52',
+                            textLight: '#938278',
+                            heading: '#5c4d44',
+                            // Diaper specific colors
+                            wet: '#89CFF0',
+                            wetDark: '#5FA8D3',
+                            dirty: '#C4A484',
+                            dirtyDark: '#A0826D',
+                            mixed: '#DDA0DD',
+                            mixedDark: '#BA8FBA'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Nunito Sans', 'sans-serif'],
+                        serif: ['Lora', 'serif']
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'float-delayed': 'float 6s ease-in-out 2s infinite',
+                        'fade-in-up': 'fadeInUp 1s ease-out forwards',
+                        'fade-in-right': 'fadeInRight 1s ease-out forwards',
+                        'fade-in-left': 'fadeInLeft 1s ease-out forwards',
+                        'fade-in': 'fadeIn 1.2s ease-out forwards',
+                        'pulse-ring': 'pulseRing 1.5s ease-out infinite',
+                        'grow-circle': 'growCircle 1s ease-out forwards',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': {transform: 'translateY(0)'},
+                            '50%': {transform: 'translateY(-20px)'},
+                        },
+                        fadeInUp: {
+                            '0%': {opacity: '0', transform: 'translateY(20px)'},
+                            '100%': {opacity: '1', transform: 'translateY(0)'},
+                        },
+                        fadeInRight: {
+                            '0%': {opacity: '0', transform: 'translateX(-20px)'},
+                            '100%': {opacity: '1', transform: 'translateX(0)'},
+                        },
+                        fadeInLeft: {
+                            '0%': {opacity: '0', transform: 'translateX(20px)'},
+                            '100%': {opacity: '1', transform: 'translateX(0)'},
+                        },
+                        fadeIn: {
+                            '0%': {opacity: '0'},
+                            '100%': {opacity: '1'},
+                        },
+                        pulseRing: {
+                            '0%': {transform: 'scale(1)', opacity: '1'},
+                            '100%': {transform: 'scale(1.3)', opacity: '0'},
+                        },
+                        growCircle: {
+                            '0%': {transform: 'scale(1)'},
+                            '100%': {transform: 'scale(1.1)'},
+                        },
+                    },
+                    boxShadow: {
+                        'pastel': '0 6px 12px rgba(180, 160, 150, 0.1)',
+                        'pastel-lg': '0 10px 25px rgba(180, 160, 150, 0.15)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Blob animation styles */
+        .blob-animation {
+            animation: blob-move 15s infinite alternate;
+        }
+
+        @keyframes blob-move {
+            0% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+            }
+            33% {
+                transform: translate(30px, -50px) rotate(20deg) scale(1.1);
+            }
+            66% {
+                transform: translate(-20px, 20px) rotate(-10deg) scale(0.9);
+            }
+            100% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+            }
+        }
+
+        /* Button hover effect */
+        .btn-hover-effect:hover {
+            box-shadow: 0 0 15px rgba(255, 140, 105, 0.5);
+        }
+
+        /* Custom scrollbar for pastel theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #fdf6f0;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #ffb5a7;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff8c69;
+        }
+
+        /* Diaper type button styles */
+        .diaper-type-btn {
+            transition: all 0.3s ease;
+            border-width: 3px;
+        }
+
+        .diaper-type-btn.selected {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Consistency selector styles */
+        .consistency-btn {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .consistency-btn.selected::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #ff8c69, #ffb5a7);
+            border-radius: inherit;
+            z-index: -1;
+        }
+
+        /* Supply counter animation */
+        @keyframes decrementPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .decrement-animation {
+            animation: decrementPulse 0.3s ease;
+        }
+
+        /* Color picker styles */
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            position: relative;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Auto-expanding textarea */
+        .auto-expand {
+            resize: none;
+            overflow: hidden;
+            min-height: 80px;
+        }
+
+        /* Health indicator animation */
+        .health-indicator {
+            transition: all 0.3s ease;
+        }
+
+        .health-warning {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="h-full bg-pastel-lightest font-sans text-pastel-text">
+<div class="flex h-full relative">
+    <!-- Background Decorative Elements -->
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-20 right-[10%] w-64 h-64 rounded-full bg-pastel-accent1 opacity-20 blur-3xl blob-animation"></div>
+        <div class="absolute bottom-40 left-[15%] w-80 h-80 rounded-full bg-pastel-accent2 opacity-20 blur-3xl blob-animation"
+             style="animation-delay: 2s;"></div>
+    </div>
+
+    <!-- Mobile Menu Button -->
+    <button id="mobileMenuBtn"
+            class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-full shadow-pastel-lg opacity-0 animate-fade-in"
+            style="animation-delay: 0.1s; animation-fill-mode: forwards;">
+        <i data-lucide="menu" class="h-5 w-5 text-pastel-primary"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <aside id="sidebar"
+           class="fixed lg:relative inset-y-0 left-0 z-40 w-64 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col gap-6 border-r border-pastel-light bg-white/80 backdrop-blur-lg p-6">
+        <!-- Logo and Brand -->
+        <div class="flex items-center space-x-2 opacity-0 animate-fade-in-right"
+             style="animation-delay: 0.2s; animation-fill-mode: forwards;">
+            <div class="w-10 h-10 rounded-full bg-pastel-primary flex items-center justify-center text-white font-serif font-semibold text-xl">
+                <i data-lucide="baby" class="h-6 w-6"></i>
+            </div>
+            <span class="font-serif text-pastel-heading text-xl">BabyHelper</span>
+        </div>
+
+        <!-- Quick Action Button -->
+        <button class="btn-hover-effect flex items-center justify-between gap-3 text-sm font-medium bg-pastel-primary text-white p-3 rounded-full shadow-pastel transition-all duration-300 hover:bg-pastel-primaryHover hover:transform hover:-translate-y-0.5 opacity-0 animate-fade-in-right"
+                style="animation-delay: 0.3s; animation-fill-mode: forwards;">
+                <span class="flex items-center gap-3">
+                    <i data-lucide="plus" class="h-4 w-4"></i>
+                    Log Diaper Change
+                </span>
+            <kbd class="text-xs text-white/80 hidden sm:block">⌘D</kbd>
+        </button>
+
+        <!-- Navigation -->
+        <nav class="flex flex-col gap-2 text-sm opacity-0 animate-fade-in-right"
+             style="animation-delay: 0.4s; animation-fill-mode: forwards;">
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="bar-chart-3" class="h-4 w-4"></i>
+                Insights & Analysis
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="moon" class="h-4 w-4"></i>
+                Sleep Tracking
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="utensils" class="h-4 w-4"></i>
+                Feeding Log
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full bg-pastel-light text-pastel-primary font-medium">
+                <i data-lucide="droplets" class="h-4 w-4"></i>
+                <span class="flex-1">Diaper Tracker</span>
+                <span class="ml-auto text-xs bg-pastel-accent1/20 text-pastel-primary px-2 py-0.5 rounded-full font-medium">NOW</span>
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="heart" class="h-4 w-4"></i>
+                Health Records
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="calendar" class="h-4 w-4"></i>
+                Development Milestones
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="settings" class="h-4 w-4"></i>
+                Settings
+            </a>
+        </nav>
+
+        <!-- Supply Status Card -->
+        <div class="mt-auto bg-gradient-to-br from-pastel-primary/10 to-pastel-accent1/10 p-4 rounded-2xl border border-pastel-light opacity-0 animate-fade-in-up"
+             style="animation-delay: 0.5s; animation-fill-mode: forwards;">
+            <h4 class="text-sm font-semibold text-pastel-heading mb-2">Diaper Supply</h4>
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-pastel-text">Current Stock</span>
+                <span id="diaperCount" class="text-lg font-bold text-pastel-primary">48</span>
+            </div>
+            <div class="w-full bg-pastel-light rounded-full h-2 mb-2">
+                <div id="supplyBar" class="bg-pastel-primary h-2 rounded-full transition-all duration-300" style="width: 60%"></div>
+            </div>
+            <p id="supplyWarning" class="text-xs text-pastel-textLight hidden">
+                <i data-lucide="alert-circle" class="h-3 w-3 inline mr-1"></i>
+                Running low - add to shopping list?
+            </p>
+        </div>
+    </aside>
+
+    <!-- Overlay for mobile -->
+    <div id="overlay" class="fixed inset-0 bg-black/30 backdrop-blur-sm z-30 lg:hidden hidden"></div>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden relative z-10">
+        <!-- Header with Context -->
+        <header class="flex items-center justify-between gap-4 px-4 lg:px-6 py-4 border-b border-pastel-light bg-white/60 backdrop-blur-lg opacity-0 animate-fade-in"
+                style="animation-delay: 0.2s; animation-fill-mode: forwards;">
+            <div class="flex items-center gap-4">
+                <div class="lg:hidden w-8"></div>
+                <!-- Baby photo and name -->
+                <div class="flex items-center gap-3">
+                    <div class="h-12 w-12 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-white font-semibold overflow-hidden">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%23fff'/%3E%3Ccircle cx='35' cy='40' r='5' fill='%23333'/%3E%3Ccircle cx='65' cy='40' r='5' fill='%23333'/%3E%3Cpath d='M 30 60 Q 50 70 70 60' stroke='%23333' stroke-width='3' fill='none'/%3E%3C/svg%3E"
+                             alt="Emma" class="w-full h-full object-cover">
+                    </div>
+                    <div>
+                        <h1 class="text-base lg:text-lg font-serif font-medium text-pastel-heading">Emma's Diaper Log</h1>
+                        <p class="text-xs lg:text-sm text-pastel-textLight">
+                            Last change: <span id="lastChangeTime" class="font-medium">45 mins ago</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <!-- Quick stats -->
+            <div class="flex items-center gap-3">
+                <div class="hidden sm:flex items-center gap-2 text-sm">
+                    <div class="flex items-center gap-1">
+                        <div class="w-2 h-2 rounded-full bg-pastel-wet"></div>
+                        <span id="wetCount" class="font-medium">4</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <div class="w-2 h-2 rounded-full bg-pastel-dirty"></div>
+                        <span id="dirtyCount" class="font-medium">2</span>
+                    </div>
+                    <span class="text-pastel-textLight">today</span>
+                </div>
+                <button class="relative hidden sm:block p-2 hover:bg-pastel-light rounded-full transition-colors">
+                    <i data-lucide="bell" class="h-5 w-5 text-pastel-text"></i>
+                    <span class="absolute top-1 right-1 h-2 w-2 rounded-full bg-pastel-primary"></span>
+                </button>
+                <div class="h-9 w-9 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-sm font-medium text-white shadow-pastel">
+                    JD
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <section class="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6">
+            <!-- Quick Log Interface -->
+            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 0.3s; animation-fill-mode: forwards;">
+                <h2 class="text-xl font-serif font-medium text-pastel-heading mb-4">Quick Log Diaper Change</h2>
+
+                <!-- Diaper Type Selection -->
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <button id="wetBtn" class="diaper-type-btn p-4 rounded-xl border-pastel-wet bg-pastel-wet/10 hover:bg-pastel-wet/20 transition-all">
+                        <i data-lucide="droplet" class="h-12 w-12 mx-auto mb-2 text-pastel-wetDark"></i>
+                        <span class="block text-sm font-medium text-pastel-wetDark">Wet</span>
+                    </button>
+                    <button id="dirtyBtn" class="diaper-type-btn p-4 rounded-xl border-pastel-dirty bg-pastel-dirty/10 hover:bg-pastel-dirty/20 transition-all">
+                        <i data-lucide="cloud" class="h-12 w-12 mx-auto mb-2 text-pastel-dirtyDark"></i>
+                        <span class="block text-sm font-medium text-pastel-dirtyDark">Dirty</span>
+                    </button>
+                    <button id="bothBtn" class="diaper-type-btn p-4 rounded-xl border-pastel-mixed bg-pastel-mixed/10 hover:bg-pastel-mixed/20 transition-all">
+                        <div class="relative h-12 w-12 mx-auto mb-2">
+                            <i data-lucide="droplet" class="h-8 w-8 absolute left-0 top-0 text-pastel-wetDark"></i>
+                            <i data-lucide="cloud" class="h-8 w-8 absolute right-0 bottom-0 text-pastel-dirtyDark"></i>
+                        </div>
+                        <span class="block text-sm font-medium text-pastel-mixedDark">Both</span>
+                    </button>
+                </div>
+
+                <!-- Time Selector -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-pastel-text mb-2">When?</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button id="nowBtn" class="px-6 py-3 rounded-full bg-pastel-primary text-white font-medium hover:bg-pastel-primaryHover transition-colors">
+                            <i data-lucide="clock" class="h-4 w-4 inline mr-2"></i>Now
+                        </button>
+                        <button class="time-quick-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                            30 min ago
+                        </button>
+                        <button class="time-quick-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                            1 hr ago
+                        </button>
+                        <button class="time-quick-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                            2 hrs ago
+                        </button>
+                        <button id="customTimeBtn" class="px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                            <i data-lucide="edit" class="h-4 w-4 inline mr-1"></i>Custom
+                        </button>
+                    </div>
+                    <input type="datetime-local" id="customTime" class="mt-2 px-4 py-2 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors hidden">
+                </div>
+            </div>
+
+            <!-- Detailed Assessment (Optional Expansion) -->
+            <div id="detailedAssessment" class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 0.4s; animation-fill-mode: forwards;">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-serif font-medium text-pastel-heading">Detailed Assessment</h3>
+                    <button id="toggleDetails" class="text-sm text-pastel-primary hover:text-pastel-primaryHover transition-colors">
+                        <i data-lucide="chevron-down" class="h-4 w-4 inline mr-1"></i>Show Details
+                    </button>
+                </div>
+
+                <div id="detailsContent" class="space-y-4 hidden">
+                    <!-- Consistency Selector -->
+                    <div>
+                        <label class="block text-sm font-medium text-pastel-text mb-2">Consistency</label>
+                        <div class="grid grid-cols-3 lg:grid-cols-6 gap-2">
+                            <button class="consistency-btn p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-all text-center">
+                                <div class="text-2xl mb-1">💧</div>
+                                <span class="text-xs">Liquid</span>
+                            </button>
+                            <button class="consistency-btn p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-all text-center">
+                                <div class="text-2xl mb-1">🥣</div>
+                                <span class="text-xs">Mushy</span>
+                            </button>
+                            <button class="consistency-btn p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-all text-center">
+                                <div class="text-2xl mb-1">🍯</div>
+                                <span class="text-xs">Soft</span>
+                            </button>
+                            <button class="consistency-btn p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-all text-center">
+                                <div class="text-2xl mb-1">🥜</div>
+                                <span class="text-xs">Formed</span>
+                            </button>
+                            <button class="consistency-btn p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-all text-center">
+                                <div class="text-2xl mb-1">🪨</div>
+                                <span class="text-xs">Hard</span>
+                            </button>
+                            <button class="consistency-btn p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-all text-center">
+                                <div class="text-2xl mb-1">🌊</div>
+                                <span class="text-xs">Watery</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Color Reference -->
+                    <div>
+                        <label class="block text-sm font-medium text-pastel-text mb-2">Color</label>
+                        <div class="flex flex-wrap gap-3">
+                            <div class="color-option" style="background-color: #F4E04D;"></div>
+                            <div class="color-option" style="background-color: #8B7355;"></div>
+                            <div class="color-option" style="background-color: #6B4423;"></div>
+                            <div class="color-option" style="background-color: #228B22;"></div>
+                            <div class="color-option" style="background-color: #FFA500;"></div>
+                            <div class="color-option" style="background-color: #DC143C;"></div>
+                            <div class="color-option" style="background-color: #2F4F4F;"></div>
+                            <div class="color-option" style="background-color: #F5F5DC;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Amount Indicator -->
+                    <div>
+                        <label class="block text-sm font-medium text-pastel-text mb-2">Amount</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button class="amount-btn px-4 py-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-colors text-center">
+                                <i data-lucide="droplets" class="h-4 w-4 mx-auto mb-1 text-pastel-textLight"></i>
+                                <span class="text-sm">Small</span>
+                            </button>
+                            <button class="amount-btn px-4 py-3 rounded-xl border-2 border-pastel-primary bg-pastel-light transition-colors text-center">
+                                <i data-lucide="droplets" class="h-5 w-5 mx-auto mb-1 text-pastel-text"></i>
+                                <span class="text-sm font-medium">Medium</span>
+                            </button>
+                            <button class="amount-btn px-4 py-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-colors text-center">
+                                <i data-lucide="droplets" class="h-6 w-6 mx-auto mb-1 text-pastel-heading"></i>
+                                <span class="text-sm">Large</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes and Observations -->
+            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 0.5s; animation-fill-mode: forwards;">
+                <h3 class="text-lg font-serif font-medium text-pastel-heading mb-4">Notes & Observations</h3>
+
+                <!-- Quick Tags -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                        <i data-lucide="check-circle" class="h-3 w-3 inline mr-1"></i>Normal
+                    </button>
+                    <button class="tag-btn px-4 py-2 rounded-full border border-red-300 bg-red-50 hover:bg-red-100 transition-colors text-sm text-red-700">
+                        <i data-lucide="alert-circle" class="h-3 w-3 inline mr-1"></i>Rash
+                    </button>
+                    <button class="tag-btn px-4 py-2 rounded-full border border-yellow-300 bg-yellow-50 hover:bg-yellow-100 transition-colors text-sm text-yellow-700">
+                        <i data-lucide="info" class="h-3 w-3 inline mr-1"></i>Unusual
+                    </button>
+                    <button class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                        <i data-lucide="thermometer" class="h-3 w-3 inline mr-1"></i>Fever
+                    </button>
+                    <button class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                        <i data-lucide="pill" class="h-3 w-3 inline mr-1"></i>Medication
+                    </button>
+                </div>
+
+                <!-- Additional Notes -->
+                <textarea id="additionalNotes"
+                          class="auto-expand w-full px-4 py-3 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors mb-3"
+                          placeholder="Add any additional notes..."></textarea>
+
+                <!-- Photo Option -->
+                <button class="flex items-center gap-2 text-sm text-pastel-primary hover:text-pastel-primaryHover transition-colors">
+                    <i data-lucide="camera" class="h-4 w-4"></i>
+                    Attach Photo for Medical Documentation
+                </button>
+            </div>
+
+            <!-- Health Indicators -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Frequency Counter -->
+                <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-4 opacity-0 animate-fade-in-up"
+                     style="animation-delay: 0.6s; animation-fill-mode: forwards;">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-medium text-pastel-text">Today's Changes</h4>
+                        <i data-lucide="activity" class="h-4 w-4 text-pastel-textLight"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-pastel-heading mb-1">
+                        <span id="totalChanges">6</span> <span class="text-lg font-normal text-pastel-textLight">total</span>
+                    </div>
+                    <p class="text-xs text-pastel-textLight">Average: 3-4 hours apart</p>
+                </div>
+
+                <!-- Pattern Alert -->
+                <div id="patternAlert" class="health-indicator bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-4 opacity-0 animate-fade-in-up"
+                     style="animation-delay: 0.7s; animation-fill-mode: forwards;">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-medium text-pastel-text">Pattern Status</h4>
+                        <i data-lucide="trending-up" class="h-4 w-4 text-green-600"></i>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                        <span class="text-sm font-medium text-green-700">Normal Pattern</span>
+                    </div>
+                    <p class="text-xs text-pastel-textLight mt-1">Within expected range</p>
+                </div>
+
+                <!-- Hydration Indicator -->
+                <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-4 opacity-0 animate-fade-in-up"
+                     style="animation-delay: 0.8s; animation-fill-mode: forwards;">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-medium text-pastel-text">Hydration</h4>
+                        <i data-lucide="droplets" class="h-4 w-4 text-pastel-wet"></i>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="flex-1 bg-pastel-light rounded-full h-2">
+                            <div class="bg-pastel-wet h-2 rounded-full" style="width: 75%"></div>
+                        </div>
+                        <span class="text-sm font-medium text-pastel-wetDark">Good</span>
+                    </div>
+                    <p class="text-xs text-pastel-textLight mt-1">4 wet diapers today</p>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="flex gap-3">
+                <button id="saveChange" class="flex-1 h-14 bg-pastel-primary hover:bg-pastel-primaryHover text-white rounded-full font-medium transition-colors btn-hover-effect">
+                    <i data-lucide="check" class="h-4 w-4 inline mr-2"></i>
+                    Log Diaper Change
+                </button>
+                <button id="saveAndTimer" class="px-6 h-14 border border-pastel-primary text-pastel-primary hover:bg-pastel-light rounded-full font-medium transition-colors">
+                    <i data-lucide="timer" class="h-4 w-4 inline mr-2"></i>
+                    Start Timer
+                </button>
+            </div>
+
+            <!-- Warning Messages (hidden by default) -->
+            <div id="supplyLowWarning" class="hidden bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-start gap-3">
+                <i data-lucide="package" class="h-5 w-5 text-yellow-600 mt-0.5"></i>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-yellow-800">Diaper supply running low</p>
+                    <p class="text-xs text-yellow-700 mt-1">Only 12 diapers remaining. Add to shopping list?</p>
+                    <button class="text-xs text-yellow-800 underline mt-2">Add to List</button>
+                </div>
+            </div>
+
+            <div id="frequencyWarning" class="hidden bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-3">
+                <i data-lucide="alert-triangle" class="h-5 w-5 text-orange-600 mt-0.5"></i>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-orange-800">Unusual frequency detected</p>
+                    <p class="text-xs text-orange-700 mt-1">8 changes in the last 4 hours. Consider consulting pediatrician if this continues.</p>
+                </div>
+            </div>
+
+            <!-- Decorative floating elements -->
+            <div class="fixed bottom-20 right-10 w-32 h-32 rounded-full bg-pastel-accent1 opacity-10 animate-float pointer-events-none"></div>
+            <div class="fixed top-40 right-1/4 w-24 h-24 rounded-full bg-pastel-accent2 opacity-10 animate-float-delayed pointer-events-none"></div>
+        </section>
+
+        <!-- Bottom Navigation (Mobile) -->
+        <nav class="lg:hidden border-t border-pastel-light bg-white/80 backdrop-blur-lg">
+            <div class="grid grid-cols-4 gap-1">
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
+                    <i data-lucide="home" class="h-5 w-5"></i>
+                    <span class="text-xs">Home</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
+                    <i data-lucide="bar-chart-3" class="h-5 w-5"></i>
+                    <span class="text-xs">Insights</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-primary">
+                    <i data-lucide="plus-circle" class="h-5 w-5"></i>
+                    <span class="text-xs">Add</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
+                    <i data-lucide="user" class="h-5 w-5"></i>
+                    <span class="text-xs">Profile</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Mobile menu toggle functionality
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+
+        function toggleMobileMenu() {
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+        overlay.addEventListener('click', toggleMobileMenu);
+
+        // Diaper tracking state
+        let diaperData = {
+            type: null,
+            time: new Date(),
+            consistency: null,
+            color: null,
+            amount: 'medium',
+            tags: new Set(),
+            notes: '',
+            photo: null
+        };
+
+        // Supply tracking
+        let diaperCount = 48;
+        const supplyBar = document.getElementById('supplyBar');
+        const supplyWarning = document.getElementById('supplyWarning');
+        const supplyLowWarning = document.getElementById('supplyLowWarning');
+
+        // Daily counters
+        let wetCount = 4;
+        let dirtyCount = 2;
+
+        // Diaper type selection
+        const diaperTypeBtns = {
+            wet: document.getElementById('wetBtn'),
+            dirty: document.getElementById('dirtyBtn'),
+            both: document.getElementById('bothBtn')
+        };
+
+        Object.entries(diaperTypeBtns).forEach(([type, btn]) => {
+            btn.addEventListener('click', () => {
+                // Reset all buttons
+                Object.values(diaperTypeBtns).forEach(b => b.classList.remove('selected'));
+
+                // Select clicked button
+                btn.classList.add('selected');
+                diaperData.type = type;
+
+                // Update border colors based on type
+                if (type === 'wet') {
+                    btn.classList.add('border-pastel-wetDark', 'bg-pastel-wet/30');
+                } else if (type === 'dirty') {
+                    btn.classList.add('border-pastel-dirtyDark', 'bg-pastel-dirty/30');
+                } else {
+                    btn.classList.add('border-pastel-mixedDark', 'bg-pastel-mixed/30');
+                }
+            });
+        });
+
+        // Time selection
+        const nowBtn = document.getElementById('nowBtn');
+        const customTimeBtn = document.getElementById('customTimeBtn');
+        const customTime = document.getElementById('customTime');
+        const quickTimeBtns = document.querySelectorAll('.time-quick-btn');
+
+        nowBtn.addEventListener('click', () => {
+            diaperData.time = new Date();
+            resetTimeButtons();
+            nowBtn.classList.add('bg-pastel-primary', 'text-white');
+        });
+
+        customTimeBtn.addEventListener('click', () => {
+            customTime.classList.toggle('hidden');
+            if (!customTime.classList.contains('hidden')) {
+                customTime.value = new Date().toISOString().slice(0, 16);
+            }
+        });
+
+        customTime.addEventListener('change', (e) => {
+            diaperData.time = new Date(e.target.value);
+            resetTimeButtons();
+            customTimeBtn.classList.add('bg-pastel-light', 'border-pastel-primary');
+        });
+
+        quickTimeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const text = btn.textContent.trim();
+                const now = new Date();
+
+                if (text === '30 min ago') {
+                    diaperData.time = new Date(now - 30 * 60 * 1000);
+                } else if (text === '1 hr ago') {
+                    diaperData.time = new Date(now - 60 * 60 * 1000);
+                } else if (text === '2 hrs ago') {
+                    diaperData.time = new Date(now - 2 * 60 * 60 * 1000);
+                }
+
+                resetTimeButtons();
+                btn.classList.add('bg-pastel-light', 'border-pastel-primary');
+            });
+        });
+
+        function resetTimeButtons() {
+            nowBtn.classList.remove('bg-pastel-primary', 'text-white');
+            nowBtn.classList.add('bg-white', 'text-pastel-text');
+            quickTimeBtns.forEach(btn => {
+                btn.classList.remove('bg-pastel-light', 'border-pastel-primary');
+            });
+            customTimeBtn.classList.remove('bg-pastel-light', 'border-pastel-primary');
+        }
+
+        // Toggle detailed assessment
+        const toggleDetails = document.getElementById('toggleDetails');
+        const detailsContent = document.getElementById('detailsContent');
+        const detailsIcon = toggleDetails.querySelector('i');
+
+        toggleDetails.addEventListener('click', () => {
+            detailsContent.classList.toggle('hidden');
+            if (detailsContent.classList.contains('hidden')) {
+                detailsIcon.setAttribute('data-lucide', 'chevron-down');
+                toggleDetails.innerHTML = '<i data-lucide="chevron-down" class="h-4 w-4 inline mr-1"></i>Show Details';
+            } else {
+                detailsIcon.setAttribute('data-lucide', 'chevron-up');
+                toggleDetails.innerHTML = '<i data-lucide="chevron-up" class="h-4 w-4 inline mr-1"></i>Hide Details';
+            }
+            lucide.createIcons();
+        });
+
+        // Consistency selection
+        document.querySelectorAll('.consistency-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.consistency-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                diaperData.consistency = btn.querySelector('span').textContent;
+            });
+        });
+
+        // Color selection
+        document.querySelectorAll('.color-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                diaperData.color = option.style.backgroundColor;
+            });
+        });
+
+        // Amount selection
+        document.querySelectorAll('.amount-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.amount-btn').forEach(b => {
+                    b.classList.remove('border-2', 'border-pastel-primary', 'bg-pastel-light');
+                    b.classList.add('border', 'border-pastel-light');
+                });
+                btn.classList.remove('border', 'border-pastel-light');
+                btn.classList.add('border-2', 'border-pastel-primary', 'bg-pastel-light');
+                diaperData.amount = btn.querySelector('span').textContent.toLowerCase();
+            });
+        });
+
+        // Quick tags
+        document.querySelectorAll('.tag-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tag = btn.textContent.trim();
+                if (diaperData.tags.has(tag)) {
+                    diaperData.tags.delete(tag);
+                    btn.classList.remove('bg-pastel-primary', 'text-white', 'border-pastel-primary');
+                } else {
+                    diaperData.tags.add(tag);
+                    btn.classList.add('bg-pastel-primary', 'text-white', 'border-pastel-primary');
+                }
+            });
+        });
+
+        // Auto-expanding textarea
+        const additionalNotes = document.getElementById('additionalNotes');
+        additionalNotes.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+            diaperData.notes = this.value;
+        });
+
+        // Save diaper change
+        const saveBtn = document.getElementById('saveChange');
+        const saveAndTimerBtn = document.getElementById('saveAndTimer');
+
+        saveBtn.addEventListener('click', () => {
+            if (!diaperData.type) {
+                alert('Please select diaper type (Wet, Dirty, or Both)');
+                return;
+            }
+
+            // Update counters
+            if (diaperData.type === 'wet') wetCount++;
+            else if (diaperData.type === 'dirty') dirtyCount++;
+            else if (diaperData.type === 'both') {
+                wetCount++;
+                dirtyCount++;
+            }
+
+            // Update display
+            document.getElementById('wetCount').textContent = wetCount;
+            document.getElementById('dirtyCount').textContent = dirtyCount;
+            document.getElementById('totalChanges').textContent = wetCount + dirtyCount;
+
+            // Update last change time
+            document.getElementById('lastChangeTime').textContent = 'Just now';
+
+            // Decrement diaper supply
+            updateDiaperSupply();
+
+            // Check patterns
+            checkPatterns();
+
+            // Show success animation
+            saveBtn.classList.add('bg-green-600');
+            saveBtn.innerHTML = '<i data-lucide="check-circle" class="h-4 w-4 inline mr-2"></i>Saved!';
+            lucide.createIcons();
+
+            setTimeout(() => {
+                saveBtn.classList.remove('bg-green-600');
+                saveBtn.innerHTML = '<i data-lucide="check" class="h-4 w-4 inline mr-2"></i>Log Diaper Change';
+                lucide.createIcons();
+                resetForm();
+            }, 2000);
+        });
+
+        saveAndTimerBtn.addEventListener('click', () => {
+            saveBtn.click();
+            // Start timer for next diaper change
+            console.log('Starting timer for next change...');
+        });
+
+        function updateDiaperSupply() {
+            diaperCount--;
+            document.getElementById('diaperCount').textContent = diaperCount;
+
+            const percentage = (diaperCount / 80) * 100; // Assuming 80 is full supply
+            supplyBar.style.width = `${percentage}%`;
+
+            // Show warnings
+            if (diaperCount <= 20 && diaperCount > 10) {
+                supplyWarning.classList.remove('hidden');
+                supplyBar.classList.add('bg-yellow-500');
+            } else if (diaperCount <= 10) {
+                supplyLowWarning.classList.remove('hidden');
+                supplyBar.classList.add('bg-red-500');
+            }
+
+            // Add animation
+            document.getElementById('diaperCount').classList.add('decrement-animation');
+            setTimeout(() => {
+                document.getElementById('diaperCount').classList.remove('decrement-animation');
+            }, 300);
+        }
+
+        function checkPatterns() {
+            const totalChanges = wetCount + dirtyCount;
+            const patternAlert = document.getElementById('patternAlert');
+            const frequencyWarning = document.getElementById('frequencyWarning');
+
+            // Check frequency
+            if (totalChanges > 8) {
+                patternAlert.querySelector('i').setAttribute('data-lucide', 'alert-triangle');
+                patternAlert.querySelector('i').classList.remove('text-green-600');
+                patternAlert.querySelector('i').classList.add('text-orange-600');
+                patternAlert.querySelector('.bg-green-500').classList.remove('bg-green-500');
+                patternAlert.querySelector('.bg-green-500')?.classList.add('bg-orange-500');
+                patternAlert.querySelector('.text-green-700').textContent = 'High Frequency';
+                patternAlert.querySelector('.text-green-700').classList.remove('text-green-700');
+                patternAlert.querySelector('.text-green-700')?.classList.add('text-orange-700');
+                patternAlert.classList.add('health-warning');
+                frequencyWarning.classList.remove('hidden');
+            } else if (totalChanges < 4) {
+                patternAlert.querySelector('i').setAttribute('data-lucide', 'alert-circle');
+                patternAlert.querySelector('i').classList.remove('text-green-600');
+                patternAlert.querySelector('i').classList.add('text-yellow-600');
+                patternAlert.querySelector('.bg-green-500').classList.remove('bg-green-500');
+                patternAlert.querySelector('.bg-green-500')?.classList.add('bg-yellow-500');
+                patternAlert.querySelector('.text-green-700').textContent = 'Low Frequency';
+                patternAlert.querySelector('.text-green-700').classList.remove('text-green-700');
+                patternAlert.querySelector('.text-green-700')?.classList.add('text-yellow-700');
+            }
+
+            lucide.createIcons();
+        }
+
+        function resetForm() {
+            // Reset diaper data
+            diaperData = {
+                type: null,
+                time: new Date(),
+                consistency: null,
+                color: null,
+                amount: 'medium',
+                tags: new Set(),
+                notes: '',
+                photo: null
+            };
+
+            // Reset UI
+            Object.values(diaperTypeBtns).forEach(btn => {
+                btn.classList.remove('selected', 'border-pastel-wetDark', 'bg-pastel-wet/30',
+                    'border-pastel-dirtyDark', 'bg-pastel-dirty/30',
+                    'border-pastel-mixedDark', 'bg-pastel-mixed/30');
+            });
+
+            resetTimeButtons();
+            nowBtn.classList.add('bg-pastel-primary', 'text-white');
+
+            document.querySelectorAll('.consistency-btn').forEach(btn => btn.classList.remove('selected'));
+            document.querySelectorAll('.color-option').forEach(option => option.classList.remove('selected'));
+            document.querySelectorAll('.tag-btn').forEach(btn => {
+                btn.classList.remove('bg-pastel-primary', 'text-white', 'border-pastel-primary');
+            });
+
+            additionalNotes.value = '';
+            additionalNotes.style.height = 'auto';
+        }
+
+        // Initialize with current time
+        nowBtn.click();
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Cmd/Ctrl + D for quick diaper log
+            if ((e.metaKey || e.ctrlKey) && e.key === 'd') {
+                e.preventDefault();
+                console.log('Quick diaper log shortcut triggered');
+            }
+        });
+    });
+</script>
+</body>
+</html>
