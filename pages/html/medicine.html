@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BabyHelper - Health Monitor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=Lora:wght@400;500;600&display=swap"
+          rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        // Tailwind configuration with pastel theme
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pastel: {
+                            lightest: '#fdf6f0',
+                            light: '#ffe8d9',
+                            primary: '#ff8c69',
+                            primaryHover: '#ff7043',
+                            secondary: '#ffd8cc',
+                            accent1: '#ffb5a7',
+                            accent2: '#fec89a',
+                            text: '#6d5d52',
+                            textLight: '#938278',
+                            heading: '#5c4d44',
+                            success: '#10b981',
+                            warning: '#f59e0b',
+                            danger: '#ef4444'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Nunito Sans', 'sans-serif'],
+                        serif: ['Lora', 'serif']
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'float-delayed': 'float 6s ease-in-out 2s infinite',
+                        'fade-in-up': 'fadeInUp 1s ease-out forwards',
+                        'fade-in-right': 'fadeInRight 1s ease-out forwards',
+                        'fade-in-left': 'fadeInLeft 1s ease-out forwards',
+                        'fade-in': 'fadeIn 1.2s ease-out forwards',
+                        'pulse-ring': 'pulseRing 1.5s ease-out infinite',
+                        'grow-circle': 'growCircle 1s ease-out forwards',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': {transform: 'translateY(0)'},
+                            '50%': {transform: 'translateY(-20px)'},
+                        },
+                        fadeInUp: {
+                            '0%': {opacity: '0', transform: 'translateY(20px)'},
+                            '100%': {opacity: '1', transform: 'translateY(0)'},
+                        },
+                        fadeInRight: {
+                            '0%': {opacity: '0', transform: 'translateX(-20px)'},
+                            '100%': {opacity: '1', transform: 'translateX(0)'},
+                        },
+                        fadeInLeft: {
+                            '0%': {opacity: '0', transform: 'translateX(20px)'},
+                            '100%': {opacity: '1', transform: 'translateX(0)'},
+                        },
+                        fadeIn: {
+                            '0%': {opacity: '0'},
+                            '100%': {opacity: '1'},
+                        },
+                        pulseRing: {
+                            '0%': {transform: 'scale(1)', opacity: '1'},
+                            '100%': {transform: 'scale(1.3)', opacity: '0'},
+                        },
+                        growCircle: {
+                            '0%': {transform: 'scale(1)'},
+                            '100%': {transform: 'scale(1.1)'},
+                        },
+                    },
+                    boxShadow: {
+                        'pastel': '0 6px 12px rgba(180, 160, 150, 0.1)',
+                        'pastel-lg': '0 10px 25px rgba(180, 160, 150, 0.15)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Blob animation styles */
+        .blob-animation {
+            animation: blob-move 15s infinite alternate;
+        }
+
+        @keyframes blob-move {
+            0% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+            }
+            33% {
+                transform: translate(30px, -50px) rotate(20deg) scale(1.1);
+            }
+            66% {
+                transform: translate(-20px, 20px) rotate(-10deg) scale(0.9);
+            }
+            100% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+            }
+        }
+
+        /* Button hover effect */
+        .btn-hover-effect:hover {
+            box-shadow: 0 0 15px rgba(255, 140, 105, 0.5);
+        }
+
+        /* Custom scrollbar for pastel theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #fdf6f0;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #ffb5a7;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff8c69;
+        }
+
+        /* Health status indicators */
+        .health-status-green {
+            background-color: #10b981;
+        }
+
+        .health-status-yellow {
+            background-color: #f59e0b;
+        }
+
+        .health-status-red {
+            background-color: #ef4444;
+        }
+
+        /* Symptom card styles */
+        .symptom-card {
+            transition: all 0.2s ease;
+        }
+
+        .symptom-card.selected {
+            background-color: #ff8c69;
+            color: white;
+        }
+
+        .symptom-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 140, 105, 0.2);
+        }
+
+        /* Severity slider custom styles */
+        .severity-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 48px;
+            border-radius: 24px;
+            background: linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%);
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .severity-slider:hover {
+            opacity: 1;
+        }
+
+        .severity-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .severity-slider::-moz-range-thumb {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Numpad button styles */
+        .numpad-btn {
+            transition: all 0.1s ease;
+        }
+
+        .numpad-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Emergency button pulse */
+        .emergency-pulse {
+            animation: emergency-pulse 2s infinite;
+        }
+
+        @keyframes emergency-pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
+        }
+    </style>
+</head>
+<body class="h-full bg-pastel-lightest font-sans text-pastel-text">
+<div class="flex h-full relative">
+    <!-- Background Decorative Elements -->
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-20 right-[10%] w-64 h-64 rounded-full bg-pastel-accent1 opacity-20 blur-3xl blob-animation"></div>
+        <div class="absolute bottom-40 left-[15%] w-80 h-80 rounded-full bg-pastel-accent2 opacity-20 blur-3xl blob-animation"
+             style="animation-delay: 2s;"></div>
+    </div>
+
+    <!-- Mobile Menu Button -->
+    <button id="mobileMenuBtn"
+            class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-full shadow-pastel-lg opacity-0 animate-fade-in"
+            style="animation-delay: 0.1s; animation-fill-mode: forwards;">
+        <i data-lucide="menu" class="h-5 w-5 text-pastel-primary"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <aside id="sidebar"
+           class="fixed lg:relative inset-y-0 left-0 z-40 w-64 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col gap-6 border-r border-pastel-light bg-white/80 backdrop-blur-lg p-6">
+        <!-- Logo and Brand -->
+        <div class="flex items-center space-x-2 opacity-0 animate-fade-in-right"
+             style="animation-delay: 0.2s; animation-fill-mode: forwards;">
+            <div class="w-10 h-10 rounded-full bg-pastel-primary flex items-center justify-center text-white font-serif font-semibold text-xl">
+                <i data-lucide="baby" class="h-6 w-6"></i>
+            </div>
+            <span class="font-serif text-pastel-heading text-xl">BabyHelper</span>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex flex-col gap-2 text-sm opacity-0 animate-fade-in-right"
+             style="animation-delay: 0.4s; animation-fill-mode: forwards;">
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="bar-chart-3" class="h-4 w-4"></i>
+                Insights & Analysis
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="moon" class="h-4 w-4"></i>
+                Sleep Tracking
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="utensils" class="h-4 w-4"></i>
+                Feeding Log
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full bg-pastel-light text-pastel-primary font-medium">
+                <i data-lucide="heart" class="h-4 w-4"></i>
+                <span class="flex-1">Health Records</span>
+                <span class="ml-auto text-xs bg-pastel-accent1/20 text-pastel-primary px-2 py-0.5 rounded-full font-medium">NOW</span>
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="calendar" class="h-4 w-4"></i>
+                Development Milestones
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="settings" class="h-4 w-4"></i>
+                Settings
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Overlay for mobile -->
+    <div id="overlay" class="fixed inset-0 bg-black/30 backdrop-blur-sm z-30 lg:hidden hidden"></div>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden relative z-10">
+        <!-- Header Section -->
+        <header class="flex items-center justify-between gap-4 px-4 lg:px-6 py-3 border-b border-pastel-light bg-white/60 backdrop-blur-lg opacity-0 animate-fade-in"
+                style="animation-delay: 0.2s; animation-fill-mode: forwards; height: 64px;">
+            <div class="flex items-center gap-4">
+                <div class="lg:hidden w-8"></div>
+                <!-- Baby photo and name with health status -->
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <div class="h-12 w-12 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-white font-semibold overflow-hidden">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%23fff'/%3E%3Ccircle cx='35' cy='40' r='5' fill='%23333'/%3E%3Ccircle cx='65' cy='40' r='5' fill='%23333'/%3E%3Cpath d='M 30 60 Q 50 70 70 60' stroke='%23333' stroke-width='3' fill='none'/%3E%3C/svg%3E"
+                                 alt="Emma" class="w-full h-full object-cover">
+                        </div>
+                        <!-- Health status indicator -->
+                        <div class="absolute bottom-0 right-0 w-3 h-3 health-status-green rounded-full border-2 border-white"></div>
+                    </div>
+                    <div>
+                        <h1 class="text-base lg:text-lg font-serif font-medium text-pastel-heading">Emma's Health</h1>
+                        <p class="text-xs lg:text-sm text-pastel-textLight">
+                            <span class="inline-flex items-center gap-1">
+                                <span class="text-pastel-success">Good health</span>
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <!-- Emergency contact button -->
+            <button class="w-8 h-8 bg-pastel-danger text-white rounded-full flex items-center justify-center emergency-pulse">
+                <i data-lucide="phone" class="h-4 w-4"></i>
+            </button>
+        </header>
+
+        <!-- Main Content Area -->
+        <section class="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6">
+            <!-- Temperature Tracking Section -->
+            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 0.3s; animation-fill-mode: forwards;">
+                <h2 class="text-xl font-serif font-medium text-pastel-heading mb-4">Temperature Tracking</h2>
+
+                <!-- Large temperature display -->
+                <div class="text-center mb-6">
+                    <div class="flex items-center justify-center gap-2">
+                        <span id="tempDisplay" class="text-5xl font-bold text-pastel-heading">98.6</span>
+                        <button id="unitToggle"
+                                class="text-2xl text-pastel-primary hover:text-pastel-primaryHover transition-colors">°F
+                        </button>
+                    </div>
+                    <p class="text-sm text-pastel-textLight mt-2">Normal range</p>
+                </div>
+
+                <!-- Input methods -->
+                <div class="mb-4">
+                    <div class="flex gap-2 mb-4">
+                        <button class="flex-1 px-4 py-2 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors text-sm font-medium">
+                            <i data-lucide="edit-3" class="h-4 w-4 inline mr-2"></i>
+                            Manual Entry
+                        </button>
+                        <button class="flex-1 px-4 py-2 rounded-full border border-pastel-light hover:bg-pastel-light transition-colors text-sm font-medium">
+                            <i data-lucide="bluetooth" class="h-4 w-4 inline mr-2"></i>
+                            Smart Thermometer
+                        </button>
+                    </div>
+
+                    <!-- Numerical keypad -->
+                    <div id="tempKeypad" class="grid grid-cols-3 gap-2 max-w-xs mx-auto mb-4">
+                        <button class="numpad-btn h-12 rounded-xl bg-pastel-light hover:bg-pastel-secondary transition-colors font-semibold">
+                            1
+                        </button>
+                        <button class="numpad-btn h-12 rounded-xl bg-pastel-light hover:bg-pastel-secondary transition-colors font-semibold">
+                            2
+                        </button>
+                        <button class="numpad-btn h-12 rounded-xl bg-pastel-light hover:bg-pastel-secondary transition-colors font-semibold">
+                            3
+                        </button>
+                        <button class="numpad-btn h-12 rounded-xl bg-pastel-light hover:bg-pastel-secondary transition-colors font-semibold">
+                            4
+                        </button>
+                        <button class="numpad-btn h-12 rounded-xl bg-pastel-light hover:bg-pastel-secondary transition-colors font-semibold">
+                            5
+                        </button>
+                        <button class="numpad-btn h-12 rounded-xl bg-pastel-light hover:bg-pastel-secondary transition-colors font-semibold">
+                            6
+                        </button>
+                        <button class="numpad-btn h-12 rounded-xl bg-pastel-light hover:bg-pastel-secondary transition-colors font-semibold">
+                            7
+                        </button>
+                        <button class="numpad-btn h-12 rounded-xl bg-pastel-light hover:bg-pastel-secondary transition-colors font-semibold">
+                            8
+                        </button>
+                        <button class="numpad-btn h-12 rounded-xl bg-pastel-light hover:bg-pastel-secondary transition-colors font-semibold">
+                            9
+                        </button>
+                        <button class="numpad-btn h-12 rounded-xl bg-pastel-light hover:bg-pastel-secondary transition-colors font-semibold">
+                            .
+                        </button>
+                        <button class="numpad-btn h-12 rounded-xl bg-pastel-light hover:bg-pastel-secondary transition-colors font-semibold">
+                            0
+                        </button>
+                        <button class="numpad-btn h-12 rounded-xl bg-pastel-accent1 hover:bg-pastel-primary transition-colors text-white">
+                            <i data-lucide="delete" class="h-5 w-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Method selector -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Measurement Method</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <button class="method-btn h-10 px-4 rounded-full bg-pastel-primary text-white font-medium transition-colors">
+                            Oral
+                        </button>
+                        <button class="method-btn h-10 px-4 rounded-full border border-pastel-light hover:bg-pastel-light transition-colors">
+                            Rectal
+                        </button>
+                        <button class="method-btn h-10 px-4 rounded-full border border-pastel-light hover:bg-pastel-light transition-colors">
+                            Armpit
+                        </button>
+                        <button class="method-btn h-10 px-4 rounded-full border border-pastel-light hover:bg-pastel-light transition-colors">
+                            Forehead
+                        </button>
+                    </div>
+                    <p class="text-xs text-pastel-textLight mt-2">Oral measurement is most accurate for this age</p>
+                </div>
+
+                <!-- Time selector -->
+                <div class="flex items-center gap-2">
+                    <button class="flex-1 px-4 py-2 rounded-full bg-pastel-primary text-white font-medium">
+                        <i data-lucide="clock" class="h-4 w-4 inline mr-2"></i>
+                        Now
+                    </button>
+                    <input type="datetime-local"
+                           class="flex-1 px-4 py-2 rounded-full border border-pastel-light text-sm">
+                </div>
+            </div>
+
+            <!-- Symptoms Tracker -->
+            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 0.4s; animation-fill-mode: forwards;">
+                <h2 class="text-xl font-serif font-medium text-pastel-heading mb-4">Symptoms Tracker</h2>
+
+                <!-- Symptom grid -->
+                <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-6">
+                    <button class="symptom-card h-16 w-full rounded-xl border border-pastel-light hover:border-pastel-primary transition-all flex flex-col items-center justify-center gap-1 p-2">
+                        <i data-lucide="thermometer" class="h-6 w-6"></i>
+                        <span class="text-xs">Fever</span>
+                    </button>
+                    <button class="symptom-card h-16 w-full rounded-xl border border-pastel-light hover:border-pastel-primary transition-all flex flex-col items-center justify-center gap-1 p-2">
+                        <i data-lucide="frown" class="h-6 w-6"></i>
+                        <span class="text-xs">Fussy</span>
+                    </button>
+                    <button class="symptom-card h-16 w-full rounded-xl border border-pastel-light hover:border-pastel-primary transition-all flex flex-col items-center justify-center gap-1 p-2">
+                        <i data-lucide="wind" class="h-6 w-6"></i>
+                        <span class="text-xs">Congestion</span>
+                    </button>
+                    <button class="symptom-card h-16 w-full rounded-xl border border-pastel-light hover:border-pastel-primary transition-all flex flex-col items-center justify-center gap-1 p-2">
+                        <i data-lucide="cloud" class="h-6 w-6"></i>
+                        <span class="text-xs">Cough</span>
+                    </button>
+                    <button class="symptom-card h-16 w-full rounded-xl border border-pastel-light hover:border-pastel-primary transition-all flex flex-col items-center justify-center gap-1 p-2">
+                        <i data-lucide="alert-circle" class="h-6 w-6"></i>
+                        <span class="text-xs">Rash</span>
+                    </button>
+                    <button class="symptom-card h-16 w-full rounded-xl border border-pastel-light hover:border-pastel-primary transition-all flex flex-col items-center justify-center gap-1 p-2">
+                        <i data-lucide="droplet" class="h-6 w-6"></i>
+                        <span class="text-xs">Vomiting</span>
+                    </button>
+                    <button class="symptom-card h-16 w-full rounded-xl border border-pastel-light hover:border-pastel-primary transition-all flex flex-col items-center justify-center gap-1 p-2">
+                        <i data-lucide="zap" class="h-6 w-6"></i>
+                        <span class="text-xs">Diarrhea</span>
+                    </button>
+                    <button class="symptom-card h-16 w-full rounded-xl border border-pastel-light hover:border-pastel-primary transition-all flex flex-col items-center justify-center gap-1 p-2">
+                        <i data-lucide="x-circle" class="h-6 w-6"></i>
+                        <span class="text-xs">No appetite</span>
+                    </button>
+                </div>
+
+                <!-- Severity sliders for selected symptoms -->
+                <div id="severitySection" class="hidden space-y-4">
+                    <div class="symptom-severity">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-pastel-text">Fever Severity</span>
+                            <span class="text-sm text-pastel-textLight">Moderate</span>
+                        </div>
+                        <input type="range" class="severity-slider w-full" min="1" max="5" value="3">
+                        <div class="flex justify-between text-xs text-pastel-textLight mt-1">
+                            <span>Mild</span>
+                            <span>Severe</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medication Logging -->
+            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 0.5s; animation-fill-mode: forwards;">
+                <h2 class="text-xl font-serif font-medium text-pastel-heading mb-4">Medication Logging</h2>
+
+                <!-- Medication selector -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Medication</label>
+                    <div class="relative mb-2">
+                        <input type="text" placeholder="Search medications..."
+                               class="w-full px-4 py-3 pr-10 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors">
+                        <i data-lucide="search" class="absolute right-3 top-3.5 h-5 w-5 text-pastel-textLight"></i>
+                    </div>
+                    <!-- Recent medications -->
+                    <div class="flex flex-wrap gap-2">
+                        <button class="px-3 py-1.5 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors text-sm">
+                            Infant Tylenol
+                        </button>
+                        <button class="px-3 py-1.5 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors text-sm">
+                            Gas Drops
+                        </button>
+                        <button class="px-3 py-1.5 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors text-sm">
+                            Vitamin D
+                        </button>
+                        <button class="px-3 py-1.5 rounded-full border border-pastel-primary text-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                            <i data-lucide="plus" class="h-3 w-3 inline mr-1"></i>
+                            Add New
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dosage input -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Dosage</label>
+                    <div class="flex items-center gap-4">
+                        <button class="w-12 h-12 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors flex items-center justify-center">
+                            <i data-lucide="minus" class="h-5 w-5 text-pastel-primary"></i>
+                        </button>
+                        <div class="text-center">
+                            <input type="number" value="2.5" step="0.1"
+                                   class="w-24 text-center text-3xl font-semibold text-pastel-heading border-b-2 border-pastel-light focus:border-pastel-primary outline-none">
+                            <select class="mt-2 px-3 py-1 rounded-full border border-pastel-light text-sm">
+                                <option>ml</option>
+                                <option>tsp</option>
+                                <option>tbsp</option>
+                                <option>drops</option>
+                            </select>
+                        </div>
+                        <button class="w-12 h-12 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors flex items-center justify-center">
+                            <i data-lucide="plus" class="h-5 w-5 text-pastel-primary"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Administration method -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Administration Method</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button class="h-14 w-full rounded-xl bg-pastel-primary text-white transition-colors flex flex-col items-center justify-center gap-1">
+                            <i data-lucide="droplet" class="h-6 w-6"></i>
+                            <span class="text-xs">Oral</span>
+                        </button>
+                        <button class="h-14 w-full rounded-xl border border-pastel-light hover:bg-pastel-light transition-colors flex flex-col items-center justify-center gap-1">
+                            <i data-lucide="hand" class="h-6 w-6"></i>
+                            <span class="text-xs">Topical</span>
+                        </button>
+                        <button class="h-14 w-full rounded-xl border border-pastel-light hover:bg-pastel-light transition-colors flex flex-col items-center justify-center gap-1">
+                            <i data-lucide="pill" class="h-6 w-6"></i>
+                            <span class="text-xs">Suppository</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Timing controls -->
+                <div class="space-y-3">
+                    <button class="w-full px-4 py-3 rounded-full bg-pastel-primary text-white font-medium">
+                        <i data-lucide="check" class="h-4 w-4 inline mr-2"></i>
+                        Given Now
+                    </button>
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-pastel-lightest">
+                        <span class="text-sm">Schedule next dose</span>
+                        <input type="time" class="px-3 py-1 rounded-full border border-pastel-light text-sm">
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm">Send reminder</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-pastel-light rounded-full peer peer-checked:bg-pastel-primary transition-colors"></div>
+                            <div class="absolute left-[2px] top-[2px] bg-white w-5 h-5 rounded-full transition-transform peer-checked:translate-x-5"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Symptom Duration Tracker -->
+            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 0.6s; animation-fill-mode: forwards;">
+                <h2 class="text-xl font-serif font-medium text-pastel-heading mb-4">Symptom Duration</h2>
+
+                <!-- When did this start -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-pastel-text mb-2">When did this start?</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        <button class="px-4 py-2 rounded-full bg-pastel-primary text-white text-sm font-medium">
+                            Just started
+                        </button>
+                        <button class="px-4 py-2 rounded-full border border-pastel-light hover:bg-pastel-light transition-colors text-sm">
+                            Few hours
+                        </button>
+                        <button class="px-4 py-2 rounded-full border border-pastel-light hover:bg-pastel-light transition-colors text-sm">
+                            Since yesterday
+                        </button>
+                        <button class="px-4 py-2 rounded-full border border-pastel-light hover:bg-pastel-light transition-colors text-sm">
+                            Few days
+                        </button>
+                        <button class="px-4 py-2 rounded-full border border-pastel-light hover:bg-pastel-light transition-colors text-sm">
+                            Over a week
+                        </button>
+                        <button class="px-4 py-2 rounded-full border border-pastel-light hover:bg-pastel-light transition-colors text-sm">
+                            Custom
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Severity progression -->
+                <div>
+                    <label class="block text-sm font-medium text-pastel-text mb-2">How is it progressing?</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button class="px-4 py-3 rounded-xl border border-pastel-success text-pastel-success hover:bg-green-50 transition-colors flex items-center justify-center gap-2">
+                            <i data-lucide="trending-down" class="h-4 w-4"></i>
+                            <span class="text-sm">Getting better</span>
+                        </button>
+                        <button class="px-4 py-3 rounded-xl bg-pastel-warning/10 border border-pastel-warning text-pastel-warning transition-colors flex items-center justify-center gap-2">
+                            <i data-lucide="minus" class="h-4 w-4"></i>
+                            <span class="text-sm">Same</span>
+                        </button>
+                        <button class="px-4 py-3 rounded-xl border border-pastel-danger text-pastel-danger hover:bg-red-50 transition-colors flex items-center justify-center gap-2">
+                            <i data-lucide="trending-up" class="h-4 w-4"></i>
+                            <span class="text-sm">Getting worse</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Photo Documentation -->
+            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 0.7s; animation-fill-mode: forwards;">
+                <h2 class="text-xl font-serif font-medium text-pastel-heading mb-4">Photo Documentation</h2>
+
+                <button class="w-full h-32 rounded-xl border-2 border-dashed border-pastel-light hover:border-pastel-primary transition-colors flex flex-col items-center justify-center gap-2 text-pastel-textLight hover:text-pastel-primary">
+                    <i data-lucide="camera" class="h-8 w-8"></i>
+                    <span class="text-sm font-medium">Take Photo</span>
+                    <span class="text-xs">For rashes or visible symptoms</span>
+                </button>
+
+                <div class="mt-4 space-y-2">
+                    <div class="flex items-center gap-2 text-xs text-pastel-textLight">
+                        <i data-lucide="shield" class="h-4 w-4"></i>
+                        <span>HIPAA-compliant secure storage</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-pastel-textLight">
+                        <i data-lucide="info" class="h-4 w-4"></i>
+                        <span>Guidelines: Good lighting, clear focus, include ruler for scale</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Assessment -->
+            <div class="bg-red-50 border border-red-200 rounded-2xl p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 0.8s; animation-fill-mode: forwards;">
+                <h2 class="text-xl font-serif font-medium text-red-800 mb-4">Emergency Assessment</h2>
+
+                <div class="space-y-3 mb-4">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" class="w-5 h-5 rounded border-red-300 text-red-600 focus:ring-red-500">
+                        <span class="text-sm text-red-700">Difficulty breathing or wheezing</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" class="w-5 h-5 rounded border-red-300 text-red-600 focus:ring-red-500">
+                        <span class="text-sm text-red-700">High fever (>104°F/40°C)</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" class="w-5 h-5 rounded border-red-300 text-red-600 focus:ring-red-500">
+                        <span class="text-sm text-red-700">Severe dehydration signs</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" class="w-5 h-5 rounded border-red-300 text-red-600 focus:ring-red-500">
+                        <span class="text-sm text-red-700">Unresponsive or extremely lethargic</span>
+                    </label>
+                </div>
+
+                <button class="w-full px-6 py-4 bg-red-600 hover:bg-red-700 text-white rounded-full font-bold text-lg transition-colors flex items-center justify-center gap-3 emergency-pulse">
+                    <i data-lucide="phone" class="h-6 w-6"></i>
+                    Call Doctor Now
+                </button>
+
+                <p class="text-xs text-red-600 text-center mt-3">If any emergency symptoms are present, seek immediate
+                    medical attention</p>
+            </div>
+
+            <!-- Notes and Observations -->
+            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 0.9s; animation-fill-mode: forwards;">
+                <h2 class="text-xl font-serif font-medium text-pastel-heading mb-4">Notes & Observations</h2>
+
+                <!-- Template phrases -->
+                <div class="mb-3">
+                    <select class="w-full px-4 py-2 rounded-xl border border-pastel-light text-sm">
+                        <option>Baby seems...</option>
+                        <option>Baby seems more tired than usual</option>
+                        <option>Baby seems uncomfortable</option>
+                        <option>Baby seems to be improving</option>
+                        <option>Baby seems happy despite symptoms</option>
+                    </select>
+                </div>
+
+                <!-- Notes textarea -->
+                <div class="relative">
+                    <textarea
+                            class="w-full px-4 py-3 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors"
+                            rows="4" placeholder="Add detailed observations..."></textarea>
+                    <button class="absolute bottom-3 right-3 p-2 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors">
+                        <i data-lucide="mic" class="h-4 w-4 text-pastel-primary"></i>
+                    </button>
+                </div>
+
+                <!-- Healthcare provider sharing -->
+                <div class="mt-3 flex items-center justify-between">
+                    <span class="text-sm text-pastel-text">Share with healthcare provider</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-pastel-light rounded-full peer peer-checked:bg-pastel-primary transition-colors"></div>
+                        <div class="absolute left-[2px] top-[2px] bg-white w-5 h-5 rounded-full transition-transform peer-checked:translate-x-5"></div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Historical Health View -->
+            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 1.0s; animation-fill-mode: forwards;">
+                <h2 class="text-xl font-serif font-medium text-pastel-heading mb-4">Health History</h2>
+
+                <!-- Temperature trend chart placeholder -->
+                <div class="mb-6">
+                    <h3 class="text-sm font-medium text-pastel-text mb-3">Temperature Trend (Last 7 Days)</h3>
+                    <div class="h-48 bg-pastel-lightest rounded-xl flex items-center justify-center">
+                        <span class="text-sm text-pastel-textLight">Temperature chart visualization</span>
+                    </div>
+                </div>
+
+                <!-- Quick stats -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <div class="text-center p-4 rounded-xl bg-pastel-lightest">
+                        <p class="text-2xl font-bold text-pastel-heading">3</p>
+                        <p class="text-xs text-pastel-textLight">Symptoms logged this week</p>
+                    </div>
+                    <div class="text-center p-4 rounded-xl bg-pastel-lightest">
+                        <p class="text-2xl font-bold text-pastel-heading">95%</p>
+                        <p class="text-xs text-pastel-textLight">Medication adherence</p>
+                    </div>
+                    <div class="text-center p-4 rounded-xl bg-pastel-lightest">
+                        <p class="text-2xl font-bold text-pastel-heading">2</p>
+                        <p class="text-xs text-pastel-textLight">Pattern alerts</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save button -->
+            <button class="w-full h-14 bg-pastel-primary hover:bg-pastel-primaryHover text-white rounded-full font-medium transition-colors btn-hover-effect opacity-0 animate-fade-in-up"
+                    style="animation-delay: 1.1s; animation-fill-mode: forwards;">
+                Save Health Record
+            </button>
+
+            <!-- Decorative floating elements -->
+            <div class="fixed bottom-20 right-10 w-32 h-32 rounded-full bg-pastel-accent1 opacity-10 animate-float pointer-events-none"></div>
+            <div class="fixed top-40 right-1/4 w-24 h-24 rounded-full bg-pastel-accent2 opacity-10 animate-float-delayed pointer-events-none"></div>
+        </section>
+
+        <!-- Bottom Navigation (Mobile) -->
+        <nav class="lg:hidden border-t border-pastel-light bg-white/80 backdrop-blur-lg">
+            <div class="grid grid-cols-4 gap-1">
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
+                    <i data-lucide="home" class="h-5 w-5"></i>
+                    <span class="text-xs">Home</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
+                    <i data-lucide="bar-chart-3" class="h-5 w-5"></i>
+                    <span class="text-xs">Insights</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-primary">
+                    <i data-lucide="plus-circle" class="h-5 w-5"></i>
+                    <span class="text-xs">Add</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
+                    <i data-lucide="user" class="h-5 w-5"></i>
+                    <span class="text-xs">Profile</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Mobile menu toggle functionality
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+
+        function toggleMobileMenu() {
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+        overlay.addEventListener('click', toggleMobileMenu);
+
+        // Temperature unit toggle
+        const unitToggle = document.getElementById('unitToggle');
+        const tempDisplay = document.getElementById('tempDisplay');
+        let isFahrenheit = true;
+
+        unitToggle.addEventListener('click', () => {
+            isFahrenheit = !isFahrenheit;
+            const currentTemp = parseFloat(tempDisplay.textContent);
+
+            if (isFahrenheit) {
+                tempDisplay.textContent = ((currentTemp * 9 / 5) + 32).toFixed(1);
+                unitToggle.textContent = '°F';
+            } else {
+                tempDisplay.textContent = ((currentTemp - 32) * 5 / 9).toFixed(1);
+                unitToggle.textContent = '°C';
+            }
+        });
+
+        // Temperature keypad functionality
+        let tempInput = '';
+        const keypadButtons = document.querySelectorAll('.numpad-btn');
+
+        keypadButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const value = btn.textContent;
+
+                if (btn.querySelector('i')) { // Delete button
+                    tempInput = tempInput.slice(0, -1);
+                } else if (value === '.' && tempInput.includes('.')) {
+                    return; // Prevent multiple decimals
+                } else if (tempInput.length < 5) { // Limit input length
+                    tempInput += value;
+                }
+
+                if (tempInput) {
+                    tempDisplay.textContent = tempInput;
+                } else {
+                    tempDisplay.textContent = '98.6';
+                }
+            });
+        });
+
+        // Method selector
+        const methodButtons = document.querySelectorAll('.method-btn');
+        methodButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                methodButtons.forEach(b => {
+                    b.classList.remove('bg-pastel-primary', 'text-white');
+                    b.classList.add('border', 'border-pastel-light');
+                });
+                btn.classList.remove('border', 'border-pastel-light');
+                btn.classList.add('bg-pastel-primary', 'text-white');
+            });
+        });
+
+        // Symptom card selection
+        const symptomCards = document.querySelectorAll('.symptom-card');
+        const severitySection = document.getElementById('severitySection');
+        let selectedSymptoms = new Set();
+
+        symptomCards.forEach(card => {
+            card.addEventListener('click', () => {
+                card.classList.toggle('selected');
+                const symptomName = card.querySelector('span').textContent;
+
+                if (card.classList.contains('selected')) {
+                    selectedSymptoms.add(symptomName);
+                } else {
+                    selectedSymptoms.delete(symptomName);
+                }
+
+                // Show/hide severity section
+                if (selectedSymptoms.size > 0) {
+                    severitySection.classList.remove('hidden');
+                } else {
+                    severitySection.classList.add('hidden');
+                }
+            });
+        });
+
+        // Severity slider interaction
+        const severitySliders = document.querySelectorAll('.severity-slider');
+        severitySliders.forEach(slider => {
+            slider.addEventListener('input', (e) => {
+                const value = e.target.value;
+                const labels = ['Mild', 'Low', 'Moderate', 'High', 'Severe'];
+                const labelSpan = e.target.parentElement.querySelector('span:last-child');
+                if (labelSpan) {
+                    labelSpan.textContent = labels[value - 1];
+                }
+            });
+        });
+
+        // Emergency symptom checklist
+        const emergencyCheckboxes = document.querySelectorAll('input[type="checkbox"]');
+        emergencyCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                const checkedCount = document.querySelectorAll('input[type="checkbox"]:checked').length;
+                if (checkedCount > 0) {
+                    // Show alert or take action
+                    console.log('Emergency symptoms detected!');
+                }
+            });
+        });
+
+        // Voice to text simulation
+        const voiceButtons = document.querySelectorAll('[data-lucide="mic"]');
+        voiceButtons.forEach(btn => {
+            btn.parentElement.addEventListener('click', () => {
+                console.log('Voice recording started...');
+                // In a real app, this would integrate with speech recognition API
+            });
+        });
+
+        // Auto-save functionality
+        let autoSaveInterval = setInterval(() => {
+            console.log('Auto-saving health data...');
+            // In a real app, this would save to backend
+        }, 30000); // Every 30 seconds
+    });
+</script>
+</body>
+</html>
