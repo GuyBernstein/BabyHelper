@@ -1,0 +1,1956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to BabyHelper - Onboarding</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=Lora:wght@400;500;600&display=swap"
+          rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pastel: {
+                            lightest: '#fdf6f0',
+                            light: '#ffe8d9',
+                            primary: '#ff8c69',
+                            primaryHover: '#ff7043',
+                            secondary: '#ffd8cc',
+                            accent1: '#ffb5a7',
+                            accent2: '#fec89a',
+                            text: '#6d5d52',
+                            textLight: '#938278',
+                            heading: '#5c4d44'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Nunito Sans', 'sans-serif'],
+                        serif: ['Lora', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Step transition animations */
+        .step-container {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+
+        .step-hidden {
+            display: none;
+        }
+
+        .step-inactive {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+
+        .progress-segment {
+            transition: background-color 0.3s ease;
+        }
+
+        /* Toast animations */
+        .toast-enter {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast-exit {
+            animation: slideOut 0.3s ease-in;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translate(-50%, -100%);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+            to {
+                transform: translate(-50%, -100%);
+                opacity: 0;
+            }
+        }
+
+        /* Loading spinner */
+        .spinner {
+            border: 2px solid rgba(255, 140, 105, 0.2);
+            border-top-color: #ff8c69;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Slide down animation for checkbox container */
+        .slide-down-enter {
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Modal animations */
+        .modal-enter {
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        .modal-enter .modal-content {
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        .modal-exit {
+            animation: modalFadeOut 0.2s ease-in;
+        }
+
+        .modal-exit .modal-content {
+            animation: modalSlideOut 0.2s ease-in;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes modalFadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes modalSlideOut {
+            from {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.95) translateY(10px);
+            }
+        }
+    </style>
+</head>
+<body class="bg-pastel-lightest font-sans text-pastel-text min-h-screen">
+<!-- Header -->
+<nav class="w-full py-4 px-4 md:px-8 bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <a href="#" class="flex items-center space-x-2">
+            <div class="w-10 h-10 rounded-full bg-pastel-primary flex items-center justify-center text-white font-serif font-semibold text-xl">
+                B
+            </div>
+            <span class="font-serif text-pastel-heading text-xl">BabyHelper</span>
+        </a>
+        <div class="flex items-center space-x-4">
+            <img id="userPicture" class="w-10 h-10 rounded-full" alt="User profile">
+            <button onclick="onboardingApp.logout()"
+                    class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Logout
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- Onboarding Content -->
+<div class="max-w-4xl mx-auto px-4 py-12">
+    <!-- Welcome Section -->
+    <div class="text-center mb-8">
+        <h1 class="font-serif text-4xl md:text-5xl font-medium text-pastel-heading mb-4">
+            Welcome to BabyHelper, <span id="userName" class="text-pastel-primary">Parent</span>!
+        </h1>
+        <p class="text-lg text-pastel-textLight">
+            Let's get your account set up. You can skip any step and complete it later in settings.
+        </p>
+        <p class="text-sm text-pastel-textLight mt-2">
+            Signed in as: <span id="userEmail" class="font-medium"></span>
+        </p>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="mb-8">
+        <button onclick="onboardingApp.handleSkipAllClick()"
+                class="text-sm text-pastel-primary hover:text-pastel-primaryHover font-medium transition-colors flex items-center space-x-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            </svg>
+            <span>Skip All Steps</span>
+        </button>
+        <div class="w-full bg-pastel-light rounded-full h-2 flex space-x-1">
+            <div id="progress-1" class="progress-segment flex-1 bg-pastel-primary rounded-full"></div>
+            <div id="progress-2" class="progress-segment flex-1 bg-pastel-light rounded-full"></div>
+            <div id="progress-3" class="progress-segment flex-1 bg-pastel-light rounded-full"></div>
+        </div>
+    </div>
+
+    <!-- Step 1: Baby Information -->
+    <div id="step-1" class="step-container">
+        <div class="bg-white rounded-2xl shadow-lg p-8 border border-pastel-light">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 rounded-full bg-pastel-primary flex items-center justify-center text-white font-semibold text-lg">
+                        1
+                    </div>
+                    <h2 class="font-serif text-2xl text-pastel-heading ml-4">Add Your Baby's Information</h2>
+                </div>
+                <button onclick="onboardingApp.skipCurrentStep()"
+                        class="text-sm text-pastel-textLight hover:text-pastel-text transition-colors">
+                    Skip This Step
+                </button>
+            </div>
+
+            <!-- Error container for step 1 -->
+            <div id="step1-error" class="hidden mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-red-700 text-sm"></p>
+            </div>
+
+            <form id="babyInfoForm" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="babyName" class="block text-sm font-medium text-pastel-text mb-2">Baby's
+                            Name</label>
+                        <input type="text" id="babyName" placeholder="Emma" maxlength="100"
+                               class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+                        <span class="text-xs text-red-500 mt-1 hidden" id="babyName-error"></span>
+                    </div>
+                    <div>
+                        <label for="babyDob" class="block text-sm font-medium text-pastel-text mb-2">Date of
+                            Birth</label>
+                        <input type="date" id="babyDob"
+                               class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+                        <span class="text-xs text-red-500 mt-1 hidden" id="babyDob-error"></span>
+                    </div>
+                    <div>
+                        <label for="babyGender" class="block text-sm font-medium text-pastel-text mb-2">Gender</label>
+                        <select id="babyGender"
+                                class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+                            <option value="">Select gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                        <span class="text-xs text-red-500 mt-1 hidden" id="babyGender-error"></span>
+                    </div>
+                    <div>
+                        <label for="babyWeight" class="block text-sm font-medium text-pastel-text mb-2">Current Weight
+                            (kg)</label>
+                        <input type="number" id="babyWeight" step="0.1" placeholder="3.2" min="0.5" max="50"
+                               class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+                        <span class="text-xs text-red-500 mt-1 hidden" id="babyWeight-error"></span>
+                    </div>
+                    <div>
+                        <label for="babyHeight" class="block text-sm font-medium text-pastel-text mb-2">Current Height
+                            (cm)</label>
+                        <input type="number" id="babyHeight" step="0.1" placeholder="49.2" min="20" max="150"
+                               class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+                        <span class="text-xs text-red-500 mt-1 hidden" id="babyHeight-error"></span>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-4 mt-8">
+                    <button type="button" onclick="onboardingApp.nextStep()" id="step1-submit"
+                            class="px-8 py-3 bg-pastel-primary text-white font-semibold rounded-lg hover:bg-pastel-primaryHover transition-colors flex items-center space-x-2">
+                        <span>Next Step</span>
+                        <div class="spinner hidden"></div>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Step 2: Co-parenting Setup -->
+    <div id="step-2" class="step-container step-hidden">
+        <div class="bg-white rounded-2xl shadow-lg p-8 border border-pastel-light">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 rounded-full bg-pastel-accent2 flex items-center justify-center text-white font-semibold text-lg">
+                        2
+                    </div>
+                    <h2 class="font-serif text-2xl text-pastel-heading ml-4">Invite a Co-parent</h2>
+                </div>
+                <button onclick="onboardingApp.skipCurrentStep()"
+                        class="text-sm text-pastel-textLight hover:text-pastel-text transition-colors">
+                    Skip This Step
+                </button>
+            </div>
+
+            <!-- Benefits -->
+            <div class="bg-pastel-lightest rounded-lg p-4 mb-6">
+                <h3 class="font-semibold text-pastel-heading mb-3">Benefits of Co-parenting</h3>
+                <div class="space-y-2">
+                    <div class="flex items-start space-x-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-primary mt-0.5 flex-shrink-0"
+                             viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                  clip-rule="evenodd"/>
+                        </svg>
+                        <p class="text-sm text-pastel-text">Share baby care responsibilities with your partner</p>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-primary mt-0.5 flex-shrink-0"
+                             viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                  clip-rule="evenodd"/>
+                        </svg>
+                        <p class="text-sm text-pastel-text">Real-time syncing keeps everyone updated</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error container for step 2 -->
+            <div id="step2-error" class="hidden mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-red-700 text-sm"></p>
+            </div>
+
+            <form id="coParentForm" class="space-y-4">
+                <div>
+                    <label for="coParentEmail" class="block text-sm font-medium text-pastel-text mb-2">Co-parent's
+                        Email</label>
+                    <div class="flex space-x-2">
+                        <input type="email" id="coParentEmail" placeholder="partner@example.com" maxlength="255"
+                               class="flex-1 px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+                        <button type="button" onclick="onboardingApp.sendInvite()" id="invite-submit"
+                                class="px-6 py-2 bg-pastel-secondary text-pastel-primary font-medium rounded-lg hover:bg-pastel-accent1 hover:text-white transition-colors flex items-center space-x-2">
+                            <span>Send Invite</span>
+                            <div class="spinner hidden"></div>
+                        </button>
+                    </div>
+                    <span class="text-xs text-red-500 mt-1 hidden" id="coParentEmail-error"></span>
+                </div>
+
+                <!-- Invited List -->
+                <div id="invitedList" class="hidden">
+                    <h3 class="font-semibold text-pastel-heading mb-2">Pending Invitations</h3>
+                    <div id="invitationsList" class="space-y-2">
+                        <!-- Invitations will be dynamically added here -->
+                    </div>
+                </div>
+            </form>
+
+            <div class="flex justify-between mt-8">
+                <button type="button" onclick="onboardingApp.previousStep()"
+                        class="px-6 py-3 border border-pastel-light text-pastel-text font-medium rounded-lg hover:bg-pastel-lightest transition-colors">
+                    Previous
+                </button>
+                <button type="button" onclick="onboardingApp.nextStep()"
+                        class="px-8 py-3 bg-pastel-primary text-white font-semibold rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                    Next Step
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3: Check Co-parent Invitations -->
+    <div id="step-3" class="step-container step-hidden">
+        <div class="bg-white rounded-2xl shadow-lg p-8 border border-pastel-light">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 rounded-full bg-pastel-accent1 flex items-center justify-center text-white font-semibold text-lg">
+                        3
+                    </div>
+                    <h2 class="font-serif text-2xl text-pastel-heading ml-4">Co-parent Invitations</h2>
+                </div>
+                <button onclick="onboardingApp.skipCurrentStep()"
+                        class="text-sm text-pastel-textLight hover:text-pastel-text transition-colors">
+                    Skip This Step
+                </button>
+            </div>
+
+            <p class="text-pastel-text mb-6">
+                Check if you have any pending invitations to be a co-parent for another user's baby.
+            </p>
+
+            <!-- Loading State -->
+            <div id="invitationsLoading" class="text-center py-8">
+                <div class="inline-flex items-center space-x-2">
+                    <div class="spinner"></div>
+                    <span class="text-pastel-textLight">Checking for invitations...</span>
+                </div>
+            </div>
+
+            <!-- No Invitations State -->
+            <div id="noInvitations" class="hidden text-center py-8">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-pastel-light mx-auto mb-4" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                </svg>
+                <p class="text-pastel-textLight">No pending invitations at this time.</p>
+            </div>
+
+            <!-- Invitations List -->
+            <div id="pendingInvitations" class="hidden space-y-4">
+                <!-- Invitations will be dynamically loaded here -->
+            </div>
+
+            <div class="flex justify-between mt-8">
+                <button type="button" onclick="onboardingApp.previousStep()"
+                        class="px-6 py-3 border border-pastel-light text-pastel-text font-medium rounded-lg hover:bg-pastel-lightest transition-colors">
+                    Previous
+                </button>
+                <button type="button" onclick="onboardingApp.completeOnboarding()" id="complete-button"
+                        class="px-8 py-3 bg-pastel-primary text-white font-semibold rounded-lg hover:bg-pastel-primaryHover transition-colors flex items-center space-x-2">
+                    <span>Complete Setup</span>
+                    <div class="spinner hidden"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Preview -->
+<div id="featuresPreview" class="bg-white py-16 mt-16">
+    <div class="max-w-6xl mx-auto px-4">
+        <h3 class="font-serif text-3xl text-pastel-heading text-center mb-12">
+            What You Can Do with BabyHelper
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="text-center">
+                <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-pastel-lightest flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-pastel-primary" fill="none"
+                         viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <h4 class="font-semibold text-lg text-pastel-heading mb-2">Track Everything</h4>
+                <p class="text-pastel-textLight">Log feedings, diaper changes, sleep times, and more with just a
+                    tap.</p>
+            </div>
+
+            <div class="text-center">
+                <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-pastel-lightest flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-pastel-accent1" fill="none"
+                         viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                </div>
+                <h4 class="font-semibold text-lg text-pastel-heading mb-2">View Insights</h4>
+                <p class="text-pastel-textLight">See patterns and trends in your baby's routine to better understand
+                    their needs.</p>
+            </div>
+
+            <div class="text-center">
+                <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-pastel-lightest flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-pastel-accent2" fill="none"
+                         viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                </div>
+                <h4 class="font-semibold text-lg text-pastel-heading mb-2">Share Care</h4>
+                <p class="text-pastel-textLight">Collaborate with partners and caregivers for seamless baby care
+                    coordination.</p>
+            </div>
+
+            <div class="text-center mt-8 text-sm text-pastel-textLight">
+                <p>Remember: You can always access these settings from your dashboard later.</p>
+                <p class="mt-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24"
+                         stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Tip: Check "Don't show this page again" above to skip onboarding in future visits.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50"></div>
+
+<!-- Skip Modal -->
+<div id="skipModal" class="fixed inset-0 z-50 hidden">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onclick="onboardingApp.closeSkipModal()"></div>
+
+    <!-- Modal Content -->
+    <div class="fixed inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full transform transition-all">
+            <!-- Modal Header -->
+            <div class="p-6 border-b border-pastel-light">
+                <h3 class="font-serif text-2xl text-pastel-heading">Skip Setup?</h3>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6">
+                <p class="text-pastel-text mb-6">
+                    You can complete these setup steps later from your dashboard settings.
+                </p>
+
+                <!-- Skip Options -->
+                <div class="space-y-3">
+                    <!-- Skip Once Option -->
+                    <button onclick="onboardingApp.skipOnce()"
+                            class="w-full p-4 text-left border border-pastel-light rounded-lg hover:bg-pastel-lightest transition-colors group">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-5 h-5 rounded-full border-2 border-pastel-primary mt-0.5 group-hover:bg-pastel-primary group-hover:bg-opacity-20"></div>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-pastel-heading">Skip for now</h4>
+                                <p class="text-sm text-pastel-textLight mt-1">
+                                    You'll see this setup guide next time you log in
+                                </p>
+                            </div>
+                        </div>
+                    </button>
+
+                    <!-- Skip Forever Option -->
+                    <button onclick="onboardingApp.skipForever()"
+                            class="w-full p-4 text-left border border-pastel-light rounded-lg hover:bg-pastel-lightest transition-colors group">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-5 h-5 rounded-full border-2 border-pastel-primary mt-0.5 group-hover:bg-pastel-primary group-hover:bg-opacity-20"></div>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-pastel-heading">Don't show again</h4>
+                                <p class="text-sm text-pastel-textLight mt-1">
+                                    Skip onboarding and go directly to dashboard on future logins
+                                </p>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Info Note -->
+                <div class="mt-6 p-3 bg-pastel-lightest rounded-lg">
+                    <div class="flex items-start space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-primary mt-0.5 flex-shrink-0"
+                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p class="text-xs text-pastel-textLight">
+                            You can always access these settings from your dashboard under Profile Settings
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-6 border-t border-pastel-light flex justify-end">
+                <button onclick="onboardingApp.closeSkipModal()"
+                        class="px-6 py-2 text-pastel-text hover:text-pastel-heading transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    /**
+     * BabyHelper Onboarding Application
+     *
+     * This Application implements:
+     * - Modular architecture with clear separation of concerns
+     * - Comprehensive error handling with user-friendly feedback
+     * - XSS prevention through consistent HTML escaping
+     * - Retry functionality for network operations
+     * - Input validation and sanitization
+     * - Reusable UI components and utilities
+     */
+
+        // Namespace for the application to avoid global scope pollution
+    const onboardingApp = (function () {
+            'use strict';
+
+            // ============================================================================
+            // Constants and Configuration
+            // ============================================================================
+
+            const CONFIG = {
+                API_TIMEOUT: 30000, // 30 seconds
+                RETRY_ATTEMPTS: 3,
+                RETRY_DELAY: 1000, // 1 second
+                TOAST_DURATION: 3000, // 3 seconds
+                MIN_PASSWORD_LENGTH: 8,
+                MAX_NAME_LENGTH: 100,
+                MAX_EMAIL_LENGTH: 255,
+                BABY_WEIGHT_MIN: 0.5,
+                BABY_WEIGHT_MAX: 50,
+                BABY_HEIGHT_MIN: 20,
+                BABY_HEIGHT_MAX: 150
+            };
+
+            const STATES = {
+                LOADING: 'loading',
+                EMPTY: 'empty',
+                LOADED: 'loaded',
+                ERROR: 'error',
+                SAVING: 'saving',
+                SAVED: 'saved'
+            };
+
+            const MESSAGE_TYPES = {
+                SUCCESS: 'success',
+                ERROR: 'error',
+                WARNING: 'warning',
+                INFO: 'info'
+            };
+
+            // ============================================================================
+            // State Management
+            // ============================================================================
+
+            const state = {
+                currentStep: 1,
+                totalSteps: 3,
+                isLoading: false,
+                retryCounters: {},
+                data: {
+                    babyInfo: {},
+                    coParents: [],
+                    acceptedInvitations: []
+                }
+            };
+
+            // ============================================================================
+            // Utility Functions
+            // ============================================================================
+
+            const utils = {
+                    /**
+                     * Escape HTML to prevent XSS attacks
+                     * @param {string} unsafe - Unsafe string
+                     * @returns {string} Safe HTML string
+                     */
+                    escapeHtml(unsafe) {
+                        if (typeof unsafe !== 'string') return '';
+                        const div = document.createElement('div');
+                        div.textContent = unsafe;
+                        return div.innerHTML;
+                    },
+
+                    /**
+                     * Validate email format (Gmail only)
+                     * @param {string} email - Email to validate
+                     * @returns {boolean} Is valid Gmail address
+                     */
+                    isValidGmail(email) {
+                        const gmailRegex = /^[a-zA-Z0-9.+_-]+@gmail\.com$/;
+                        return gmailRegex.test(email);
+                    },
+
+                    /**
+                     * Validate date is not in the future
+                     * @param {string} dateString - Date string
+                     * @returns {boolean} Is valid date
+                     */
+                    isValidBirthdate(dateString) {
+                        const date = new Date(dateString);
+                        if (isNaN(date.getTime())) return false;
+
+                        // Get today in YYYY-MM-DD format for comparison
+                        const today = new Date();
+                        const todayStr = today.getFullYear() + '-' +
+                            String(today.getMonth() + 1).padStart(2, '0') + '-' +
+                            String(today.getDate()).padStart(2, '0');
+
+                        // Convert input date to YYYY-MM-DD format
+                        const inputDateStr = date.getFullYear() + '-' +
+                            String(date.getMonth() + 1).padStart(2, '0') + '-' +
+                            String(date.getDate()).padStart(2, '0');
+
+                        // Compare date strings to avoid timezone issues
+                        return inputDateStr <= todayStr;
+                    },
+
+                    /**
+                     * Format date to YYYY-MM-DD
+                     * @param {string} dateString - Date in any format
+                     * @returns {string} Formatted date
+                     */
+                    formatDateForAPI(dateString) {
+                        const date = new Date(dateString);
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        return `${year}-${month}-${day}`;
+                    }
+                    ,
+
+                    /**
+                     * Format date for display
+                     * @param {string} dateString - Date string
+                     * @returns {string} Formatted date
+                     */
+                    formatDateForDisplay(dateString) {
+                        try {
+                            const date = new Date(dateString);
+                            return date.toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                            });
+                        } catch (e) {
+                            return 'Invalid date';
+                        }
+                    }
+                    ,
+
+                    /**
+                     * Debounce function to limit execution frequency
+                     * @param {Function} func - Function to debounce
+                     * @param {number} wait - Wait time in milliseconds
+                     * @returns {Function} Debounced function
+                     */
+                    debounce(func, wait) {
+                        let timeout;
+                        return function executedFunction(...args) {
+                            const later = () => {
+                                clearTimeout(timeout);
+                                func(...args);
+                            };
+                            clearTimeout(timeout);
+                            timeout = setTimeout(later, wait);
+                        };
+                    }
+                    ,
+
+                    /**
+                     * Sleep for specified milliseconds
+                     * @param {number} ms - Milliseconds to sleep
+                     * @returns {Promise} Promise that resolves after delay
+                     */
+                    sleep(ms) {
+                        return new Promise(resolve => setTimeout(resolve, ms));
+                    }
+                }
+            ;
+
+            // ============================================================================
+            // API Communication Layer
+            // ============================================================================
+
+            const api = {
+                /**
+                 * Get authentication token
+                 * @returns {string|null} Auth token
+                 */
+                getAuthToken() {
+                    return sessionStorage.getItem('idToken') || window.authToken || null;
+                },
+
+                /**
+                 * Get API headers with authentication
+                 * @returns {Object} Headers object
+                 */
+                getHeaders() {
+                    const token = this.getAuthToken();
+                    if (!token) {
+                        throw new Error('No authentication token found');
+                    }
+                    return {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    };
+                },
+
+                /**
+                 * Parse error response from API
+                 * @param {Response} response - Fetch response
+                 * @returns {Promise<string>} Error message
+                 */
+                async parseErrorResponse(response) {
+                    let errorMessage = `Request failed (${response.status})`;
+
+                    try {
+                        const errorData = await response.json();
+
+                        if (errorData.detail) {
+                            if (typeof errorData.detail === 'string') {
+                                errorMessage = errorData.detail;
+                            } else if (Array.isArray(errorData.detail)) {
+                                errorMessage = errorData.detail
+                                    .map(err => {
+                                        const field = err.loc?.[err.loc.length - 1] || 'field';
+                                        return `${field}: ${err.msg}`;
+                                    })
+                                    .join(', ');
+                            }
+                        } else if (errorData.message) {
+                            errorMessage = errorData.message;
+                        }
+                    } catch (e) {
+                        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                    }
+
+                    return errorMessage;
+                },
+
+                /**
+                 * Make authenticated API request with retry
+                 * @param {string} url - API endpoint
+                 * @param {Object} options - Fetch options
+                 * @returns {Promise<Response>} API response
+                 */
+                async request(url, options = {}) {
+                    const retryKey = `${options.method || 'GET'}_${url}`;
+                    state.retryCounters[retryKey] = state.retryCounters[retryKey] || 0;
+
+                    for (let attempt = 0; attempt < CONFIG.RETRY_ATTEMPTS; attempt++) {
+                        try {
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => controller.abort(), CONFIG.API_TIMEOUT);
+
+                            const response = await fetch(url, {
+                                ...options,
+                                headers: {
+                                    ...this.getHeaders(),
+                                    ...options.headers
+                                },
+                                signal: controller.signal
+                            });
+
+                            clearTimeout(timeoutId);
+
+                            // Handle authentication errors
+                            if (response.status === 401 || response.status === 403) {
+                                sessionStorage.clear();
+                                window.location.href = '/auth/login';
+                                throw new Error('Authentication expired');
+                            }
+
+                            // Reset retry counter on success
+                            if (response.ok) {
+                                state.retryCounters[retryKey] = 0;
+                            }
+
+                            return response;
+
+                        } catch (error) {
+                            state.retryCounters[retryKey]++;
+
+                            // Don't retry on authentication errors
+                            if (error.message === 'Authentication expired') {
+                                throw error;
+                            }
+
+                            // Last attempt or non-retryable error
+                            if (attempt === CONFIG.RETRY_ATTEMPTS - 1 ||
+                                error.name === 'AbortError') {
+                                throw error;
+                            }
+
+                            // Wait before retry with exponential backoff
+                            await utils.sleep(CONFIG.RETRY_DELAY * Math.pow(2, attempt));
+                        }
+                    }
+                },
+
+                /**
+                 * API endpoints
+                 */
+                endpoints: {
+                    async createBaby(data) {
+                        const response = await api.request('/baby/', {
+                            method: 'POST',
+                            body: JSON.stringify(data)
+                        });
+                        if (!response.ok) {
+                            const error = await api.parseErrorResponse(response);
+                            throw new Error(error);
+                        }
+                        return response.json();
+                    },
+
+                    async sendCoparentInvite(data) {
+                        const response = await api.request('/coparent/invite/', {
+                            method: 'POST',
+                            body: JSON.stringify(data)
+                        });
+                        if (!response.ok) {
+                            const error = await api.parseErrorResponse(response);
+                            throw new Error(error);
+                        }
+                        return response.json();
+                    },
+
+                    async getPendingInvitations() {
+                        const response = await api.request('/coparent/invitations/', {
+                            method: 'GET'
+                        });
+                        if (!response.ok) {
+                            const error = await api.parseErrorResponse(response);
+                            throw new Error(error);
+                        }
+                        return response.json();
+                    },
+
+                    async respondToInvitation(invitationId, accept) {
+                        const response = await api.request(`/coparent/invitations/${invitationId}`, {
+                            method: 'POST',
+                            body: JSON.stringify({invitation_id: invitationId, accept})
+                        });
+                        if (!response.ok) {
+                            const error = await api.parseErrorResponse(response);
+                            throw new Error(error);
+                        }
+                        return response.json();
+                    },
+
+                    async removeNotification(notificationId) {
+                        const response = await api.request(`/notifications/${notificationId}`, {
+                            method: 'DELETE'
+                        });
+                        if (!response.ok) {
+                            const error = await api.parseErrorResponse(response);
+                            throw new Error(error);
+                        }
+                        return response.json();
+                    },
+
+                    async markNotificationAsRead(notificationId) {
+                        const response = await api.request(`/notifications/${notificationId}/read`, {
+                            method: 'PUT'
+                        });
+                        if (!response.ok) {
+                            const error = await api.parseErrorResponse(response);
+                            throw new Error(error);
+                        }
+                        return response.json();
+                    },
+
+                    async updateUserPreference(data) {
+                        const response = await api.request('/auth/me/preferences', {
+                            method: 'PUT',
+                            body: JSON.stringify(data)
+                        });
+                        if (!response.ok) {
+                            const error = await api.parseErrorResponse(response);
+                            throw new Error(error);
+                        }
+                        return response.json();
+                    }
+                }
+            };
+
+            // ============================================================================
+            // UI Components and Updates
+            // ============================================================================
+
+            const ui = {
+                /**
+                 * Show loading state on button
+                 * @param {string} buttonId - Button element ID
+                 * @param {boolean} isLoading - Loading state
+                 */
+                setButtonLoading(buttonId, isLoading) {
+                    const button = document.getElementById(buttonId);
+                    if (!button) return;
+
+                    const spinner = button.querySelector('.spinner');
+                    const text = button.querySelector('span');
+
+                    if (isLoading) {
+                        button.disabled = true;
+                        if (spinner) spinner.classList.remove('hidden');
+                        if (text) text.textContent = 'Loading...';
+                    } else {
+                        button.disabled = false;
+                        if (spinner) spinner.classList.add('hidden');
+                        if (text) {
+                            // Reset to original text
+                            switch (buttonId) {
+                                case 'step1-submit':
+                                    text.textContent = 'Next Step';
+                                    break;
+                                case 'invite-submit':
+                                    text.textContent = 'Send Invite';
+                                    break;
+                                case 'complete-button':
+                                    text.textContent = 'Complete Setup';
+                                    break;
+                            }
+                        }
+                    }
+                },
+
+                /**
+                 * Show field error
+                 * @param {string} fieldId - Field element ID
+                 * @param {string} message - Error message
+                 */
+                showFieldError(fieldId, message) {
+                    const field = document.getElementById(fieldId);
+                    const errorEl = document.getElementById(`${fieldId}-error`);
+
+                    if (field) {
+                        field.classList.add('border-red-500');
+                        field.classList.remove('border-pastel-light');
+                    }
+
+                    if (errorEl) {
+                        errorEl.textContent = message;
+                        errorEl.classList.remove('hidden');
+                    }
+                },
+
+                /**
+                 * Clear field error
+                 * @param {string} fieldId - Field element ID
+                 */
+                clearFieldError(fieldId) {
+                    const field = document.getElementById(fieldId);
+                    const errorEl = document.getElementById(`${fieldId}-error`);
+
+                    if (field) {
+                        field.classList.remove('border-red-500');
+                        field.classList.add('border-pastel-light');
+                    }
+
+                    if (errorEl) {
+                        errorEl.classList.add('hidden');
+                        errorEl.textContent = '';
+                    }
+                },
+
+                /**
+                 * Clear all field errors in a form
+                 * @param {string} formId - Form element ID
+                 */
+                clearFormErrors(formId) {
+                    const form = document.getElementById(formId);
+                    if (!form) return;
+
+                    // Clear all field errors
+                    form.querySelectorAll('input, select').forEach(field => {
+                        this.clearFieldError(field.id);
+                    });
+
+                    // Clear step error
+                    const stepError = form.closest('.step-container')?.querySelector('[id$="-error"]');
+                    if (stepError) {
+                        stepError.classList.add('hidden');
+                        stepError.querySelector('p').textContent = '';
+                    }
+                },
+
+                /**
+                 * Show step error
+                 * @param {number} step - Step number
+                 * @param {string} message - Error message
+                 */
+                showStepError(step, message) {
+                    const errorEl = document.getElementById(`step${step}-error`);
+                    if (errorEl) {
+                        errorEl.querySelector('p').textContent = message;
+                        errorEl.classList.remove('hidden');
+                    }
+                },
+
+                /**
+                 * Show toast notification
+                 * @param {string} message - Message to display
+                 * @param {string} type - Message type (success, error, warning, info)
+                 */
+                showToast(message, type = MESSAGE_TYPES.SUCCESS) {
+                    const container = document.getElementById('toast-container');
+                    if (!container) return;
+
+                    const toast = document.createElement('div');
+                    const bgColors = {
+                        [MESSAGE_TYPES.SUCCESS]: 'bg-green-600',
+                        [MESSAGE_TYPES.ERROR]: 'bg-red-600',
+                        [MESSAGE_TYPES.WARNING]: 'bg-yellow-600',
+                        [MESSAGE_TYPES.INFO]: 'bg-pastel-primary'
+                    };
+
+                    toast.className = `${bgColors[type]} text-white px-6 py-3 rounded-lg shadow-lg mb-2 toast-enter`;
+                    toast.textContent = message;
+
+                    container.appendChild(toast);
+
+                    // Remove after duration
+                    setTimeout(() => {
+                        toast.classList.add('toast-exit');
+                        setTimeout(() => toast.remove(), 300);
+                    }, CONFIG.TOAST_DURATION);
+                },
+
+                /**
+                 * Update progress bar
+                 * @param {number} step - Current step
+                 */
+                updateProgressBar(step) {
+                    for (let i = 1; i <= state.totalSteps; i++) {
+                        const segment = document.getElementById(`progress-${i}`);
+                        if (segment) {
+                            if (i <= step) {
+                                segment.classList.add('bg-pastel-primary');
+                                segment.classList.remove('bg-pastel-light');
+                            } else {
+                                segment.classList.remove('bg-pastel-primary');
+                                segment.classList.add('bg-pastel-light');
+                            }
+                        }
+                    }
+                },
+
+                /**
+                 * Update invitation list display
+                 */
+                updateInvitationsList() {
+                    const listContainer = document.getElementById('invitedList');
+                    const invitationsList = document.getElementById('invitationsList');
+
+                    if (!listContainer || !invitationsList) return;
+
+                    if (state.data.coParents.length > 0) {
+                        listContainer.classList.remove('hidden');
+                        invitationsList.innerHTML = state.data.coParents
+                            .map(item => {
+                                if (typeof item === 'string') {
+                                    // Handle legacy format
+                                    return this.createInvitationItemHTML(item, null);
+                                }
+                                return this.createInvitationItemHTML(item.email, item.notificationId);
+                            })
+                            .join('');
+                    } else {
+                        listContainer.classList.add('hidden');
+                    }
+                },
+
+                /**
+                 * Create HTML for invitation list item
+                 * @param {string} email - Invitee email
+                 * @param notificationId
+                 * @returns {string} HTML string
+                 */
+                createInvitationItemHTML(email, notificationId) {
+                    const safeEmail = utils.escapeHtml(email);
+                    const safeId = parseInt(notificationId, 10) || 0;
+                    return `
+                        <div class="p-3 bg-pastel-lightest rounded-lg flex justify-between items-center"
+                             data-notification-id="${safeId}">
+                            <span class="text-sm text-pastel-text">${safeEmail}</span>
+                            ${safeId ? `
+                                <button onclick="onboardingApp.removeInvitation(${safeId})"
+                                        class="text-xs text-red-500 hover:text-red-700 font-medium transition-colors">
+                                    Remove
+                                </button>
+                            ` : ''}
+                        </div>
+                    `;
+                },
+
+                /**
+                 * Create HTML for pending invitation
+                 * @param {Object} invitation - Invitation data
+                 * @returns {string} HTML string
+                 */
+                createPendingInvitationHTML(invitation) {
+                    const safe = {
+                        inviterName: utils.escapeHtml(invitation.inviter_name || 'Unknown'),
+                        inviterEmail: utils.escapeHtml(invitation.inviter_email),
+                        babyName: utils.escapeHtml(invitation.baby_name),
+                        createdAt: utils.formatDateForDisplay(invitation.created_at),
+                        invitationId: parseInt(invitation.invitation_id, 10)
+                    };
+
+                    return `
+                    <div class="border border-pastel-light rounded-lg p-4 space-y-3"
+                         data-invitation-id="${safe.invitationId}">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-semibold text-pastel-heading">${safe.inviterName}</h4>
+                                <p class="text-sm text-pastel-textLight">${safe.inviterEmail}</p>
+                            </div>
+                            <span class="text-xs text-pastel-textLight">${safe.createdAt}</span>
+                        </div>
+                        <p class="text-sm text-pastel-text">
+                            Invites you to be a co-parent for
+                            <span class="font-medium">${safe.babyName}</span>
+                        </p>
+                        <div class="flex space-x-2">
+                            <button onclick="onboardingApp.respondToInvitation(${safe.invitationId}, true)"
+                                    class="invitation-accept px-4 py-2 bg-pastel-primary text-white text-sm font-medium rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                                Accept
+                            </button>
+                            <button onclick="onboardingApp.respondToInvitation(${safe.invitationId}, false)"
+                                    class="invitation-decline px-4 py-2 border border-pastel-light text-pastel-text text-sm font-medium rounded-lg hover:bg-pastel-lightest transition-colors">
+                                Decline
+                            </button>
+                        </div>
+                    </div>
+                `;
+                },
+
+                /**
+                 * Set invitation display state
+                 * @param {Object} elements - DOM elements
+                 * @param {string} displayState - Display state
+                 */
+                setInvitationState(elements, displayState) {
+                    Object.values(elements).forEach(el => el?.classList.add('hidden'));
+
+                    switch (displayState) {
+                        case STATES.LOADING:
+                            elements.loading?.classList.remove('hidden');
+                            break;
+                        case STATES.EMPTY:
+                        case STATES.ERROR:
+                            elements.noInvitations?.classList.remove('hidden');
+                            break;
+                        case STATES.LOADED:
+                            elements.invitations?.classList.remove('hidden');
+                            break;
+                    }
+                }
+            };
+
+            // ============================================================================
+            // Form Validation
+            // ============================================================================
+
+            const validation = {
+                /**
+                 * Validate baby information form
+                 * @returns {Object} Validation result with isValid and errors
+                 */
+                validateBabyInfo() {
+                    const errors = {};
+                    let isValid = true;
+
+                    // Clear previous errors
+                    ui.clearFormErrors('babyInfoForm');
+
+                    // Name validation
+                    const name = document.getElementById('babyName').value.trim();
+                    if (!name) {
+                        errors.babyName = 'Baby name is required';
+                        isValid = false;
+                    } else if (name.length > CONFIG.MAX_NAME_LENGTH) {
+                        errors.babyName = `Name must be less than ${CONFIG.MAX_NAME_LENGTH} characters`;
+                        isValid = false;
+                    } else if (!/^[a-zA-Z\s'-]+$/.test(name)) {
+                        errors.babyName = 'Name can only contain letters, spaces, hyphens, and apostrophes';
+                        isValid = false;
+                    }
+
+                    // Date of birth validation
+                    const dob = document.getElementById('babyDob').value;
+                    if (!dob) {
+                        errors.babyDob = 'Date of birth is required';
+                        isValid = false;
+                    } else if (!utils.isValidBirthdate(dob)) {
+                        errors.babyDob = 'Please enter a valid date not in the future';
+                        isValid = false;
+                    }
+
+                    // Gender validation
+                    const gender = document.getElementById('babyGender').value;
+                    if (!gender) {
+                        errors.babyGender = 'Please select a gender';
+                        isValid = false;
+                    }
+
+                    // Weight validation
+                    const weight = document.getElementById('babyWeight').value;
+                    if (!weight) {
+                        errors.babyWeight = 'Weight is required';
+                        isValid = false;
+                    } else if (isNaN(weight) || weight < CONFIG.BABY_WEIGHT_MIN || weight > CONFIG.BABY_WEIGHT_MAX) {
+                        errors.babyWeight = `Weight must be between ${CONFIG.BABY_WEIGHT_MIN} and ${CONFIG.BABY_WEIGHT_MAX} kg`;
+                        isValid = false;
+                    }
+
+                    // Height validation
+                    const height = document.getElementById('babyHeight').value;
+                    if (!height) {
+                        errors.babyHeight = 'Height is required';
+                        isValid = false;
+                    } else if (isNaN(height) || height < CONFIG.BABY_HEIGHT_MIN || height > CONFIG.BABY_HEIGHT_MAX) {
+                        errors.babyHeight = `Height must be between ${CONFIG.BABY_HEIGHT_MIN} and ${CONFIG.BABY_HEIGHT_MAX} cm`;
+                        isValid = false;
+                    }
+
+                    // Show errors
+                    Object.entries(errors).forEach(([field, message]) => {
+                        ui.showFieldError(field, message);
+                    });
+
+                    return {isValid, errors};
+                },
+
+                /**
+                 * Validate co-parent email
+                 * @returns {Object} Validation result
+                 */
+                validateCoparentEmail() {
+                    const email = document.getElementById('coParentEmail').value.trim();
+                    const userEmail = sessionStorage.getItem('userEmail');
+
+                    ui.clearFieldError('coParentEmail');
+
+                    if (!email) {
+                        const error = 'Please enter an email address';
+                        ui.showFieldError('coParentEmail', error);
+                        return {isValid: false, error};
+                    }
+
+                    if (email === userEmail) {
+                        const error = 'You cannot invite yourself';
+                        ui.showFieldError('coParentEmail', error);
+                        return {isValid: false, error};
+                    }
+
+                    if (!utils.isValidGmail(email)) {
+                        const error = 'Please enter a valid Gmail address';
+                        ui.showFieldError('coParentEmail', error);
+                        return {isValid: false, error};
+                    }
+
+                    // Check if already invited
+                    const alreadyInvited = state.data.coParents.some(item => {
+                        return typeof item === 'string' ? item === email : item.email === email;
+                    });
+
+                    if (alreadyInvited) {
+                        const error = 'This person has already been invited';
+                        ui.showFieldError('coParentEmail', error);
+                        return {isValid: false, error};
+                    }
+
+                    return {isValid: true};
+                }
+            };
+
+            // ============================================================================
+            // Step Management
+            // ============================================================================
+
+            const steps = {
+                /**
+                 * Show specific step
+                 * @param {number} stepNumber - Step to show
+                 */
+                show(stepNumber) {
+                    state.currentStep = stepNumber;
+
+                    ui.updateProgressBar(stepNumber);
+
+                    // Show/hide steps
+                    for (let i = 1; i <= state.totalSteps; i++) {
+                        const step = document.getElementById(`step-${i}`);
+                        if (step) {
+                            if (i === stepNumber) {
+                                step.classList.remove('step-hidden', 'step-inactive');
+
+                                // Special handling for step 3
+                                if (i === 3) {
+                                    this.loadPendingInvitations();
+                                }
+                            } else {
+                                step.classList.add('step-hidden');
+                            }
+                        }
+                    }
+                },
+
+                /**
+                 * Save baby information
+                 */
+                async saveBabyInfo() {
+                    const validationResult = validation.validateBabyInfo();
+                    if (!validationResult.isValid) {
+                        throw new Error('Please correct the errors before continuing');
+                    }
+
+                    const formData = {
+                        fullname: document.getElementById('babyName').value.trim(),
+                        birthdate: utils.formatDateForAPI(document.getElementById('babyDob').value),
+                        sex: document.getElementById('babyGender').value,
+                        weight: parseFloat(document.getElementById('babyWeight').value),
+                        height: parseFloat(document.getElementById('babyHeight').value)
+                    };
+
+                    ui.setButtonLoading('step1-submit', true);
+
+                    try {
+                        const savedBaby = await api.endpoints.createBaby(formData);
+
+                        state.data.babyInfo = {
+                            baby_id: savedBaby.id,
+                            name: savedBaby.fullname,
+                            dob: savedBaby.birthdate,
+                            gender: savedBaby.sex,
+                            weight: savedBaby.weight,
+                            height: savedBaby.height
+                        };
+
+                        storage.saveProgress();
+                        ui.showToast('Baby information saved successfully!');
+
+                    } finally {
+                        ui.setButtonLoading('step1-submit', false);
+                    }
+                },
+
+                /**
+                 * Send co-parent invitation
+                 */
+                async sendCoparentInvite() {
+                    if (!state.data.babyInfo?.baby_id) {
+                        throw new Error('Please add baby information first or skip this step');
+                    }
+
+                    const validationResult = validation.validateCoparentEmail();
+                    if (!validationResult.isValid) {
+                        throw new Error(validationResult.error);
+                    }
+
+                    const email = document.getElementById('coParentEmail').value.trim();
+
+                    ui.setButtonLoading('invite-submit', true);
+
+                    try {
+                        const result = await api.endpoints.sendCoparentInvite({
+                            baby_id: state.data.babyInfo.baby_id,
+                            email: email
+                        });
+                        // Extract notification_id using regex
+                        const match = result.message.match(/notification: (\d+)$/);
+                        const notification_id = match ? parseInt(match[1]) : null;
+
+                        state.data.coParents.push({
+                            email: email,
+                            notificationId: notification_id
+                        });
+                        storage.saveProgress();
+                        ui.updateInvitationsList();
+                        document.getElementById('coParentEmail').value = '';
+                        ui.showToast('Invitation sent successfully!');
+
+                    } finally {
+                        ui.setButtonLoading('invite-submit', false);
+                    }
+                },
+
+                /**
+                 * Load pending invitations
+                 */
+                async loadPendingInvitations() {
+                    const elements = {
+                        loading: document.getElementById('invitationsLoading'),
+                        noInvitations: document.getElementById('noInvitations'),
+                        invitations: document.getElementById('pendingInvitations')
+                    };
+
+                    ui.setInvitationState(elements, STATES.LOADING);
+
+                    try {
+                        // Add minimum loading time for better UX
+                        const [invitations] = await Promise.all([
+                            api.endpoints.getPendingInvitations(),
+                            utils.sleep(1000)
+                        ]);
+
+                        if (invitations.length > 0) {
+                            elements.invitations.innerHTML = invitations
+                                .map(inv => ui.createPendingInvitationHTML(inv))
+                                .join('');
+                            ui.setInvitationState(elements, STATES.LOADED);
+                        } else {
+                            ui.setInvitationState(elements, STATES.EMPTY);
+                        }
+
+                    } catch (error) {
+                        console.error('Error loading invitations:', error);
+                        elements.noInvitations.innerHTML = `
+                        <p class="text-pastel-textLight">Unable to load invitations</p>
+                        <p class="text-sm text-red-500 mt-2">${utils.escapeHtml(error.message)}</p>
+                        <button onclick="onboardingApp.loadPendingInvitations()"
+                                class="mt-3 text-sm text-pastel-primary hover:underline">
+                            Try again
+                        </button>
+                    `;
+                        ui.setInvitationState(elements, STATES.ERROR);
+                    }
+                }
+            };
+
+            // ============================================================================
+            // Storage Management
+            // ============================================================================
+
+            const storage = {
+                /**
+                 * Save progress to sessionStorage
+                 */
+                saveProgress() {
+                    sessionStorage.setItem('onboardingProgress', JSON.stringify(state.data));
+                },
+
+                /**
+                 * Load saved progress
+                 */
+                loadProgress() {
+                    const savedProgress = sessionStorage.getItem('onboardingProgress');
+                    if (savedProgress) {
+                        try {
+                            const progress = JSON.parse(savedProgress);
+                            state.data = progress;
+
+                            // Pre-fill forms
+                            if (progress.babyInfo) {
+                                const fields = {
+                                    babyName: progress.babyInfo.name,
+                                    babyDob: progress.babyInfo.dob,
+                                    babyGender: progress.babyInfo.gender,
+                                    babyWeight: progress.babyInfo.weight,
+                                    babyHeight: progress.babyInfo.height
+                                };
+
+                                Object.entries(fields).forEach(([id, value]) => {
+                                    const el = document.getElementById(id);
+                                    if (el && value) el.value = value;
+                                });
+                            }
+                        } catch (e) {
+                            console.error('Error loading saved progress:', e);
+                        }
+                    }
+                },
+
+                /**
+                 * Clear onboarding progress
+                 */
+                clearProgress() {
+                    sessionStorage.removeItem('onboardingProgress');
+                }
+            };
+
+            // ============================================================================
+            // Public API
+            // ============================================================================
+
+            return {
+                /**
+                 * Initialize the application
+                 */
+                init() {
+                    // Check authentication
+                    const idToken = sessionStorage.getItem('idToken');
+                    const skipOnboarding = sessionStorage.getItem('skipOnboarding');
+
+                    // If user has skip preference, redirect to dashboard
+                    if (skipOnboarding === 'true') {
+                        window.location.href = '/dashboard';
+                        return;
+                    }
+                    if (!idToken) {
+                        window.location.href = '/';
+                        return;
+                    }
+
+                    // Display user information
+                    const userInfo = {
+                        userName: sessionStorage.getItem('userName'),
+                        userEmail: sessionStorage.getItem('userEmail'),
+                        userPicture: sessionStorage.getItem('userPicture')
+                    };
+
+                    if (userInfo.userName) {
+                        document.getElementById('userName').textContent = userInfo.userName;
+                    }
+                    if (userInfo.userEmail) {
+                        document.getElementById('userEmail').textContent = userInfo.userEmail;
+                    }
+                    if (userInfo.userPicture) {
+                        document.getElementById('userPicture').src = userInfo.userPicture;
+                    }
+
+                    // Set global auth token
+                    window.authToken = idToken;
+
+                    // Initialize first step
+                    steps.show(1);
+
+                    // Load saved progress
+                    storage.loadProgress();
+
+                    // Update invitations list if we have coParents
+                    if (state.data.coParents.length > 0) {
+                        ui.updateInvitationsList();
+                    }
+
+                    // Add input event listeners for real-time validation
+                    this.attachValidationListeners();
+                },
+
+                /**
+                 * Attach validation listeners to form inputs
+                 */
+                attachValidationListeners() {
+                    // Baby info form
+                    ['babyName', 'babyDob', 'babyGender', 'babyWeight', 'babyHeight'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.addEventListener('input', utils.debounce(() => {
+                                ui.clearFieldError(id);
+                            }, 300));
+                        }
+                    });
+
+                    // Co-parent email
+                    const emailField = document.getElementById('coParentEmail');
+                    if (emailField) {
+                        emailField.addEventListener('input', utils.debounce(() => {
+                            ui.clearFieldError('coParentEmail');
+                        }, 300));
+                    }
+
+                    // Add form submit prevention
+                    const forms = ['babyInfoForm', 'coParentForm'];
+                    forms.forEach(formId => {
+                        const form = document.getElementById(formId);
+                        if (form) {
+                            form.addEventListener('submit', (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                return false;
+                            });
+                        }
+                    });
+                },
+
+                /**
+                 * Navigate to next step
+                 */
+                async nextStep() {
+                    if (state.currentStep >= state.totalSteps) return;
+
+                    try {
+                        switch (state.currentStep) {
+                            case 1:
+                                await steps.saveBabyInfo();
+                                steps.show(state.currentStep + 1);
+                                break;
+                            case 2:
+                                // Step 2 doesn't require validation, just move to next
+                                steps.show(state.currentStep + 1);
+                                break;
+                        }
+                    } catch (error) {
+                        ui.showStepError(state.currentStep, error.message);
+                        ui.showToast(error.message, MESSAGE_TYPES.ERROR);
+                    }
+                },
+
+                /**
+                 * Navigate to previous step
+                 */
+                previousStep() {
+                    if (state.currentStep > 1) {
+                        steps.show(state.currentStep - 1);
+                    }
+                },
+
+                /**
+                 * Skip current step
+                 */
+                skipCurrentStep() {
+                    if (state.currentStep < state.totalSteps) {
+                        steps.show(state.currentStep + 1);
+                    } else {
+                        this.completeOnboarding();
+                    }
+                },
+
+                /**
+                 * Handle skip all click - show modal
+                 */
+                handleSkipAllClick() {
+                    this.showSkipModal();
+                },
+
+                /**
+                 * Show the skip modal
+                 */
+                showSkipModal() {
+                    const modal = document.getElementById('skipModal');
+                    if (modal) {
+                        modal.classList.remove('hidden');
+                        modal.classList.add('modal-enter');
+
+                        // Add content animation class
+                        const content = modal.querySelector('.bg-white');
+                        if (content) {
+                            content.classList.add('modal-content');
+                        }
+                    }
+                },
+
+                /**
+                 * Close the skip modal
+                 */
+                closeSkipModal() {
+                    const modal = document.getElementById('skipModal');
+                    if (modal) {
+                        modal.classList.add('modal-exit');
+
+                        setTimeout(() => {
+                            modal.classList.add('hidden');
+                            modal.classList.remove('modal-enter', 'modal-exit');
+                        }, 200);
+                    }
+                },
+
+                /**
+                 * Skip onboarding just for this session
+                 */
+                skipOnce() {
+                    this.closeSkipModal();
+
+                    // Clear progress and redirect
+                    storage.clearProgress();
+                    sessionStorage.setItem('onboardingComplete', 'true');
+
+                    ui.showToast('Skipping setup. You can complete it next time!', MESSAGE_TYPES.INFO);
+
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1000);
+                },
+
+                /**
+                 * Skip onboarding permanently
+                 */
+                async skipForever() {
+                    this.closeSkipModal();
+
+                    ui.showToast('Saving preference...', MESSAGE_TYPES.INFO);
+
+                    try {
+                        // Save preference to backend
+                        await api.endpoints.updateUserPreference({skip_onboarding: true});
+
+                        // Update session storage
+                        sessionStorage.setItem('skipOnboarding', 'true');
+
+                        // Clear progress and redirect
+                        storage.clearProgress();
+                        sessionStorage.setItem('onboardingComplete', 'true');
+
+                        ui.showToast('Setup skipped. Going to dashboard...', MESSAGE_TYPES.SUCCESS);
+
+                        setTimeout(() => {
+                            window.location.href = '/dashboard';
+                        }, 1000);
+
+                    } catch (error) {
+                        console.error('Failed to save preference:', error);
+                        ui.showToast('Failed to save preference, but continuing to dashboard', MESSAGE_TYPES.WARNING);
+
+                        // Continue to dashboard even if preference save fails
+                        setTimeout(() => {
+                            window.location.href = '/dashboard';
+                        }, 1500);
+                    }
+                },
+
+                /**
+                 * Save user preference to skip onboarding
+                 */
+                async saveSkipPreference() {
+                    try {
+                        await api.endpoints.updateUserPreference({skip_onboarding: true});
+                        sessionStorage.setItem('skipOnboarding', 'true');
+                    } catch (error) {
+                        console.error('Failed to save skip preference:', error);
+                        throw error;
+                    }
+                },
+
+                /**
+                 * Send co-parent invitation
+                 */
+                async sendInvite() {
+                    try {
+                        await steps.sendCoparentInvite();
+                    } catch (error) {
+                        ui.showStepError(2, error.message);
+                        ui.showToast(error.message, MESSAGE_TYPES.ERROR);
+                    }
+                },
+
+
+                /**
+                 * Respond to pending invitation
+                 * @param {number} invitationId - Invitation ID
+                 * @param {boolean} accept - Accept or decline
+                 */
+                async respondToInvitation(invitationId, accept) {
+                    try {
+                        // Disable buttons during request
+                        const invCard = document.querySelector(`[data-invitation-id="${invitationId}"]`);
+                        if (invCard) {
+                            invCard.querySelectorAll('button').forEach(btn => btn.disabled = true);
+                        }
+
+                        await api.endpoints.respondToInvitation(invitationId, accept);
+
+                        await api.endpoints.markNotificationAsRead(invitationId);
+
+
+                        state.data.acceptedInvitations.push(invitationId);
+                        storage.saveProgress();
+
+                        const message = accept ? 'Invitation accepted!' : 'Invitation declined';
+                        ui.showToast(message, MESSAGE_TYPES.SUCCESS);
+
+                        // Reload invitations
+                        await steps.loadPendingInvitations();
+
+                    } catch (error) {
+                        ui.showToast(error.message, MESSAGE_TYPES.ERROR);
+
+                        // Re-enable buttons on error
+                        const invCard = document.querySelector(`[data-invitation-id="${invitationId}"]`);
+                        if (invCard) {
+                            invCard.querySelectorAll('button').forEach(btn => btn.disabled = false);
+                        }
+                    }
+                },
+
+                async removeInvitation(notificationId) {
+                    try {
+                        // Find and disable the remove button
+                        const invElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
+                        if (invElement) {
+                            const removeBtn = invElement.querySelector('button');
+                            if (removeBtn) {
+                                removeBtn.disabled = true;
+                                removeBtn.textContent = 'Removing...';
+                            }
+                        }
+
+                        await api.endpoints.removeNotification(notificationId);
+
+                        // Remove from state
+                        state.data.coParents = state.data.coParents.filter(
+                            item => (typeof item === 'string' ? false : item.notificationId !== notificationId)
+                        );
+
+                        storage.saveProgress();
+                        ui.updateInvitationsList();
+                        ui.showToast('Invitation removed successfully');
+
+                    } catch (error) {
+                        ui.showToast(error.message, MESSAGE_TYPES.ERROR);
+
+                        // Re-enable button on error
+                        const invElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
+                        if (invElement) {
+                            const removeBtn = invElement.querySelector('button');
+                            if (removeBtn) {
+                                removeBtn.disabled = false;
+                                removeBtn.textContent = 'Remove';
+                            }
+                        }
+                    }
+                },
+
+                /**
+                 * Reload pending invitations (exposed for retry button)
+                 */
+                async loadPendingInvitations() {
+                    await steps.loadPendingInvitations();
+                },
+
+                /**
+                 * Complete onboarding
+                 * @param {boolean} showToast - Whether to show completion toast
+                 */
+                async completeOnboarding(showToast = true) {
+                    ui.setButtonLoading('complete-button', true);
+
+                    try {
+                        // Clear progress
+                        storage.clearProgress();
+
+                        // Mark as complete
+                        sessionStorage.setItem('onboardingComplete', 'true');
+
+                        // Show success only if requested
+                        if (showToast) {
+                            ui.showToast('Welcome to BabyHelper! Redirecting...', MESSAGE_TYPES.SUCCESS);
+                        }
+
+                        // Redirect after short delay
+                        setTimeout(() => {
+                            window.location.href = '/dashboard';
+                        }, showToast ? 1500 : 100);
+
+                    } catch (error) {
+                        ui.setButtonLoading('complete-button', false);
+                        ui.showToast('Error completing setup. Please try again.', MESSAGE_TYPES.ERROR);
+                    }
+                },
+
+                /**
+                 * Logout user
+                 */
+                logout() {
+                    if (confirm('Are you sure you want to logout?')) {
+                        sessionStorage.clear();
+                        window.location.href = '/';
+                    }
+                }
+            };
+        })();
+
+    // Initialize on DOM ready
+    window.addEventListener('DOMContentLoaded', () => {
+        onboardingApp.init();
+    });
+</script>
+</body>
+</html>
