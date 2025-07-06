@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BabyHelper Dashboard - Milestone Achievements</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=Lora:wght@400;500;600&display=swap"
+          rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Tailwind configuration with pastel theme
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pastel: {
+                            lightest: '#fdf6f0',
+                            light: '#ffe8d9',
+                            primary: '#ff8c69',
+                            primaryHover: '#ff7043',
+                            secondary: '#ffd8cc',
+                            accent1: '#ffb5a7',
+                            accent2: '#fec89a',
+                            text: '#6d5d52',
+                            textLight: '#938278',
+                            heading: '#5c4d44'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Nunito Sans', 'sans-serif'],
+                        serif: ['Lora', 'serif']
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'float-delayed': 'float 6s ease-in-out 2s infinite',
+                        'fade-in-up': 'fadeInUp 1s ease-out forwards',
+                        'fade-in-right': 'fadeInRight 1s ease-out forwards',
+                        'fade-in-left': 'fadeInLeft 1s ease-out forwards',
+                        'fade-in': 'fadeIn 1.2s ease-out forwards',
+                        'progress-ring': 'progressRing 2s ease-out forwards',
+                        'celebration': 'celebration 1s ease-out forwards',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': {transform: 'translateY(0)'},
+                            '50%': {transform: 'translateY(-20px)'},
+                        },
+                        fadeInUp: {
+                            '0%': {opacity: '0', transform: 'translateY(20px)'},
+                            '100%': {opacity: '1', transform: 'translateY(0)'},
+                        },
+                        fadeInRight: {
+                            '0%': {opacity: '0', transform: 'translateX(-20px)'},
+                            '100%': {opacity: '1', transform: 'translateX(0)'},
+                        },
+                        fadeInLeft: {
+                            '0%': {opacity: '0', transform: 'translateX(20px)'},
+                            '100%': {opacity: '1', transform: 'translateX(0)'},
+                        },
+                        fadeIn: {
+                            '0%': {opacity: '0'},
+                            '100%': {opacity: '1'},
+                        },
+                        progressRing: {
+                            '0%': {'stroke-dasharray': '0 100'},
+                            '100%': {'stroke-dasharray': 'var(--progress) 100'},
+                        },
+                        celebration: {
+                            '0%': {transform: 'scale(0) rotate(0deg)'},
+                            '50%': {transform: 'scale(1.1) rotate(180deg)'},
+                            '100%': {transform: 'scale(1) rotate(360deg)'},
+                        },
+                    },
+                    boxShadow: {
+                        'pastel': '0 6px 12px rgba(180, 160, 150, 0.1)',
+                        'pastel-lg': '0 10px 25px rgba(180, 160, 150, 0.15)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Blob animation styles */
+        .blob-animation {
+            animation: blob-move 15s infinite alternate;
+        }
+
+        @keyframes blob-move {
+            0% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+            }
+            33% {
+                transform: translate(30px, -50px) rotate(20deg) scale(1.1);
+            }
+            66% {
+                transform: translate(-20px, 20px) rotate(-10deg) scale(0.9);
+            }
+            100% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+            }
+        }
+
+        /* Button hover effect */
+        .btn-hover-effect:hover {
+            box-shadow: 0 0 15px rgba(255, 140, 105, 0.5);
+        }
+
+        /* Custom scrollbar for pastel theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #fdf6f0;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #ffb5a7;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff8c69;
+        }
+
+        /* Progress ring styles */
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-circle {
+            fill: none;
+            stroke-width: 3;
+            stroke-linecap: round;
+        }
+
+        /* Timeline styles */
+        .timeline-connector {
+            position: absolute;
+            top: 50%;
+            left: 100%;
+            width: 100%;
+            height: 2px;
+            background: #ffe8d9;
+            transform: translateY(-50%);
+        }
+
+        /* Modal backdrop */
+        .modal-backdrop {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        /* File upload area */
+        .upload-area {
+            border: 2px dashed #ffb5a7;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #ff8c69;
+            background: rgba(255, 140, 105, 0.05);
+        }
+
+        /* Milestone category badges */
+        .category-motor {
+            background: rgba(255, 181, 167, 0.2);
+            color: #ff8c69;
+        }
+
+        .category-social {
+            background: rgba(254, 200, 154, 0.2);
+            color: #f59e0b;
+        }
+
+        .category-language {
+            background: rgba(255, 140, 105, 0.2);
+            color: #ff7043;
+        }
+
+        .category-cognitive {
+            background: rgba(255, 216, 204, 0.2);
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body class="h-full bg-pastel-lightest font-sans text-pastel-text">
+<div class="flex h-full relative">
+    <!-- Background Decorative Elements -->
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-20 right-[10%] w-64 h-64 rounded-full bg-pastel-accent1 opacity-20 blur-3xl blob-animation"></div>
+        <div class="absolute bottom-40 left-[15%] w-80 h-80 rounded-full bg-pastel-accent2 opacity-20 blur-3xl blob-animation"
+             style="animation-delay: 2s;"></div>
+    </div>
+
+    <!-- Mobile Menu Button -->
+    <button id="mobileMenuBtn"
+            class="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-full shadow-pastel-lg opacity-0 animate-fade-in"
+            style="animation-delay: 0.1s; animation-fill-mode: forwards;">
+        <i data-lucide="menu" class="h-5 w-5 text-pastel-primary"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <aside id="sidebar"
+           class="fixed lg:relative inset-y-0 left-0 z-40 w-64 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col gap-6 border-r border-pastel-light bg-white/80 backdrop-blur-lg p-6">
+        <!-- Logo and Brand -->
+        <div class="flex items-center space-x-2 opacity-0 animate-fade-in-right"
+             style="animation-delay: 0.2s; animation-fill-mode: forwards;">
+            <div class="w-10 h-10 rounded-full bg-pastel-primary flex items-center justify-center text-white font-serif font-semibold text-xl">
+                <i data-lucide="baby" class="h-6 w-6"></i>
+            </div>
+            <span class="font-serif text-pastel-heading text-xl">BabyHelper</span>
+        </div>
+
+        <!-- Quick Action Button -->
+        <button onclick="openMilestoneModal()"
+                class="btn-hover-effect flex items-center justify-between gap-3 text-sm font-medium bg-pastel-primary text-white p-3 rounded-full shadow-pastel transition-all duration-300 hover:bg-pastel-primaryHover hover:transform hover:-translate-y-0.5 opacity-0 animate-fade-in-right"
+                style="animation-delay: 0.3s; animation-fill-mode: forwards;">
+                <span class="flex items-center gap-3">
+                    <i data-lucide="trophy" class="h-4 w-4"></i>
+                    Add Milestone
+                </span>
+            <kbd class="text-xs text-white/80 hidden sm:block">⌘M</kbd>
+        </button>
+
+        <!-- Navigation -->
+        <nav class="flex flex-col gap-2 text-sm opacity-0 animate-fade-in-right"
+             style="animation-delay: 0.4s; animation-fill-mode: forwards;">
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full bg-pastel-light text-pastel-primary font-medium">
+                <i data-lucide="award" class="h-4 w-4"></i>
+                Milestones
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="moon" class="h-4 w-4"></i>
+                Sleep Tracking
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="utensils" class="h-4 w-4"></i>
+                <span class="flex-1">Feeding Log</span>
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="heart" class="h-4 w-4"></i>
+                Health Records
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="camera" class="h-4 w-4"></i>
+                Memory Book
+                <span class="ml-auto text-xs bg-pastel-accent1/20 text-pastel-primary px-2 py-0.5 rounded-full font-medium">NEW</span>
+            </a>
+            <a href="#"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-full hover:bg-pastel-light transition-colors text-pastel-text hover:text-pastel-primary">
+                <i data-lucide="settings" class="h-4 w-4"></i>
+                Settings
+            </a>
+        </nav>
+
+        <!-- Premium Upgrade Card -->
+        <div class="mt-auto bg-gradient-to-br from-pastel-primary/10 to-pastel-accent1/10 p-4 rounded-2xl border border-pastel-light opacity-0 animate-fade-in-up"
+             style="animation-delay: 0.5s; animation-fill-mode: forwards;">
+            <p class="text-sm leading-relaxed text-pastel-text">
+                Upgrade to <span class="font-semibold text-pastel-primary">BabyHelper Pro</span> for unlimited photo
+                storage and advanced milestone tracking!
+            </p>
+            <div class="flex items-center justify-between mt-4 text-sm">
+                <button class="hover:underline text-pastel-textLight">Maybe Later</button>
+                <button class="bg-pastel-primary hover:bg-pastel-primaryHover text-white px-4 py-1.5 rounded-full font-medium transition-colors">
+                    Go Premium
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Overlay for mobile -->
+    <div id="overlay" class="fixed inset-0 bg-black/30 backdrop-blur-sm z-30 lg:hidden hidden"></div>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden relative z-10">
+        <!-- Top bar -->
+        <header class="flex items-center justify-between gap-4 px-4 lg:px-6 py-4 border-b border-pastel-light bg-white/60 backdrop-blur-lg opacity-0 animate-fade-in"
+                style="animation-delay: 0.2s; animation-fill-mode: forwards;">
+            <div class="flex items-center gap-4">
+                <div class="lg:hidden w-8"></div>
+                <div>
+                    <h1 class="text-base lg:text-lg font-serif font-medium text-pastel-heading">Milestone
+                        Achievements</h1>
+                    <p class="text-xs lg:text-sm text-pastel-textLight">Emma, 8 months • 12 milestones achieved</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="openShareModal()"
+                        class="hidden sm:block p-2 hover:bg-pastel-light rounded-full transition-colors">
+                    <i data-lucide="share-2" class="h-5 w-5 text-pastel-text"></i>
+                </button>
+                <button onclick="openBackupModal()"
+                        class="hidden sm:block p-2 hover:bg-pastel-light rounded-full transition-colors">
+                    <i data-lucide="cloud" class="h-5 w-5 text-pastel-text"></i>
+                </button>
+                <div class="h-9 w-9 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-sm font-medium text-white shadow-pastel">
+                    JD
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <section class="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6">
+            <!-- Milestone Overview Dashboard -->
+            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 0.3s; animation-fill-mode: forwards;">
+                <h2 class="text-xl font-serif font-medium text-pastel-heading mb-6 flex items-center gap-2">
+                    <i data-lucide="trophy" class="h-5 w-5 text-pastel-accent2"></i>
+                    Development Overview
+                </h2>
+
+                <!-- Progress Rings Grid -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <!-- Motor Skills Progress -->
+                    <div class="text-center">
+                        <div class="relative w-24 h-24 mx-auto mb-2">
+                            <svg class="progress-ring w-full h-full">
+                                <circle cx="48" cy="48" r="40"
+                                        class="progress-ring-circle stroke-pastel-light"></circle>
+                                <circle cx="48" cy="48" r="40"
+                                        class="progress-ring-circle stroke-pastel-accent1 animate-progress-ring"
+                                        style="stroke-dasharray: 75 100; --progress: 75;"></circle>
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span class="text-lg font-semibold text-pastel-heading">75%</span>
+                            </div>
+                        </div>
+                        <p class="text-sm font-medium text-pastel-text">Motor Skills</p>
+                        <p class="text-xs text-pastel-textLight">6 of 8 achieved</p>
+                    </div>
+
+                    <!-- Social/Emotional Progress -->
+                    <div class="text-center">
+                        <div class="relative w-24 h-24 mx-auto mb-2">
+                            <svg class="progress-ring w-full h-full">
+                                <circle cx="48" cy="48" r="40"
+                                        class="progress-ring-circle stroke-pastel-light"></circle>
+                                <circle cx="48" cy="48" r="40"
+                                        class="progress-ring-circle stroke-pastel-accent2 animate-progress-ring"
+                                        style="stroke-dasharray: 60 100; --progress: 60;"></circle>
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span class="text-lg font-semibold text-pastel-heading">60%</span>
+                            </div>
+                        </div>
+                        <p class="text-sm font-medium text-pastel-text">Social/Emotional</p>
+                        <p class="text-xs text-pastel-textLight">3 of 5 achieved</p>
+                    </div>
+
+                    <!-- Language Progress -->
+                    <div class="text-center">
+                        <div class="relative w-24 h-24 mx-auto mb-2">
+                            <svg class="progress-ring w-full h-full">
+                                <circle cx="48" cy="48" r="40"
+                                        class="progress-ring-circle stroke-pastel-light"></circle>
+                                <circle cx="48" cy="48" r="40"
+                                        class="progress-ring-circle stroke-pastel-primary animate-progress-ring"
+                                        style="stroke-dasharray: 80 100; --progress: 80;"></circle>
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span class="text-lg font-semibold text-pastel-heading">80%</span>
+                            </div>
+                        </div>
+                        <p class="text-sm font-medium text-pastel-text">Language</p>
+                        <p class="text-xs text-pastel-textLight">4 of 5 achieved</p>
+                    </div>
+
+                    <!-- Cognitive Progress -->
+                    <div class="text-center">
+                        <div class="relative w-24 h-24 mx-auto mb-2">
+                            <svg class="progress-ring w-full h-full">
+                                <circle cx="48" cy="48" r="40"
+                                        class="progress-ring-circle stroke-pastel-light"></circle>
+                                <circle cx="48" cy="48" r="40"
+                                        class="progress-ring-circle stroke-pastel-secondary animate-progress-ring"
+                                        style="stroke-dasharray: 50 100; --progress: 50;"></circle>
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span class="text-lg font-semibold text-pastel-heading">50%</span>
+                            </div>
+                        </div>
+                        <p class="text-sm font-medium text-pastel-text">Cognitive</p>
+                        <p class="text-xs text-pastel-textLight">2 of 4 achieved</p>
+                    </div>
+                </div>
+
+                <!-- Overall Progress Bar -->
+                <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-pastel-text">Overall Development Progress</span>
+                        <span class="text-sm font-semibold text-pastel-primary">15 of 22 milestones</span>
+                    </div>
+                    <div class="w-full h-3 bg-pastel-light rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-pastel-primary to-pastel-accent1 rounded-full transition-all duration-1000"
+                             style="width: 68%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Focus & Recently Achieved -->
+            <div class="grid lg:grid-cols-2 gap-6">
+                <!-- Current Focus Milestones -->
+                <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-left"
+                     style="animation-delay: 0.4s; animation-fill-mode: forwards;">
+                    <h2 class="text-lg font-serif font-medium text-pastel-heading mb-4 flex items-center gap-2">
+                        <i data-lucide="target" class="h-5 w-5 text-pastel-accent2"></i>
+                        Current Focus (8-10 months)
+                    </h2>
+                    <div class="space-y-3">
+                        <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light hover:shadow-pastel transition-shadow cursor-pointer">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex-1">
+                                    <h3 class="font-medium text-pastel-heading mb-1">Crawling</h3>
+                                    <p class="text-sm text-pastel-textLight">Moving forward on hands and knees</p>
+                                    <span class="inline-block mt-2 px-2 py-1 text-xs rounded-full category-motor font-medium">Motor Skills</span>
+                                </div>
+                                <button onclick="openMilestoneModal('crawling')"
+                                        class="p-2 hover:bg-white rounded-full transition-colors">
+                                    <i data-lucide="plus-circle" class="h-5 w-5 text-pastel-primary"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light hover:shadow-pastel transition-shadow cursor-pointer">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex-1">
+                                    <h3 class="font-medium text-pastel-heading mb-1">Clapping Hands</h3>
+                                    <p class="text-sm text-pastel-textLight">Bringing hands together in play</p>
+                                    <span class="inline-block mt-2 px-2 py-1 text-xs rounded-full category-social font-medium">Social/Emotional</span>
+                                </div>
+                                <button onclick="openMilestoneModal('clapping')"
+                                        class="p-2 hover:bg-white rounded-full transition-colors">
+                                    <i data-lucide="plus-circle" class="h-5 w-5 text-pastel-primary"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light hover:shadow-pastel transition-shadow cursor-pointer">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex-1">
+                                    <h3 class="font-medium text-pastel-heading mb-1">First Words</h3>
+                                    <p class="text-sm text-pastel-textLight">"Mama" or "Dada" with meaning</p>
+                                    <span class="inline-block mt-2 px-2 py-1 text-xs rounded-full category-language font-medium">Language</span>
+                                </div>
+                                <button onclick="openMilestoneModal('first-words')"
+                                        class="p-2 hover:bg-white rounded-full transition-colors">
+                                    <i data-lucide="plus-circle" class="h-5 w-5 text-pastel-primary"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recently Achieved Celebrations -->
+                <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-right"
+                     style="animation-delay: 0.5s; animation-fill-mode: forwards;">
+                    <h2 class="text-lg font-serif font-medium text-pastel-heading mb-4 flex items-center gap-2">
+                        <i data-lucide="star" class="h-5 w-5 text-pastel-accent1"></i>
+                        Recently Achieved 🎉
+                    </h2>
+                    <div class="space-y-3">
+                        <div class="bg-gradient-to-r from-pastel-primary/10 to-pastel-accent1/10 rounded-xl p-4 border border-pastel-accent1/30">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-full overflow-hidden bg-white shadow-pastel">
+                                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23ffd8cc' width='100' height='100'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%23ff8c69' font-size='40' font-family='serif'%3E📸%3C/text%3E%3C/svg%3E"
+                                         alt="Milestone photo">
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-medium text-pastel-heading">Sitting Without Support</h3>
+                                    <p class="text-sm text-pastel-textLight">Achieved 3 days ago • 7.5 months</p>
+                                </div>
+                                <i data-lucide="award" class="h-5 w-5 text-pastel-accent1 animate-celebration"></i>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-r from-pastel-accent2/10 to-pastel-secondary/10 rounded-xl p-4 border border-pastel-accent2/30">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-full overflow-hidden bg-white shadow-pastel">
+                                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23ffd8cc' width='100' height='100'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%23ff8c69' font-size='40' font-family='serif'%3E🎥%3C/text%3E%3C/svg%3E"
+                                         alt="Milestone video">
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-medium text-pastel-heading">Babbling Consonants</h3>
+                                    <p class="text-sm text-pastel-textLight">Achieved 1 week ago • 7 months</p>
+                                </div>
+                                <i data-lucide="award" class="h-5 w-5 text-pastel-accent2 animate-celebration"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="mt-4 w-full text-center text-sm text-pastel-primary hover:text-pastel-primaryHover font-medium">
+                        View All Achievements →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Upcoming Milestones Timeline -->
+            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 0.6s; animation-fill-mode: forwards;">
+                <h2 class="text-xl font-serif font-medium text-pastel-heading mb-6 flex items-center gap-2">
+                    <i data-lucide="calendar-days" class="h-5 w-5 text-pastel-accent2"></i>
+                    Upcoming Milestones (Next 3-6 Months)
+                </h2>
+
+                <!-- Horizontal Timeline -->
+                <div class="overflow-x-auto pb-4">
+                    <div class="flex gap-4 min-w-max">
+                        <!-- 9-10 months -->
+                        <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light w-64">
+                            <h3 class="font-medium text-pastel-heading mb-3">9-10 months</h3>
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-2 text-sm">
+                                    <i data-lucide="circle" class="h-3 w-3 text-pastel-accent1"></i>
+                                    <span class="text-pastel-text">Pulling to stand</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-sm">
+                                    <i data-lucide="circle" class="h-3 w-3 text-pastel-accent2"></i>
+                                    <span class="text-pastel-text">Pincer grasp</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-sm">
+                                    <i data-lucide="circle" class="h-3 w-3 text-pastel-primary"></i>
+                                    <span class="text-pastel-text">Waving bye-bye</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 11-12 months -->
+                        <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light w-64 relative">
+                            <div class="timeline-connector"></div>
+                            <h3 class="font-medium text-pastel-heading mb-3">11-12 months</h3>
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-2 text-sm">
+                                    <i data-lucide="circle" class="h-3 w-3 text-pastel-accent1"></i>
+                                    <span class="text-pastel-text">First steps</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-sm">
+                                    <i data-lucide="circle" class="h-3 w-3 text-pastel-accent2"></i>
+                                    <span class="text-pastel-text">2-3 word vocabulary</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-sm">
+                                    <i data-lucide="circle" class="h-3 w-3 text-pastel-primary"></i>
+                                    <span class="text-pastel-text">Drinking from cup</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 13-15 months -->
+                        <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light w-64 relative">
+                            <div class="timeline-connector"></div>
+                            <h3 class="font-medium text-pastel-heading mb-3">13-15 months</h3>
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-2 text-sm">
+                                    <i data-lucide="circle" class="h-3 w-3 text-pastel-accent1"></i>
+                                    <span class="text-pastel-text">Walking confidently</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-sm">
+                                    <i data-lucide="circle" class="h-3 w-3 text-pastel-accent2"></i>
+                                    <span class="text-pastel-text">Stacking blocks</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-sm">
+                                    <i data-lucide="circle" class="h-3 w-3 text-pastel-primary"></i>
+                                    <span class="text-pastel-text">Following simple instructions</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daily Development Activities -->
+            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 0.7s; animation-fill-mode: forwards;">
+                <h2 class="text-lg font-serif font-medium text-pastel-heading mb-4 flex items-center gap-2">
+                    <i data-lucide="sparkles" class="h-5 w-5 text-pastel-accent2"></i>
+                    Today's Development Activities
+                </h2>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light hover:shadow-pastel transition-shadow cursor-pointer">
+                        <div class="flex items-start gap-3">
+                            <div class="w-10 h-10 bg-pastel-accent1/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="baby" class="h-5 w-5 text-pastel-accent1"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-pastel-heading text-sm">Tummy Time</h3>
+                                <p class="text-xs text-pastel-textLight mt-1">15 minutes of supervised play</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light hover:shadow-pastel transition-shadow cursor-pointer">
+                        <div class="flex items-start gap-3">
+                            <div class="w-10 h-10 bg-pastel-accent2/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="music" class="h-5 w-5 text-pastel-accent2"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-pastel-heading text-sm">Sing Songs</h3>
+                                <p class="text-xs text-pastel-textLight mt-1">Nursery rhymes with actions</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light hover:shadow-pastel transition-shadow cursor-pointer">
+                        <div class="flex items-start gap-3">
+                            <div class="w-10 h-10 bg-pastel-primary/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="book-open" class="h-5 w-5 text-pastel-primary"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-pastel-heading text-sm">Story Time</h3>
+                                <p class="text-xs text-pastel-textLight mt-1">Read colorful picture books</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medical Integration Summary -->
+            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 style="animation-delay: 0.8s; animation-fill-mode: forwards;">
+                <h2 class="text-lg font-serif font-medium text-pastel-heading mb-4 flex items-center gap-2">
+                    <i data-lucide="clipboard-check" class="h-5 w-5 text-pastel-accent2"></i>
+                    Healthcare Summary
+                </h2>
+                <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light">
+                    <p class="text-sm text-pastel-text mb-3">
+                        <span class="font-medium">Next checkup:</span> March 15, 2025 (9-month visit)
+                    </p>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-pastel-textLight">Development screening status:</span>
+                            <span class="text-pastel-primary font-medium">On track</span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-pastel-textLight">Areas to discuss:</span>
+                            <span class="text-pastel-text">None currently</span>
+                        </div>
+                    </div>
+                    <button class="mt-4 text-sm text-pastel-primary hover:text-pastel-primaryHover font-medium">
+                        Generate Milestone Report for Doctor →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Decorative floating elements -->
+            <div class="fixed bottom-20 right-10 w-32 h-32 rounded-full bg-pastel-accent1 opacity-10 animate-float pointer-events-none"></div>
+            <div class="fixed top-40 right-1/4 w-24 h-24 rounded-full bg-pastel-accent2 opacity-10 animate-float-delayed pointer-events-none"></div>
+        </section>
+
+        <!-- Bottom Navigation (Mobile) -->
+        <nav class="lg:hidden border-t border-pastel-light bg-white/80 backdrop-blur-lg">
+            <div class="grid grid-cols-4 gap-1">
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
+                    <i data-lucide="home" class="h-5 w-5"></i>
+                    <span class="text-xs">Home</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-primary">
+                    <i data-lucide="award" class="h-5 w-5"></i>
+                    <span class="text-xs">Milestones</span>
+                </button>
+                <button onclick="openMilestoneModal()"
+                        class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
+                    <i data-lucide="plus-circle" class="h-5 w-5"></i>
+                    <span class="text-xs">Add</span>
+                </button>
+                <button class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
+                    <i data-lucide="user" class="h-5 w-5"></i>
+                    <span class="text-xs">Profile</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+</div>
+
+<!-- Add Milestone Modal -->
+<div id="milestoneModal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-backdrop absolute inset-0" onclick="closeMilestoneModal()"></div>
+    <div class="relative h-full flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-pastel-lg w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b border-pastel-light p-4 flex items-center justify-between">
+                <h2 class="text-lg font-serif font-medium text-pastel-heading">Add New Milestone</h2>
+                <button onclick="closeMilestoneModal()"
+                        class="p-2 hover:bg-pastel-light rounded-full transition-colors">
+                    <i data-lucide="x" class="h-5 w-5 text-pastel-text"></i>
+                </button>
+            </div>
+
+            <div class="p-4 space-y-4">
+                <!-- Quick Add Today Button -->
+                <button class="w-full bg-pastel-primary text-white py-3 rounded-xl font-medium hover:bg-pastel-primaryHover transition-colors flex items-center justify-center gap-2">
+                    <i data-lucide="zap" class="h-5 w-5"></i>
+                    Quick Add for Today
+                </button>
+
+                <!-- Search/Select Milestone -->
+                <div>
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Select Milestone</label>
+                    <div class="relative">
+                        <input type="text" placeholder="Search milestones..."
+                               class="w-full px-4 py-2.5 pr-10 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none">
+                        <i data-lucide="search"
+                           class="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-pastel-textLight"></i>
+                    </div>
+                </div>
+
+                <!-- Category Filters -->
+                <div>
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Filter by Category</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button class="px-3 py-1.5 rounded-full text-sm font-medium category-motor">Motor Skills
+                        </button>
+                        <button class="px-3 py-1.5 rounded-full text-sm font-medium category-social">Social/Emotional
+                        </button>
+                        <button class="px-3 py-1.5 rounded-full text-sm font-medium category-language">Language</button>
+                        <button class="px-3 py-1.5 rounded-full text-sm font-medium category-cognitive">Cognitive
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Milestone List -->
+                <div class="space-y-2 max-h-48 overflow-y-auto">
+                    <div class="p-3 rounded-xl border border-pastel-light hover:bg-pastel-lightest cursor-pointer">
+                        <h4 class="font-medium text-pastel-heading">Sitting Without Support</h4>
+                        <p class="text-sm text-pastel-textLight">Typical: 4-8 months</p>
+                    </div>
+                    <div class="p-3 rounded-xl border border-pastel-light hover:bg-pastel-lightest cursor-pointer">
+                        <h4 class="font-medium text-pastel-heading">Crawling</h4>
+                        <p class="text-sm text-pastel-textLight">Typical: 6-10 months</p>
+                    </div>
+                    <div class="p-3 rounded-xl border border-pastel-light hover:bg-pastel-lightest cursor-pointer">
+                        <h4 class="font-medium text-pastel-heading">First Words</h4>
+                        <p class="text-sm text-pastel-textLight">Typical: 10-14 months</p>
+                    </div>
+                </div>
+
+                <!-- Custom Milestone Option -->
+                <button class="w-full text-center text-sm text-pastel-primary hover:text-pastel-primaryHover font-medium py-2">
+                    + Add Custom Milestone
+                </button>
+
+                <!-- Date Selection -->
+                <div>
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Achievement Date</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button class="px-3 py-2 rounded-xl bg-pastel-primary text-white font-medium text-sm">
+                            Today
+                        </button>
+                        <button class="px-3 py-2 rounded-xl border border-pastel-light text-pastel-text font-medium text-sm hover:bg-pastel-lightest">
+                            Yesterday
+                        </button>
+                        <button class="px-3 py-2 rounded-xl border border-pastel-light text-pastel-text font-medium text-sm hover:bg-pastel-lightest">
+                            Pick Date
+                        </button>
+                    </div>
+                    <label class="flex items-center gap-2 mt-2">
+                        <input type="checkbox" class="rounded text-pastel-primary">
+                        <span class="text-sm text-pastel-textLight">Approximate date (developed gradually)</span>
+                    </label>
+                </div>
+
+                <!-- Photo/Video Upload -->
+                <div>
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Add Photos or Videos</label>
+                    <div class="upload-area rounded-xl p-6 text-center cursor-pointer hover:bg-pastel-lightest/50">
+                        <i data-lucide="camera" class="h-8 w-8 text-pastel-primary mx-auto mb-2"></i>
+                        <p class="text-sm text-pastel-text">Click to upload or drag & drop</p>
+                        <p class="text-xs text-pastel-textLight mt-1">Up to 5 photos or 1 video (30s max)</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <button class="flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-pastel-light text-sm font-medium hover:bg-pastel-lightest">
+                            <i data-lucide="camera" class="h-4 w-4"></i>
+                            Take Photo
+                        </button>
+                        <button class="flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-pastel-light text-sm font-medium hover:bg-pastel-lightest">
+                            <i data-lucide="video" class="h-4 w-4"></i>
+                            Record Video
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div>
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Notes (Optional)</label>
+                    <textarea rows="3" placeholder="Add any special notes about this milestone..."
+                              class="w-full px-4 py-2.5 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none resize-none"></textarea>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-3 pt-4">
+                    <button onclick="closeMilestoneModal()"
+                            class="flex-1 px-4 py-2.5 rounded-xl border border-pastel-light text-pastel-text font-medium hover:bg-pastel-lightest">
+                        Cancel
+                    </button>
+                    <button class="flex-1 px-4 py-2.5 rounded-xl bg-pastel-primary text-white font-medium hover:bg-pastel-primaryHover">
+                        Save Milestone
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div id="shareModal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-backdrop absolute inset-0" onclick="closeShareModal()"></div>
+    <div class="relative h-full flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-pastel-lg w-full max-w-md">
+            <div class="border-b border-pastel-light p-4 flex items-center justify-between">
+                <h2 class="text-lg font-serif font-medium text-pastel-heading">Share Milestone</h2>
+                <button onclick="closeShareModal()" class="p-2 hover:bg-pastel-light rounded-full transition-colors">
+                    <i data-lucide="x" class="h-5 w-5 text-pastel-text"></i>
+                </button>
+            </div>
+
+            <div class="p-4 space-y-4">
+                <!-- Milestone Preview -->
+                <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light">
+                    <div class="flex items-center gap-3">
+                        <div class="w-16 h-16 rounded-xl overflow-hidden bg-white shadow-pastel">
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23ffd8cc' width='100' height='100'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%23ff8c69' font-size='40' font-family='serif'%3E👶%3C/text%3E%3C/svg%3E"
+                                 alt="Milestone">
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-medium text-pastel-heading">Sitting Without Support</h3>
+                            <p class="text-sm text-pastel-textLight">Emma • 7.5 months</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Share Options -->
+                <div>
+                    <h3 class="text-sm font-medium text-pastel-text mb-3">Share via</h3>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button class="flex flex-col items-center gap-2 p-3 rounded-xl border border-pastel-light hover:bg-pastel-lightest">
+                            <i data-lucide="mail" class="h-6 w-6 text-pastel-primary"></i>
+                            <span class="text-xs text-pastel-text">Email</span>
+                        </button>
+                        <button class="flex flex-col items-center gap-2 p-3 rounded-xl border border-pastel-light hover:bg-pastel-lightest">
+                            <i data-lucide="users" class="h-6 w-6 text-pastel-accent1"></i>
+                            <span class="text-xs text-pastel-text">Family</span>
+                        </button>
+                        <button class="flex flex-col items-center gap-2 p-3 rounded-xl border border-pastel-light hover:bg-pastel-lightest">
+                            <i data-lucide="download" class="h-6 w-6 text-pastel-accent2"></i>
+                            <span class="text-xs text-pastel-text">Save</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Privacy Settings -->
+                <div>
+                    <h3 class="text-sm font-medium text-pastel-text mb-2">Privacy</h3>
+                    <select class="w-full px-4 py-2.5 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none">
+                        <option>Family Members Only</option>
+                        <option>Close Friends</option>
+                        <option>All Friends</option>
+                        <option>Public</option>
+                    </select>
+                </div>
+
+                <!-- Custom Message -->
+                <div>
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Add a message</label>
+                    <textarea rows="2" placeholder="Look what Emma can do now!"
+                              class="w-full px-4 py-2.5 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none resize-none"></textarea>
+                </div>
+
+                <!-- Action Buttons -->
+                <button class="w-full px-4 py-2.5 rounded-xl bg-pastel-primary text-white font-medium hover:bg-pastel-primaryHover">
+                    Share Milestone
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Backup Modal -->
+<div id="backupModal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-backdrop absolute inset-0" onclick="closeBackupModal()"></div>
+    <div class="relative h-full flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-pastel-lg w-full max-w-md">
+            <div class="border-b border-pastel-light p-4 flex items-center justify-between">
+                <h2 class="text-lg font-serif font-medium text-pastel-heading">Backup & Security</h2>
+                <button onclick="closeBackupModal()" class="p-2 hover:bg-pastel-light rounded-full transition-colors">
+                    <i data-lucide="x" class="h-5 w-5 text-pastel-text"></i>
+                </button>
+            </div>
+
+            <div class="p-4 space-y-4">
+                <!-- Backup Status -->
+                <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-pastel-text">Cloud Backup</span>
+                        <span class="text-xs text-pastel-primary font-medium">Active</span>
+                    </div>
+                    <p class="text-xs text-pastel-textLight mb-2">Last backup: 2 hours ago</p>
+                    <div class="w-full h-2 bg-pastel-light rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-pastel-primary to-pastel-accent1 rounded-full"
+                             style="width: 75%"></div>
+                    </div>
+                    <p class="text-xs text-pastel-textLight mt-2">7.5 GB of 10 GB used</p>
+                </div>
+
+                <!-- Privacy Settings -->
+                <div>
+                    <h3 class="text-sm font-medium text-pastel-text mb-3">Privacy & Access</h3>
+                    <div class="space-y-2">
+                        <label class="flex items-center justify-between p-3 rounded-xl border border-pastel-light hover:bg-pastel-lightest cursor-pointer">
+                            <span class="text-sm text-pastel-text">Allow family member access</span>
+                            <input type="checkbox" checked class="rounded text-pastel-primary">
+                        </label>
+                        <label class="flex items-center justify-between p-3 rounded-xl border border-pastel-light hover:bg-pastel-lightest cursor-pointer">
+                            <span class="text-sm text-pastel-text">Share with pediatrician</span>
+                            <input type="checkbox" class="rounded text-pastel-primary">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Export Options -->
+                <div>
+                    <h3 class="text-sm font-medium text-pastel-text mb-3">Export Data</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button class="px-3 py-2 rounded-xl border border-pastel-light text-sm font-medium hover:bg-pastel-lightest">
+                            Download Photos
+                        </button>
+                        <button class="px-3 py-2 rounded-xl border border-pastel-light text-sm font-medium hover:bg-pastel-lightest">
+                            Export PDF Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <button class="w-full px-4 py-2.5 rounded-xl bg-pastel-primary text-white font-medium hover:bg-pastel-primaryHover">
+                    Backup Now
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Mobile menu toggle functionality
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+
+        function toggleMobileMenu() {
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+        overlay.addEventListener('click', toggleMobileMenu);
+
+        // Re-render icons when modals are opened
+        const observer = new MutationObserver(() => {
+            lucide.createIcons();
+        });
+
+        // Observe all modals
+        document.querySelectorAll('[id$="Modal"]').forEach(modal => {
+            observer.observe(modal, {attributes: true, attributeFilter: ['class']});
+        });
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Cmd/Ctrl + M to add new milestone
+            if ((e.metaKey || e.ctrlKey) && e.key === 'm') {
+                e.preventDefault();
+                openMilestoneModal();
+            }
+            // Escape to close modals
+            if (e.key === 'Escape') {
+                closeMilestoneModal();
+                closeShareModal();
+                closeBackupModal();
+            }
+        });
+
+        // Initialize progress rings animation on scroll
+        const progressRings = document.querySelectorAll('.progress-ring-circle');
+        const observerOptions = {
+            threshold: 0.5
+        };
+
+        const animateOnScroll = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animation = 'progressRing 2s ease-out forwards';
+                }
+            });
+        }, observerOptions);
+
+        progressRings.forEach(ring => {
+            animateOnScroll.observe(ring);
+        });
+
+        // Smooth scroll behavior for internal links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({behavior: 'smooth'});
+                }
+            });
+        });
+    });
+
+    // Modal functions
+    function openMilestoneModal(milestone = null) {
+        document.getElementById('milestoneModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        // Pre-select milestone if provided
+        if (milestone) {
+            console.log('Pre-selecting milestone:', milestone);
+        }
+    }
+
+    function closeMilestoneModal() {
+        document.getElementById('milestoneModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    function openShareModal() {
+        document.getElementById('shareModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeShareModal() {
+        document.getElementById('shareModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    function openBackupModal() {
+        document.getElementById('backupModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeBackupModal() {
+        document.getElementById('backupModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    // Photo/Video upload simulation
+    document.addEventListener('DOMContentLoaded', () => {
+        const uploadArea = document.querySelector('.upload-area');
+        if (uploadArea) {
+            uploadArea.addEventListener('click', () => {
+                console.log('Opening file picker...');
+            });
+
+            // Drag and drop functionality
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('bg-pastel-lightest');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('bg-pastel-lightest');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('bg-pastel-lightest');
+                console.log('Files dropped:', e.dataTransfer.files);
+            });
+        }
+    });
+</script>
+</body>
+</html>
