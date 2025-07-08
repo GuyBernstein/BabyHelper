@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:type" content="Technology information">
+    <meta name="image" property="og:image"
+          content="https://unsplash.com/photos/selective-focus-photography-of-baby-holding-wooden-cube-CEEhmAGpYzE">
+    <meta name="author" content="Guy Bernstein">
     <title>BabyHelper - Your Baby Care Companion</title>
-    <meta name="description"
+    <meta name="description" property="og:description"
           content="Track feeding times, sleep patterns, and growth milestones effortlessly with BabyHelper. Join thousands of parents who trust us with their baby's care.">
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -170,11 +174,6 @@
             transition: max-height 0.3s ease-out;
         }
 
-        /* Newsletter input focus */
-        .newsletter-input:focus {
-            border-color: #ff8c69;
-            box-shadow: 0 0 0 3px rgba(255, 140, 105, 0.1);
-        }
 
         /* Demo preview styles - removed scale on hover */
         .demo-screen {
@@ -274,20 +273,58 @@
 
         // Demo preview functionality
         let demoStep = 0;
-        const demoSteps = ['feeding', 'sleep', 'growth'];
+        const demoScreens = ['feeding-screen', 'sleep-screen', 'growth-screen'];
+        let autoAdvanceInterval;
+
 
         function nextDemoStep() {
-            demoStep = (demoStep + 1) % demoSteps.length;
+            demoStep = (demoStep + 1) % demoScreens.length;
             updateDemoPreview();
+            resetAutoAdvance();
+        }
+
+        function goToDemoStep(step) {
+            demoStep = step;
+            updateDemoPreview();
+            resetAutoAdvance();
+        }
+
+        function resetAutoAdvance() {
+            // Clear existing interval
+            if (autoAdvanceInterval) {
+                clearInterval(autoAdvanceInterval);
+            }
+
+            // Set new interval
+            autoAdvanceInterval = setInterval(() => {
+                nextDemoStep();
+            }, 4000);
         }
 
         function updateDemoPreview() {
-            const screens = document.querySelectorAll('.demo-screen');
-            screens.forEach((screen, index) => {
-                if (index === demoStep) {
-                    screen.classList.remove('hidden');
-                } else {
+            // Hide all screens
+            demoScreens.forEach((screenId, index) => {
+                const screen = document.getElementById(screenId);
+                if (screen) {
                     screen.classList.add('hidden');
+                }
+            });
+
+            // Show current screen
+            const currentScreen = document.getElementById(demoScreens[demoStep]);
+            if (currentScreen) {
+                currentScreen.classList.remove('hidden');
+            }
+
+            // Update dots
+            const dots = document.querySelectorAll('.demo-dot');
+            dots.forEach((dot, index) => {
+                if (index === demoStep) {
+                    dot.classList.remove('bg-pastel-light');
+                    dot.classList.add('bg-pastel-primary');
+                } else {
+                    dot.classList.remove('bg-pastel-primary');
+                    dot.classList.add('bg-pastel-light');
                 }
             });
         }
@@ -349,9 +386,11 @@
         window.addEventListener('DOMContentLoaded', function () {
             animateCounters();
             lazyLoadImages();
+            updateDemoPreview();
+            resetAutoAdvance();
         });
 
-                // remove this
+        // remove this
         function showAuthModal() {
             showModal('authModal');
         }
@@ -512,6 +551,7 @@
     </div>
 </nav>
 
+
 <!-- Hero Section -->
 <section id="home" class="relative min-h-screen flex items-center overflow-hidden">
     <main id="main-content" class="w-full max-w-7xl mx-auto px-4 md:px-8">
@@ -589,18 +629,17 @@
                                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                                 </svg>
                             </div>
-                            <p class="text-sm text-pastel-textLight">Loved by <span class="font-semibold counter"
-                                                                                    data-target="10000">0</span>+
-                                parents</p>
+                            <p class="text-sm text-pastel-textLight">Your go‑to hub for <span
+                                    class="font-semibold">trusted parenting</span> advice</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Feature Cards - Enhanced with demo preview -->
-                <div class="relative opacity-0 animate-fade-in-left"
+                <!-- Feature Cards -->
+                <div class="relative lg:pl-12 opacity-0 animate-fade-in-left"
                      style="animation-delay: 0.5s; animation-fill-mode: forwards;">
                     <!-- Main Feature Card with Demo -->
-                    <div class="relative z-10 bg-white p-6 rounded-2xl shadow-pastel-lg border border-pastel-light max-w-md mx-auto lg:ml-auto animate-float">
+                    <div class="relative z-10 bg-white p-6 rounded-2xl shadow-pastel-lg border border-pastel-light max-w-md ml-auto animate-float">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="font-serif text-lg font-medium text-pastel-heading">Live Preview</h3>
                             <button onclick="nextDemoStep()"
@@ -656,29 +695,32 @@
                                 </button>
                             </div>
 
-                            <!-- Sleep Screen -->
+                            <!-- Sleep Screen - Made more compact -->
                             <div class="demo-screen hidden absolute inset-0 p-4" id="sleep-screen">
-                                <h4 class="font-semibold text-pastel-heading mb-3">Sleep Tracking</h4>
-                                <div class="bg-white p-4 rounded-lg mb-3">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="text-sm font-medium">Current Sleep</span>
-                                        <span class="text-xs text-pastel-primary">Started 1:30 PM</span>
+                                <h4 class="font-semibold text-pastel-heading mb-2 text-sm">Sleep Tracking</h4>
+                                <div class="bg-white p-3 rounded-lg mb-2">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="text-xs font-medium">Current Sleep</span>
+                                        <span class="text-xs text-pastel-primary">1:30 PM</span>
                                     </div>
-                                    <div class="text-3xl font-bold text-pastel-heading">02:15:32</div>
-                                    <div class="mt-3 h-2 bg-pastel-lightest rounded-full overflow-hidden">
+                                    <div class="text-2xl font-bold text-pastel-heading">02:15:32</div>
+                                    <div class="mt-2 h-1.5 bg-pastel-lightest rounded-full overflow-hidden">
                                         <div class="h-full bg-pastel-accent2 rounded-full" style="width: 65%;"></div>
                                     </div>
                                 </div>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div class="bg-white p-3 rounded-lg text-center">
-                                        <p class="text-2xl font-bold text-pastel-heading">14h</p>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="bg-white p-2 rounded-lg text-center">
+                                        <p class="text-lg font-bold text-pastel-heading">14h</p>
                                         <p class="text-xs text-pastel-textLight">Today's Total</p>
                                     </div>
-                                    <div class="bg-white p-3 rounded-lg text-center">
-                                        <p class="text-2xl font-bold text-pastel-heading">3</p>
+                                    <div class="bg-white p-2 rounded-lg text-center">
+                                        <p class="text-lg font-bold text-pastel-heading">3</p>
                                         <p class="text-xs text-pastel-textLight">Naps Today</p>
                                     </div>
                                 </div>
+                                <button class="mt-3 w-full py-2 bg-pastel-primary text-white rounded-lg text-sm font-medium">
+                                    Start/Stop Sleep
+                                </button>
                             </div>
 
                             <!-- Growth Screen -->
@@ -707,16 +749,19 @@
                             </div>
                         </div>
 
-                        <!-- Demo Navigation Dots -->
+                        <!-- Demo Navigation Dots - Now clickable -->
                         <div class="flex justify-center mt-4 space-x-2">
-                            <div class="w-2 h-2 rounded-full bg-pastel-primary transition-all"></div>
-                            <div class="w-2 h-2 rounded-full bg-pastel-light transition-all"></div>
-                            <div class="w-2 h-2 rounded-full bg-pastel-light transition-all"></div>
+                            <button onclick="goToDemoStep(0)"
+                                    class="demo-dot w-2 h-2 rounded-full bg-pastel-primary transition-all hover:scale-125"></button>
+                            <button onclick="goToDemoStep(1)"
+                                    class="demo-dot w-2 h-2 rounded-full bg-pastel-light transition-all hover:scale-125"></button>
+                            <button onclick="goToDemoStep(2)"
+                                    class="demo-dot w-2 h-2 rounded-full bg-pastel-light transition-all hover:scale-125"></button>
                         </div>
                     </div>
 
                     <!-- Secondary Feature Card -->
-                    <div class="absolute -bottom-6 -left-6 bg-white p-4 rounded-xl shadow-pastel border border-pastel-light max-w-[200px] animate-float-delayed">
+                    <div class="absolute -bottom-6 -left-14 bg-white p-4 rounded-xl shadow-pastel border border-pastel-light max-w-[200px] animate-float-delayed">
                         <div class="flex items-center space-x-3">
                             <div class="w-12 h-12 rounded-full bg-pastel-accent1 bg-opacity-20 flex items-center justify-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-primary" fill="none"
@@ -1660,13 +1705,19 @@
             <div>
                 <h4 class="font-medium text-pastel-heading mb-4">Resources</h4>
                 <ul class="space-y-2">
-                    <li><button onclick="showBabyTipsModal()"
-                           class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Baby Care
-                        Tips</button>
+                    <li>
+                        <button onclick="showBabyTipsModal()"
+                                class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Baby
+                            Care
+                            Tips
+                        </button>
                     </li>
 
-                    <li><button onclick="showCommunityModal()"
-                           class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Community</button>
+                    <li>
+                        <button onclick="showCommunityModal()"
+                                class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">
+                            Community
+                        </button>
                     </li>
                 </ul>
             </div>
@@ -1675,16 +1726,23 @@
             <div>
                 <h4 class="font-medium text-pastel-heading mb-4">Get Help</h4>
                 <ul class="space-y-2">
-                    <li><button onclick="showHelpCenterModal()"
-                           class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Help
-                        Center</button>
+                    <li>
+                        <button onclick="showHelpCenterModal()"
+                                class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Help
+                            Center
+                        </button>
                     </li>
-                    <li><button onclick="showContactModal()"
-                           class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Contact
-                        Us</button>
+                    <li>
+                        <button onclick="showContactModal()"
+                                class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">
+                            Contact
+                            Us
+                        </button>
                     </li>
-                    <li><button onclick="showFAQModal()"
-                           class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">FAQs</button>
+                    <li>
+                        <button onclick="showFAQModal()"
+                                class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">FAQs
+                        </button>
                     </li>
                 </ul>
             </div>
