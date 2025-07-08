@@ -133,11 +133,6 @@
             transition: max-height 0.3s ease-out;
         }
 
-        .mobile-menu.active {
-            max-height: 500px;
-            transition: max-height 0.5s ease-in;
-        }
-
         /* Screen reader only class */
         .sr-only {
             position: absolute;
@@ -173,10 +168,6 @@
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease-out;
-        }
-
-        .faq-content.active {
-            max-height: 300px;
         }
 
         /* Newsletter input focus */
@@ -216,8 +207,6 @@
         }
     </style>
     <script>
-        // Enhanced JavaScript functionality
-
         // Mobile menu toggle
         function toggleMobileMenu() {
             const menu = document.getElementById('mobileMenu');
@@ -259,38 +248,6 @@
             }
         }
 
-        // Email sign-in handler
-        async function handleEmailSignIn(event) {
-            event.preventDefault();
-            const email = document.getElementById('emailInput').value;
-            const password = document.getElementById('passwordInput').value;
-            const remember = document.getElementById('rememberMe').checked;
-
-            // Show loading state
-            const submitBtn = event.target.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
-
-            // Simulate API call
-            setTimeout(() => {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Sign In';
-                closeAuthModal();
-                // Handle successful sign-in
-            }, 2000);
-        }
-
-        // Show/hide auth modal
-        function showAuthModal() {
-            document.getElementById('authModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeAuthModal() {
-            document.getElementById('authModal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-
         // Testimonial carousel
         let currentTestimonial = 0;
 
@@ -313,26 +270,6 @@
 
             content.classList.toggle('active');
             icon.classList.toggle('rotate-180');
-        }
-
-        // Newsletter submission
-        function handleNewsletter(event) {
-            event.preventDefault();
-            const email = document.getElementById('newsletterEmail').value;
-            const submitBtn = event.target.querySelector('button[type="submit"]');
-
-            // Show success state
-            submitBtn.innerHTML = '✓ Subscribed!';
-            submitBtn.classList.add('bg-green-500');
-            submitBtn.disabled = true;
-
-            // Reset after 3 seconds
-            setTimeout(() => {
-                document.getElementById('newsletterEmail').value = '';
-                submitBtn.innerHTML = 'Subscribe';
-                submitBtn.classList.remove('bg-green-500');
-                submitBtn.disabled = false;
-            }, 3000);
         }
 
         // Demo preview functionality
@@ -412,12 +349,89 @@
         window.addEventListener('DOMContentLoaded', function () {
             animateCounters();
             lazyLoadImages();
+        });
 
-            // Check OAuth callback
-            const urlParams = new URLSearchParams(window.location.search);
-            if (window.location.pathname === '/auth/callback') {
-                // Handle OAuth callback
-            }
+                // remove this
+        function showAuthModal() {
+            showModal('authModal');
+        }
+
+        // Modal functions
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Specific modal show functions
+        function showHelpCenterModal() {
+            showModal('helpCenterModal');
+        }
+
+        function showContactModal() {
+            showModal('contactModal');
+        }
+
+        function showFAQModal() {
+            showModal('faqModal');
+        }
+
+        function showBabyTipsModal() {
+            showModal('babyTipsModal');
+        }
+
+        function showCommunityModal() {
+            showModal('communityModal');
+        }
+
+        function showSuccessStoriesModal() {
+            showModal('successStoriesModal');
+        }
+
+        // Form handlers
+        function handleContactSubmit(event) {
+            event.preventDefault();
+            const name = document.getElementById('contactName').value;
+            const email = document.getElementById('contactEmail').value;
+            const message = document.getElementById('contactMessage').value;
+
+            // Show loading state
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+            // Simulate API call
+            setTimeout(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Message Sent! 🎉';
+
+                // Reset form and close modal after delay
+                setTimeout(() => {
+                    event.target.reset();
+                    submitBtn.innerHTML = 'Send Message';
+                    closeModal('contactModal');
+                }, 2000);
+            }, 1500);
+        }
+
+        // Close modals when clicking outside
+        window.addEventListener('click', function (event) {
+            const modals = [
+                'helpCenterModal', 'contactModal', 'faqModal',
+                'babyTipsModal', 'newsletterModal', 'communityModal',
+                'blogModal', 'successStoriesModal', 'languageModal'
+            ];
+
+            modals.forEach(modalId => {
+                const modal = document.getElementById(modalId);
+                if (event.target === modal) {
+                    closeModal(modalId);
+                }
+            });
         });
     </script>
 </head>
@@ -451,7 +465,7 @@
                class="text-pastel-text hover:text-pastel-primary transition-colors">Pricing</a>
             <a href="#support" onclick="scrollToSection('support')"
                class="text-pastel-text hover:text-pastel-primary transition-colors">Support</a>
-            <button onclick="showAuthModal()"
+            <button onclick="handleGoogleSignIn()"
                     class="px-5 py-2 bg-white border border-pastel-light rounded-full text-pastel-primary hover:bg-pastel-light transition-all flex items-center space-x-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -490,7 +504,7 @@
                class="text-pastel-text hover:text-pastel-primary transition-colors py-2">Pricing</a>
             <a href="#support" onclick="scrollToSection('support')"
                class="text-pastel-text hover:text-pastel-primary transition-colors py-2">Support</a>
-            <button onclick="showAuthModal()"
+            <button onclick="handleGoogleSignIn()"
                     class="w-full px-5 py-2 bg-white border border-pastel-light rounded-full text-pastel-primary hover:bg-pastel-light transition-all">
                 Sign In
             </button>
@@ -525,9 +539,9 @@
                     </p>
                     <div class="mt-10 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 opacity-0 animate-fade-in-right"
                          style="animation-delay: 0.9s; animation-fill-mode: forwards;">
-                        <button onclick="showAuthModal()"
+                        <button onclick="handleGoogleSignIn()"
                                 class="btn-hover-effect px-8 py-3 bg-pastel-primary text-white font-semibold rounded-full shadow-pastel transition-all duration-300 hover:bg-pastel-primaryHover hover:transform hover:-translate-y-1 text-center">
-                            Start Free Trial
+                            Sign Up
                         </button>
                         <a href="#demo" onclick="scrollToSection('demo')"
                            class="px-8 py-3 bg-white border border-pastel-light text-pastel-text font-semibold rounded-full hover:bg-pastel-light transition-all duration-300 flex items-center justify-center space-x-2">
@@ -1548,8 +1562,8 @@
                 </div>
                 <h3 class="font-medium text-pastel-heading mb-2">Email Support</h3>
                 <p class="text-pastel-textLight mb-2">Get help via email</p>
-                <a href="mailto:support@babyhelper.com"
-                   class="text-pastel-primary hover:text-pastel-primaryHover transition-colors">support@babyhelper.com</a>
+                <a href="mailto:guyu669@gmail.com"
+                   class="text-pastel-primary hover:text-pastel-primaryHover transition-colors">guyu669@gmail.com</a>
             </div>
 
             <!-- Support Option 2 -->
@@ -1566,6 +1580,7 @@
                 <a href="#" class="text-pastel-primary hover:text-pastel-primaryHover transition-colors">Visit Help
                     Center</a>
             </div>
+
             <!-- Support Option 3 -->
             <div class="text-center">
                 <div class="w-16 h-16 mx-auto mb-4 bg-pastel-accent2 bg-opacity-20 rounded-full flex items-center justify-center">
@@ -1581,27 +1596,6 @@
             </div>
         </div>
 
-        <!-- Newsletter Signup -->
-        <div class="max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-pastel">
-            <h3 class="font-serif text-2xl font-medium text-pastel-heading mb-4 text-center">Stay Updated</h3>
-            <p class="text-pastel-textLight text-center mb-6">Get parenting tips, app updates, and exclusive offers
-                delivered to your inbox.</p>
-            <form onsubmit="handleNewsletter(event)" class="flex flex-col sm:flex-row gap-4">
-                <input
-                        type="email"
-                        id="newsletterEmail"
-                        placeholder="Enter your email"
-                        required
-                        class="newsletter-input flex-1 px-4 py-3 border border-pastel-light rounded-full focus:outline-none transition-all"
-                >
-                <button type="submit"
-                        class="px-6 py-3 bg-pastel-primary text-white font-semibold rounded-full hover:bg-pastel-primaryHover transition-colors">
-                    Subscribe
-                </button>
-            </form>
-            <p class="text-xs text-pastel-textLight text-center mt-4">We respect your privacy. Unsubscribe at any
-                time.</p>
-        </div>
     </div>
 </section>
 
@@ -1617,101 +1611,93 @@
                     </div>
                     <span class="font-serif text-pastel-heading text-xl">BabyHelper</span>
                 </div>
-                <p class="text-sm text-pastel-textLight">Your trusted companion for baby care tracking and insights.</p>
+                <p class="text-sm text-pastel-textLight">Your friendly companion for tracking your little one's journey
+                    💕</p>
                 <div class="flex space-x-4 mt-4">
-                    <a href="#" class="text-pastel-textLight hover:text-pastel-primary transition-colors"
-                       aria-label="Facebook">
+                    <a href="https://github.com/guybernstein" target="_blank"
+                       class="text-pastel-textLight hover:text-pastel-primary transition-colors"
+                       aria-label="GitHub">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                         </svg>
                     </a>
-                    <a href="#" class="text-pastel-textLight hover:text-pastel-primary transition-colors"
-                       aria-label="Twitter">
+                    <a href="https://linkedin.com/in/GuyBernstein" target="_blank"
+                       class="text-pastel-textLight hover:text-pastel-primary transition-colors"
+                       aria-label="LinkedIn">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                         </svg>
                     </a>
-                    <a href="#" class="text-pastel-textLight hover:text-pastel-primary transition-colors"
-                       aria-label="Instagram">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zM5.838 12a6.162 6.162 0 1112.324 0 6.162 6.162 0 01-12.324 0zM12 16a4 4 0 110-8 4 4 0 010 8zm4.965-10.405a1.44 1.44 0 112.881.001 1.44 1.44 0 01-2.881-.001z"/>
+                    <a href="https://personalproject-cc2.pages.dev/" target="_blank"
+                       class="text-pastel-textLight hover:text-pastel-primary transition-colors"
+                       aria-label="Developer's Website">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
                         </svg>
                     </a>
                 </div>
             </div>
 
-            <!-- Product -->
+            <!-- Explore -->
             <div>
-                <h4 class="font-medium text-pastel-heading mb-4">Product</h4>
+                <h4 class="font-medium text-pastel-heading mb-4">Explore</h4>
                 <ul class="space-y-2">
                     <li><a href="#features" onclick="scrollToSection('features')"
                            class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Features</a>
                     </li>
-                    <li><a href="#pricing" onclick="scrollToSection('pricing')"
-                           class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Pricing</a>
-                    </li>
-                    <li><a href="#" class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">iOS
-                        App</a></li>
-                    <li><a href="#" class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Android
-                        App</a></li>
-                </ul>
-            </div>
 
-            <!-- Company -->
-            <div>
-                <h4 class="font-medium text-pastel-heading mb-4">Company</h4>
-                <ul class="space-y-2">
-                    <li><a href="#" class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">About
-                        Us</a></li>
-                    <li><a href="#" class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Blog</a>
-                    </li>
-                    <li><a href="#" class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Careers</a>
-                    </li>
-                    <li><a href="#" class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Press</a>
+                    <li>
+                        <button onclick="showSuccessStoriesModal()"
+                                class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">
+                            Success Stories
+                        </button>
                     </li>
                 </ul>
             </div>
 
-            <!-- Support -->
+            <!-- Resources -->
             <div>
-                <h4 class="font-medium text-pastel-heading mb-4">Support</h4>
+                <h4 class="font-medium text-pastel-heading mb-4">Resources</h4>
                 <ul class="space-y-2">
-                    <li><a href="#support" onclick="scrollToSection('support')"
+                    <li><button onclick="showBabyTipsModal()"
+                           class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Baby Care
+                        Tips</button>
+                    </li>
+
+                    <li><button onclick="showCommunityModal()"
+                           class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Community</button>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Get Help -->
+            <div>
+                <h4 class="font-medium text-pastel-heading mb-4">Get Help</h4>
+                <ul class="space-y-2">
+                    <li><button onclick="showHelpCenterModal()"
                            class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Help
-                        Center</a></li>
-                    <li><a href="#" class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Contact
-                        Us</a></li>
-                    <li><a href="#" class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Privacy
-                        Policy</a></li>
-                    <li><a href="#" class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Terms
-                        of Service</a></li>
+                        Center</button>
+                    </li>
+                    <li><button onclick="showContactModal()"
+                           class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Contact
+                        Us</button>
+                    </li>
+                    <li><button onclick="showFAQModal()"
+                           class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">FAQs</button>
+                    </li>
                 </ul>
             </div>
         </div>
 
-        <div class="border-t border-pastel-light pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p class="text-sm text-pastel-textLight mb-4 md:mb-0">© 2024 BabyHelper. All rights reserved.</p>
-            <div class="flex items-center space-x-4">
-                <button class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors flex items-center space-x-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                         stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
-                    </svg>
-                    <span>English</span>
-                </button>
-                <button class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">
-                    High Contrast Mode
-                </button>
-            </div>
-        </div>
     </div>
 </footer>
 
-<!-- Authentication Modal - Enhanced with email/password option -->
-<div id="authModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
-    <div class="bg-white rounded-2xl p-8 max-w-md w-full relative animate-fade-in-up">
-        <button onclick="closeAuthModal()"
+<!-- Help Center Modal -->
+<div id="helpCenterModal"
+     class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl p-8 max-w-2xl w-full relative animate-fade-in-up max-h-[90vh] overflow-y-auto">
+        <button onclick="closeModal('helpCenterModal')"
                 class="absolute top-4 right-4 text-pastel-textLight hover:text-pastel-text transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor">
@@ -1719,69 +1705,255 @@
             </svg>
         </button>
 
-        <h2 class="font-serif text-2xl font-medium text-pastel-heading mb-6 text-center">Welcome to BabyHelper</h2>
+        <h2 class="font-serif text-2xl font-medium text-pastel-heading mb-6">How can we help? 🤗</h2>
 
-        <!-- Google Sign In -->
-        <button onclick="handleGoogleSignIn()"
-                class="w-full py-3 bg-white border border-pastel-light rounded-full font-medium text-pastel-text hover:bg-pastel-lightest transition-colors flex items-center justify-center space-x-2 mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-            <span>Continue with Google</span>
-        </button>
-
-        <div class="relative my-6">
-            <div class="absolute inset-0 flex items-center">
-                <div class="w-full border-t border-pastel-light"></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors cursor-pointer">
+                <h3 class="font-medium text-pastel-heading mb-2">Getting Started</h3>
+                <p class="text-sm text-pastel-textLight">Learn how to set up your baby's profile and start tracking</p>
             </div>
-            <div class="relative flex justify-center text-sm">
-                <span class="px-2 bg-white text-pastel-textLight">or</span>
+            <div class="p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors cursor-pointer">
+                <h3 class="font-medium text-pastel-heading mb-2">Tracking Features</h3>
+                <p class="text-sm text-pastel-textLight">Discover all the things you can track for your little one</p>
+            </div>
+            <div class="p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors cursor-pointer">
+                <h3 class="font-medium text-pastel-heading mb-2">Sharing with Family</h3>
+                <p class="text-sm text-pastel-textLight">Learn how to share your baby's milestones with loved ones</p>
+            </div>
+            <div class="p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors cursor-pointer">
+                <h3 class="font-medium text-pastel-heading mb-2">Data & Insights</h3>
+                <p class="text-sm text-pastel-textLight">Understanding your baby's patterns and growth charts</p>
             </div>
         </div>
 
-        <!-- Email Sign In Form -->
-        <form onsubmit="handleEmailSignIn(event)">
+        <div class="text-center">
+            <p class="text-sm text-pastel-textLight mb-4">Can't find what you're looking for?</p>
+            <button onclick="closeModal('helpCenterModal'); showContactModal();"
+                    class="py-2 px-6 bg-pastel-primary text-white font-medium rounded-full hover:bg-pastel-primaryHover transition-colors">
+                Contact Us
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Contact Modal -->
+<div id="contactModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl p-8 max-w-md w-full relative animate-fade-in-up">
+        <button onclick="closeModal('contactModal')"
+                class="absolute top-4 right-4 text-pastel-textLight hover:text-pastel-text transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+
+        <h2 class="font-serif text-2xl font-medium text-pastel-heading mb-6">Let's Chat! 💬</h2>
+
+        <form onsubmit="handleContactSubmit(event)">
             <div class="mb-4">
-                <label for="emailInput" class="block text-sm font-medium text-pastel-text mb-2">Email</label>
+                <label for="contactName" class="block text-sm font-medium text-pastel-text mb-2">Your Name</label>
+                <input
+                        type="text"
+                        id="contactName"
+                        required
+                        class="w-full px-4 py-3 border border-pastel-light rounded-lg focus:outline-none focus:border-pastel-primary transition-colors"
+                        placeholder="Jane Doe"
+                >
+            </div>
+
+            <div class="mb-4">
+                <label for="contactEmail" class="block text-sm font-medium text-pastel-text mb-2">Email</label>
                 <input
                         type="email"
-                        id="emailInput"
+                        id="contactEmail"
                         required
                         class="w-full px-4 py-3 border border-pastel-light rounded-lg focus:outline-none focus:border-pastel-primary transition-colors"
-                        placeholder="you@example.com"
+                        placeholder="jane@example.com"
                 >
             </div>
+
             <div class="mb-4">
-                <label for="passwordInput" class="block text-sm font-medium text-pastel-text mb-2">Password</label>
-                <input
-                        type="password"
-                        id="passwordInput"
+                <label for="contactMessage" class="block text-sm font-medium text-pastel-text mb-2">How can we
+                    help?</label>
+                <textarea
+                        id="contactMessage"
                         required
-                        class="w-full px-4 py-3 border border-pastel-light rounded-lg focus:outline-none focus:border-pastel-primary transition-colors"
-                        placeholder="••••••••"
-                >
+                        rows="4"
+                        class="w-full px-4 py-3 border border-pastel-light rounded-lg focus:outline-none focus:border-pastel-primary transition-colors resize-none"
+                        placeholder="Tell us what's on your mind..."
+                ></textarea>
             </div>
-            <div class="flex items-center justify-between mb-6">
-                <label class="flex items-center">
-                    <input type="checkbox" id="rememberMe" class="mr-2 text-pastel-primary focus:ring-pastel-primary">
-                    <span class="text-sm text-pastel-text">Remember me</span>
-                </label>
-                <a href="#" class="text-sm text-pastel-primary hover:text-pastel-primaryHover transition-colors">Forgot
-                    password?</a>
-            </div>
+
             <button type="submit"
                     class="w-full py-3 bg-pastel-primary text-white font-medium rounded-full hover:bg-pastel-primaryHover transition-colors">
-                Sign In
+                Send Message
             </button>
         </form>
 
         <p class="text-center text-sm text-pastel-textLight mt-6">
-            Don't have an account?
-            <a href="#" class="text-pastel-primary hover:text-pastel-primaryHover transition-colors">Sign up free</a>
+            We usually respond within 24 hours! 🌟
         </p>
+    </div>
+</div>
+
+<!-- FAQ Modal -->
+<div id="faqModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl p-8 max-w-2xl w-full relative animate-fade-in-up max-h-[90vh] overflow-y-auto">
+        <button onclick="closeModal('faqModal')"
+                class="absolute top-4 right-4 text-pastel-textLight hover:text-pastel-text transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+
+        <h2 class="font-serif text-2xl font-medium text-pastel-heading mb-6">Frequently Asked Questions 🤔</h2>
+
+        <div class="space-y-4">
+            <div class="border border-pastel-light rounded-lg p-4">
+                <h3 class="font-medium text-pastel-heading mb-2">Is BabyHelper free to use?</h3>
+                <p class="text-sm text-pastel-textLight">Yes! Our basic features are completely free. We believe every
+                    parent should have access to baby tracking tools.</p>
+            </div>
+
+            <div class="border border-pastel-light rounded-lg p-4">
+                <h3 class="font-medium text-pastel-heading mb-2">Can multiple caregivers track the same baby?</h3>
+                <p class="text-sm text-pastel-textLight">Absolutely! You can share your baby's profile with partners,
+                    grandparents, and babysitters.</p>
+            </div>
+
+            <div class="border border-pastel-light rounded-lg p-4">
+                <h3 class="font-medium text-pastel-heading mb-2">Is my baby's data safe?</h3>
+                <p class="text-sm text-pastel-textLight">Your privacy is our priority. All data is stored and never
+                    shared with third parties.</p>
+            </div>
+
+            <div class="border border-pastel-light rounded-lg p-4">
+                <h3 class="font-medium text-pastel-heading mb-2">Can I export my data?</h3>
+                <p class="text-sm text-pastel-textLight">Yes! You can download all your tracking data anytime in PDF or
+                    CSV format.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Baby Tips Modal -->
+<div id="babyTipsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl p-8 max-w-2xl w-full relative animate-fade-in-up max-h-[90vh] overflow-y-auto">
+        <button onclick="closeModal('babyTipsModal')"
+                class="absolute top-4 right-4 text-pastel-textLight hover:text-pastel-text transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+
+        <h2 class="font-serif text-2xl font-medium text-pastel-heading mb-6">Baby Care Tips 👶</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-pastel-lightest rounded-lg p-4">
+                <h3 class="font-medium text-pastel-heading mb-2">Sleep Tips 😴</h3>
+                <p class="text-sm text-pastel-textLight">Create a consistent bedtime routine and keep the room dark and
+                    quiet.</p>
+            </div>
+
+            <div class="bg-pastel-lightest rounded-lg p-4">
+                <h3 class="font-medium text-pastel-heading mb-2">Feeding Guide 🍼</h3>
+                <p class="text-sm text-pastel-textLight">Watch for hunger cues and feed on demand for the first few
+                    months.</p>
+            </div>
+
+            <div class="bg-pastel-lightest rounded-lg p-4">
+                <h3 class="font-medium text-pastel-heading mb-2">Tummy Time 🐛</h3>
+                <p class="text-sm text-pastel-textLight">Start with a few minutes daily to strengthen neck and shoulder
+                    muscles.</p>
+            </div>
+
+            <div class="bg-pastel-lightest rounded-lg p-4">
+                <h3 class="font-medium text-pastel-heading mb-2">Milestone Watch 🎯</h3>
+                <p class="text-sm text-pastel-textLight">Every baby develops at their own pace - celebrate each
+                    achievement!</p>
+            </div>
+        </div>
+
+        <div class="text-center mt-6">
+            <button onclick="closeModal('babyTipsModal')"
+                    class="py-2 px-6 bg-pastel-primary text-white font-medium rounded-full hover:bg-pastel-primaryHover transition-colors">
+                Got it!
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- Community Modal -->
+<div id="communityModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl p-8 max-w-md w-full relative animate-fade-in-up">
+        <button onclick="closeModal('communityModal')"
+                class="absolute top-4 right-4 text-pastel-textLight hover:text-pastel-text transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+
+        <h2 class="font-serif text-2xl font-medium text-pastel-heading mb-6">Join Our Community! 👨‍👩‍👧‍👦</h2>
+
+        <p class="text-sm text-pastel-textLight mb-6">Connect with other parents, share experiences, and get support on
+            your parenting journey.</p>
+
+        <div class="space-y-3">
+            <a href="#" class="block p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors">
+                <h3 class="font-medium text-pastel-heading mb-1">Discord Community</h3>
+                <p class="text-sm text-pastel-textLight">Chat with parents in real-time</p>
+            </a>
+
+            <a href="#" class="block p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors">
+                <h3 class="font-medium text-pastel-heading mb-1">Facebook Group</h3>
+                <p class="text-sm text-pastel-textLight">Share photos and milestones</p>
+            </a>
+
+            <a href="#" class="block p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors">
+                <h3 class="font-medium text-pastel-heading mb-1">Reddit Community</h3>
+                <p class="text-sm text-pastel-textLight">Ask questions and share advice</p>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Success Stories Modal -->
+<div id="successStoriesModal"
+     class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl p-8 max-w-2xl w-full relative animate-fade-in-up max-h-[90vh] overflow-y-auto">
+        <button onclick="closeModal('successStoriesModal')"
+                class="absolute top-4 right-4 text-pastel-textLight hover:text-pastel-text transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+
+        <h2 class="font-serif text-2xl font-medium text-pastel-heading mb-6">Parent Success Stories 🌟</h2>
+
+        <div class="space-y-6">
+            <div class="bg-pastel-lightest rounded-lg p-4">
+                <p class="text-sm text-pastel-text mb-3">"BabyHelper helped us finally understand our baby's sleep
+                    patterns. We went from waking up 5 times a night to just once!"</p>
+                <p class="text-sm font-medium text-pastel-heading">- Sarah M., mom of 6-month-old</p>
+            </div>
+
+            <div class="bg-pastel-lightest rounded-lg p-4">
+                <p class="text-sm text-pastel-text mb-3">"The feeding tracker was a lifesaver! It helped us identify
+                    that our little one was cluster feeding in the evenings."</p>
+                <p class="text-sm font-medium text-pastel-heading">- Mike D., dad of twins</p>
+            </div>
+
+            <div class="bg-pastel-lightest rounded-lg p-4">
+                <p class="text-sm text-pastel-text mb-3">"Being able to share the app with our nanny meant everyone was
+                    on the same page. No more confusion!"</p>
+                <p class="text-sm font-medium text-pastel-heading">- Jennifer L., working mom</p>
+            </div>
+        </div>
     </div>
 </div>
 </body>
