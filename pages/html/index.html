@@ -195,15 +195,6 @@
             transition: transform 0.3s ease;
         }
 
-        /* Pricing card hover effect */
-        .pricing-card {
-            transition: box-shadow 0.3s ease;
-        }
-
-        .pricing-card:hover {
-            box-shadow: 0 20px 40px rgba(180, 160, 150, 0.2);
-        }
-
         /* Loading skeleton animation */
         @keyframes skeleton {
             0% {
@@ -459,6 +450,10 @@
             showModal('successStoriesModal');
         }
 
+        function showFeaturesModal() {
+            showModal('featuresModal');
+        }
+
         // Form handlers
         function handleContactSubmit(event) {
             event.preventDefault();
@@ -489,8 +484,8 @@
         window.addEventListener('click', function (event) {
             const modals = [
                 'helpCenterModal', 'contactModal', 'faqModal',
-                'babyTipsModal', 'newsletterModal', 'communityModal',
-                'blogModal', 'successStoriesModal', 'languageModal'
+                'babyTipsModal', 'communityModal',
+                'featuresModal', 'successStoriesModal'
             ];
 
             modals.forEach(modalId => {
@@ -528,8 +523,8 @@
                class="text-pastel-text hover:text-pastel-primary transition-colors">Features</a>
             <a href="#how-it-works" onclick="scrollToSection('how-it-works')"
                class="text-pastel-text hover:text-pastel-primary transition-colors">How It Works</a>
-            <a href="#pricing" onclick="scrollToSection('pricing')"
-               class="text-pastel-text hover:text-pastel-primary transition-colors">Pricing</a>
+            <a href="#architecture" onclick="scrollToSection('architecture')"
+               class="text-pastel-text hover:text-pastel-primary transition-colors">Behind the Scenes</a>
             <a href="#support" onclick="scrollToSection('support')"
                class="text-pastel-text hover:text-pastel-primary transition-colors">Support</a>
             <button onclick="handleGoogleSignIn()"
@@ -567,8 +562,8 @@
                class="text-pastel-text hover:text-pastel-primary transition-colors py-2">Features</a>
             <a href="#how-it-works" onclick="scrollToSection('how-it-works')"
                class="text-pastel-text hover:text-pastel-primary transition-colors py-2">How It Works</a>
-            <a href="#pricing" onclick="scrollToSection('pricing')"
-               class="text-pastel-text hover:text-pastel-primary transition-colors py-2">Pricing</a>
+            <a href="#architecture" onclick="scrollToSection('architecture')"
+               class="text-pastel-text hover:text-pastel-primary transition-colors py-2">Behind the Scenes</a>
             <a href="#support" onclick="scrollToSection('support')"
                class="text-pastel-text hover:text-pastel-primary transition-colors py-2">Support</a>
             <button onclick="handleGoogleSignIn()"
@@ -1457,7 +1452,7 @@
             <p class="text-lg text-pastel-text mb-6">
                 Interested in the technical details? Have questions about the implementation?
             </p>
-            <button onclick="window.location.href='#contact'"
+            <button onclick="showContactModal()"
                     class="inline-flex items-center px-8 py-3 bg-pastel-primary text-white font-semibold rounded-full hover:bg-pastel-primaryHover transition-colors btn-hover-effect">
                 <span>Get in Touch</span>
                 <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1751,8 +1746,11 @@
             <div>
                 <h4 class="font-medium text-pastel-heading mb-4">Explore</h4>
                 <ul class="space-y-2">
-                    <li><a href="#features" onclick="scrollToSection('features')"
-                           class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">Features</a>
+                    <li>
+                        <button onclick="showFeaturesModal()"
+                                class="text-sm text-pastel-textLight hover:text-pastel-primary transition-colors">
+                            Features
+                        </button>
                     </li>
 
                     <li>
@@ -2074,6 +2072,144 @@
                     on the same page. No more confusion!"</p>
                 <p class="text-sm font-medium text-pastel-heading">- Jennifer L., working mom</p>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Modal -->
+<div id="featuresModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl p-8 max-w-2xl w-full relative animate-fade-in-up max-h-[90vh] overflow-y-auto">
+        <button onclick="closeModal('featuresModal')"
+                class="absolute top-4 right-4 text-pastel-textLight hover:text-pastel-text transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+
+        <h2 class="font-serif text-2xl font-medium text-pastel-heading mb-6">Quick Feature Overview 🍼</h2>
+        <p class="text-sm text-pastel-textLight mb-6">Here's everything BabyHelper can do for you and your little
+            one:</p>
+
+        <div class="space-y-4">
+            <!-- Feeding Tracker -->
+            <div class="border border-pastel-light rounded-lg p-4 hover:bg-pastel-lightest transition-colors">
+                <div class="flex items-start space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-pastel-primary bg-opacity-20 flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-primary" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-pastel-heading mb-1">🍼 Feeding Tracker</h3>
+                        <p class="text-sm text-pastel-textLight">Track breast & bottle feeding, pumping sessions, and
+                            get smart feeding time predictions.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sleep Analytics -->
+            <div class="border border-pastel-light rounded-lg p-4 hover:bg-pastel-lightest transition-colors">
+                <div class="flex items-start space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-pastel-accent1 bg-opacity-20 flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-accent1" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-pastel-heading mb-1">😴 Sleep Analytics</h3>
+                        <p class="text-sm text-pastel-textLight">Monitor sleep patterns, track naps, and get
+                            personalized bedtime recommendations.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Growth Monitoring -->
+            <div class="border border-pastel-light rounded-lg p-4 hover:bg-pastel-lightest transition-colors">
+                <div class="flex items-start space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-pastel-accent2 bg-opacity-20 flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-accent2" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-pastel-heading mb-1">📊 Growth Monitoring</h3>
+                        <p class="text-sm text-pastel-textLight">Track height & weight with WHO charts, capture
+                            milestone photos.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Health Records -->
+            <div class="border border-pastel-light rounded-lg p-4 hover:bg-pastel-lightest transition-colors">
+                <div class="flex items-start space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-pastel-secondary bg-opacity-40 flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-primary" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-pastel-heading mb-1">🏥 Health Records</h3>
+                        <p class="text-sm text-pastel-textLight">Store vaccinations, doctor visits, medications, and
+                            track symptoms.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Family Sharing -->
+            <div class="border border-pastel-light rounded-lg p-4 hover:bg-pastel-lightest transition-colors">
+                <div class="flex items-start space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-pastel-light bg-opacity-60 flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-primary" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-pastel-heading mb-1">👨‍👩‍👧‍👦 Family Sharing</h3>
+                        <p class="text-sm text-pastel-textLight">Share with partners & caregivers, real-time sync across
+                            devices.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Insights -->
+            <div class="border border-pastel-light rounded-lg p-4 hover:bg-pastel-lightest transition-colors">
+                <div class="flex items-start space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-pastel-accent1 bg-opacity-30 flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-primary" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-pastel-heading mb-1">💡 Smart Insights</h3>
+                        <p class="text-sm text-pastel-textLight">AI-powered pattern detection, personalized tips, and
+                            weekly reports.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6 p-4 bg-pastel-lightest rounded-lg">
+            <p class="text-sm text-pastel-text text-center">
+                <span class="font-medium">Too tired to explore?</span> We get it! 😊
+                <br>
+                <a href="#features" onclick="closeModal('featuresModal'); scrollToSection('features')"
+                   class="text-pastel-primary hover:text-pastel-accent1 transition-colors underline">
+                    See the full features section
+                </a> when you're ready.
+            </p>
         </div>
     </div>
 </div>
