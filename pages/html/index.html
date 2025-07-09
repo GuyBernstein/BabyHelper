@@ -14,6 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=Lora:wght@400;500;600&display=swap"
           rel="stylesheet">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -535,18 +536,28 @@
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
 
-            // Simulate API call
-            setTimeout(() => {
+            // Send email using EmailJS
+            emailjs.send("service_hnnp7mi", "template_pu7igxa", {
+                name: 'Name: ' + name,
+                email: email,
+                title: 'BabyHelper Support',
+                message: message
+
+            }).then(function (response) {
+                console.log('SUCCESS!', response.status, response.text);
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = 'Message Sent! 🎉';
-
                 // Reset form and close modal after delay
                 setTimeout(() => {
                     event.target.reset();
                     submitBtn.innerHTML = 'Send Message';
                     closeModal('contactModal');
                 }, 2000);
-            }, 1500);
+            }, function (error) {
+                console.log('FAILED...', error);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Error Sending Message';
+            });
         }
 
         // Initialize on DOM load
@@ -555,6 +566,7 @@
             lazyLoadImages();
             updateDemoPreview();
             resetAutoAdvance();
+            emailjs.init("fE6JnjGkBOX9wvXjU");
         });
 
         // Close modals when clicking outside
