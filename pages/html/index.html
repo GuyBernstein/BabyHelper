@@ -1487,8 +1487,8 @@
             <div class="bg-pastel-lightest rounded-lg">
                 <button onclick="toggleFAQ(1)"
                         class="faq-button w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none rounded-lg transition-colors">
-                    <h3 class="font-medium text-pastel-heading pr-4">Do I really need another app when I can barely
-                        remember to shower?</h3>
+                    <h3 class="font-medium text-pastel-heading pr-4">Can I just text when baby eats instead of opening
+                        another website?</h3>
                     <svg id="faq-icon-1" xmlns="http://www.w3.org/2000/svg"
                          class="h-5 w-5 text-pastel-primary transition-transform flex-shrink-0" fill="none"
                          viewBox="0 0 24 24"
@@ -1497,11 +1497,13 @@
                     </svg>
                 </button>
                 <div id="faq-content-1" class="faq-content px-6">
-                    <p class="text-pastel-textLight pb-4">We get it. This app is designed BY sleep-deprived parents FOR
-                        sleep-deprived parents. One-tap tracking means you can log a feeding while holding baby in one
-                        arm. No complicated menus, no subscriptions, no ads. Just simple tracking that helps you answer
-                        "When did baby last eat?" without relying on your exhausted brain. It's free, open-source, and
-                        works offline - because we know your WiFi might be as unreliable as your sleep schedule.</p>
+                    <p class="text-pastel-textLight pb-4">Yes! just message our WhatsApp number with
+                        simple texts like "fed 20 min" or "nap 2pm" and we'll log it for you automatically. No need to
+                        open your browser when you're juggling a crying baby. The AI understands tired-parent shorthand,
+                        so even "fed" or "pooped" works. Your data is still secure - messages are processed and
+                        immediately deleted, never stored. Only you and any co-parents you've added can see your baby's
+                        logs when you sign in with Google. Because sometimes typing with one thumb while bouncing a baby
+                        is all you can manage.</p>
                 </div>
             </div>
 
@@ -1509,7 +1511,7 @@
             <div class="bg-pastel-lightest rounded-lg">
                 <button onclick="toggleFAQ(2)"
                         class="faq-button w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none rounded-lg transition-colors">
-                    <h3 class="font-medium text-pastel-heading pr-4">How fast can I actually log something at 3 AM?</h3>
+                    <h3 class="font-medium text-pastel-heading pr-4">Is my baby's information safe? Who can see it?</h3>
                     <svg id="faq-icon-2" xmlns="http://www.w3.org/2000/svg"
                          class="h-5 w-5 text-pastel-primary transition-transform flex-shrink-0" fill="none"
                          viewBox="0 0 24 24"
@@ -1518,11 +1520,13 @@
                     </svg>
                 </button>
                 <div id="faq-content-2" class="faq-content px-6">
-                    <p class="text-pastel-textLight pb-4">Two taps. Seriously. Open app → tap what you're tracking.
-                        That's it. We designed BabyHelper with bleary-eyed, one-handed operation in mind. Big buttons,
-                        high contrast for dark rooms, and it remembers your last entries. No typing required. You can
-                        even use voice commands if your hands are full. The app auto-saves everything, so if you fall
-                        asleep mid-entry (it happens!), your data is safe.</p>
+                    <p class="text-pastel-textLight pb-4">Yes, your data is secure. You sign in with your Google
+                        account, so it's protected by Google's security. Only you can see your baby's information -
+                        unless you specifically add a co-parent, then they can see it too when they sign in with their
+                        own Google account. No one else has access. The website uses standard security practices to keep
+                        everything private, just like your online banking does. Since it's a website, you can access it
+                        from any device - your phone, tablet, or computer - without downloading anything. Just bookmark
+                        it for quick access during those 3 AM feedings.</p>
                 </div>
             </div>
 
@@ -1541,7 +1545,7 @@
                 </button>
                 <div id="faq-content-3" class="faq-content px-6">
                     <p class="text-pastel-textLight pb-4">Real-time sync means you'll see their entries instantly on
-                        your device. No more "Did you feed the baby?" texts at work. Everyone with access sees the same
+                        your browser. No more "Did you feed the baby?" texts at work. Everyone with access sees the same
                         info - parents, grandparents, babysitters. You can even get gentle notifications like "Baby
                         hasn't eaten in 3 hours" if you want them. Perfect for shift changes between caregivers or when
                         you're both too tired to communicate properly.</p>
@@ -1583,16 +1587,26 @@
                     </svg>
                 </button>
                 <div id="faq-content-5" class="faq-content px-6">
-                    <p class="text-pastel-textLight pb-4">No catch. A group of parent-developers built this because we
-                        needed it and existing apps were either expensive, complicated, or full of ads. It's
-                        open-source, meaning anyone can verify there's no data selling or hidden agenda. We run on
-                        donations from grateful parents who can afford to chip in. Your data stays on your device unless
-                        you choose to sync. No ads, no premium features, no guilt trips. Just parents helping parents
-                        survive the early years.</p>
+                    <p class="text-pastel-textLight pb-4">No catch. I'm a parent-developer who built this because I
+                        needed it and existing solutions were either expensive, complicated, or full of ads. It's
+                        open-source, meaning anyone can verify there's no data selling or hidden agenda. Your data is
+                        securely stored online so you can access it from anywhere - and if you add a co-parent, they can
+                        see your baby's data too when they sign in. No ads, no premium features, no guilt trips. If you
+                        find this helpful and want to support the project, you can connect with me on
+                        <a href="https://linkedin.com/in/GuyBernstein" target="_blank"
+                           class="inline-flex text-pastel-textLight hover:text-pastel-primary transition-colors"
+                           aria-label="LinkedIn">LinkedIn
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                            </svg>
+                        </a>
+                        .. Just one
+                        parent helping other parents survive the early years.
+                    </p>
                 </div>
             </div>
 
-            <!-- FAQ 6 - New addition -->
+            <!-- FAQ 6  -->
             <div class="bg-pastel-lightest rounded-lg">
                 <button onclick="toggleFAQ(6)"
                         class="faq-button w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none rounded-lg transition-colors">
@@ -1606,11 +1620,12 @@
                     </svg>
                 </button>
                 <div id="faq-content-6" class="faq-content px-6">
-                    <p class="text-pastel-textLight pb-4">Dead simple. No account creation, no tutorial needed.
-                        Download, open, tap. The home screen shows only what matters RIGHT NOW - when baby last ate,
+                    <p class="text-pastel-textLight pb-4">Dead simple. One-click Google sign-in and you're tracking.
+                        Open any browser, sign in, start logging.
+                        The home screen shows only what matters RIGHT NOW - when baby last ate,
                         slept, and pooped. Everything else is tucked away until you need it. We tested this with parents
                         running on 2 hours of sleep. If they could use it, anyone can. Plus, if you mess up an entry,
-                        fixing it takes one tap. We know perfection isn't possible with a newborn.</p>
+                        fixing it takes one click. We know perfection isn't possible with a newborn.</p>
                 </div>
             </div>
         </div>
