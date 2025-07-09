@@ -524,6 +524,22 @@
             showModal('featuresModal');
         }
 
+        function showGettingStartedModalModal() {
+            showModal('gettingStartedModal');
+        }
+
+        function showTrackingFeaturesModalModal() {
+            showModal('trackingFeaturesModal');
+        }
+
+        function showDataInsightsModalModal() {
+            showModal('dataInsightsModal');
+        }
+
+        function showAiAssistantModalModal() {
+            showModal('aiAssistantModal');
+        }
+
         // Form handlers
         function handleContactSubmit(event) {
             event.preventDefault();
@@ -574,7 +590,9 @@
             const modals = [
                 'helpCenterModal', 'contactModal', 'faqModal',
                 'babyTipsModal', 'communityModal',
-                'featuresModal', 'successStoriesModal'
+                'featuresModal', 'successStoriesModal',
+                'showGettingStartedModalModal', 'showTrackingFeaturesModalModal',
+                'showDataInsightsModalModal', 'showAiAssistantModalModal'
             ];
 
             modals.forEach(modalId => {
@@ -1915,49 +1933,6 @@
     </div>
 </footer>
 
-<!-- Help Center Modal -->
-<div id="helpCenterModal"
-     class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
-    <div class="bg-white rounded-2xl p-8 max-w-2xl w-full relative animate-fade-in-up max-h-[90vh] overflow-y-auto">
-        <button onclick="closeModal('helpCenterModal')"
-                class="absolute top-4 right-4 text-pastel-textLight hover:text-pastel-text transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                 stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-        </button>
-
-        <h2 class="font-serif text-2xl font-medium text-pastel-heading mb-6">How can we help? 🤗</h2>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div class="p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors cursor-pointer">
-                <h3 class="font-medium text-pastel-heading mb-2">Getting Started</h3>
-                <p class="text-sm text-pastel-textLight">Learn how to set up your baby's profile and start tracking</p>
-            </div>
-            <div class="p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors cursor-pointer">
-                <h3 class="font-medium text-pastel-heading mb-2">Tracking Features</h3>
-                <p class="text-sm text-pastel-textLight">Discover all the things you can track for your little one</p>
-            </div>
-            <div class="p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors cursor-pointer">
-                <h3 class="font-medium text-pastel-heading mb-2">Sharing with Family</h3>
-                <p class="text-sm text-pastel-textLight">Learn how to share your baby's milestones with loved ones</p>
-            </div>
-            <div class="p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors cursor-pointer">
-                <h3 class="font-medium text-pastel-heading mb-2">Data & Insights</h3>
-                <p class="text-sm text-pastel-textLight">Understanding your baby's patterns and growth charts</p>
-            </div>
-        </div>
-
-        <div class="text-center">
-            <p class="text-sm text-pastel-textLight mb-4">Can't find what you're looking for?</p>
-            <button onclick="closeModal('helpCenterModal'); showContactModal();"
-                    class="py-2 px-6 bg-pastel-primary text-white font-medium rounded-full hover:bg-pastel-primaryHover transition-colors">
-                Contact Us
-            </button>
-        </div>
-    </div>
-</div>
-
 <!-- Contact Modal -->
 <div id="contactModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
     <div class="bg-white rounded-2xl p-8 max-w-md w-full relative animate-fade-in-up">
@@ -2125,17 +2100,20 @@
             your parenting journey.</p>
 
         <div class="space-y-3">
-            <a href="#" class="block p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors">
+            <a href="https://disboard.org/servers/tag/parenting"
+               class="block p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors">
                 <h3 class="font-medium text-pastel-heading mb-1">Discord Community</h3>
                 <p class="text-sm text-pastel-textLight">Chat with parents in real-time</p>
             </a>
 
-            <a href="#" class="block p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors">
+            <a href="https://www.facebook.com/share/g/1AnqLKS8JJ/"
+               class="block p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors">
                 <h3 class="font-medium text-pastel-heading mb-1">Facebook Group</h3>
                 <p class="text-sm text-pastel-textLight">Share photos and milestones</p>
             </a>
 
-            <a href="#" class="block p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors">
+            <a href="http://reddit.com/r/NewParents/"
+               class="block p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors">
                 <h3 class="font-medium text-pastel-heading mb-1">Reddit Community</h3>
                 <p class="text-sm text-pastel-textLight">Ask questions and share advice</p>
             </a>
@@ -2313,6 +2291,341 @@
                     See the full features section
                 </a> when you're ready.
             </p>
+        </div>
+    </div>
+</div>
+
+<!-- Help Center Modal -->
+<div id="helpCenterModal"
+     class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl p-8 max-w-2xl w-full relative animate-fade-in-up max-h-[90vh] overflow-y-auto">
+        <button onclick="closeModal('helpCenterModal')"
+                class="absolute top-4 right-4 text-pastel-textLight hover:text-pastel-text transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+
+        <h2 class="font-serif text-2xl font-medium text-pastel-heading mb-6">How can we help? 🤗</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <button onclick="closeModal('helpCenterModal'); showGettingStartedModalModal();"
+                    class="p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors cursor-pointer">
+                <h3 class="font-medium text-pastel-heading mb-2">Getting Started</h3>
+                <p class="text-sm text-pastel-textLight">Learn how to set up your baby's profile and start tracking</p>
+            </button>
+            <button onclick="closeModal('helpCenterModal'); showTrackingFeaturesModalModal();"
+                    class="p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors cursor-pointer">
+                <h3 class="font-medium text-pastel-heading mb-2">Tracking Features</h3>
+                <p class="text-sm text-pastel-textLight">Discover all the things you can track for your little one</p>
+            </button>
+            <button onclick="closeModal('helpCenterModal'); showModal('aiAssistantModal');"
+                    class="p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors cursor-pointer">
+                <h3 class="font-medium text-pastel-heading mb-2">AI Assistant 🤖</h3>
+                <p class="text-sm text-pastel-textLight">Get personalized parenting guidance based on your baby's
+                    tracked data</p>
+            </button>
+            <button onclick="closeModal('helpCenterModal'); showDataInsightsModalModal();"
+                    class="p-4 bg-pastel-lightest rounded-lg hover:bg-pastel-secondary transition-colors cursor-pointer">
+                <h3 class="font-medium text-pastel-heading mb-2">Data & Insights</h3>
+                <p class="text-sm text-pastel-textLight">Understanding your baby's patterns and growth charts</p>
+            </button>
+        </div>
+
+        <div class="text-center">
+            <p class="text-sm text-pastel-textLight mb-4">Can't find what you're looking for?</p>
+            <button onclick="closeModal('helpCenterModal'); showContactModal();"
+                    class="py-2 px-6 bg-pastel-primary text-white font-medium rounded-full hover:bg-pastel-primaryHover transition-colors">
+                Contact Us
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- AI Assistant Modal -->
+<div id="aiAssistantModal"
+     class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl p-8 max-w-2xl w-full relative animate-fade-in-up max-h-[90vh] overflow-y-auto">
+        <button onclick="closeModal('aiAssistantModal')"
+                class="absolute top-4 right-4 text-pastel-textLight hover:text-pastel-text transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+
+        <h2 class="font-serif text-2xl font-medium text-pastel-heading mb-6">AI Assistant 🤖</h2>
+
+        <p class="text-pastel-text mb-6">Meet your 24/7 parenting companion! Our AI assistant provides personalized
+            guidance based on your baby's data and trusted parenting resources.</p>
+
+        <div class="space-y-4 mb-6">
+            <div class="p-4 bg-pastel-lightest rounded-lg">
+                <h3 class="font-medium text-pastel-heading mb-2">What Can I Ask?</h3>
+                <p class="text-sm text-pastel-textLight">• "Why is my baby waking every hour?"</p>
+                <p class="text-sm text-pastel-textLight">• "When should I introduce solid foods?"</p>
+                <p class="text-sm text-pastel-textLight">• "Is this diaper rash normal?"</p>
+                <p class="text-sm text-pastel-textLight">• "How can I improve nap times?"</p>
+                <p class="text-sm text-pastel-textLight">• "What milestones come next?"</p>
+            </div>
+
+            <div class="p-4 bg-pastel-lightest rounded-lg">
+                <h3 class="font-medium text-pastel-heading mb-2">Personalized Insights</h3>
+                <p class="text-sm text-pastel-textLight">• Analyzes your baby's tracked patterns</p>
+                <p class="text-sm text-pastel-textLight">• Provides advice tailored to your situation</p>
+                <p class="text-sm text-pastel-textLight">• Suggests routines based on your data</p>
+                <p class="text-sm text-pastel-textLight">• Learns from your tracking history</p>
+            </div>
+
+            <div class="p-4 bg-pastel-lightest rounded-lg">
+                <h3 class="font-medium text-pastel-heading mb-2">How to Use</h3>
+                <p class="text-sm text-pastel-textLight">• Tap the chat bubble on any screen</p>
+                <p class="text-sm text-pastel-textLight">• Type or speak your question</p>
+                <p class="text-sm text-pastel-textLight">• Get instant, helpful responses</p>
+                <p class="text-sm text-pastel-textLight">• Save favorite answers for later</p>
+            </div>
+
+            <div class="p-4 bg-pastel-lightest rounded-lg">
+                <h3 class="font-medium text-pastel-heading mb-2">Privacy & Safety</h3>
+                <p class="text-sm text-pastel-textLight">• Your data stays completely private</p>
+                <p class="text-sm text-pastel-textLight">• AI never replaces medical advice</p>
+                <p class="text-sm text-pastel-textLight">• Always consult doctors for concerns</p>
+                <p class="text-sm text-pastel-textLight">• Based on pediatric best practices</p>
+            </div>
+        </div>
+
+        <div class="p-4 bg-pastel-secondary rounded-lg mb-6">
+            <h3 class="font-medium text-pastel-heading mb-2">💡 Pro Tip</h3>
+            <p class="text-sm text-pastel-textLight">The more you track, the better the AI understands your baby's
+                unique patterns. Regular tracking helps the assistant provide more accurate and helpful suggestions
+                tailored specifically to your little one!</p>
+        </div>
+
+        <div class="flex gap-3 justify-center">
+            <button onclick="handleGoogleSignIn();"
+                    class="py-2 px-6 bg-pastel-primary text-white font-medium rounded-full hover:bg-pastel-primaryHover transition-colors">
+                Sign Up to Chat
+            </button>
+            <button onclick="closeModal('aiAssistantModal'); showModal('helpCenterModal');"
+                    class="py-2 px-6 bg-white text-pastel-primary border-2 border-pastel-primary font-medium rounded-full hover:bg-pastel-lightest transition-colors">
+                Back to Help
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Data & Insights Modal -->
+<div id="dataInsightsModal"
+     class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl p-8 max-w-2xl w-full relative animate-fade-in-up max-h-[90vh] overflow-y-auto">
+        <button onclick="closeModal('dataInsightsModal')"
+                class="absolute top-4 right-4 text-pastel-textLight hover:text-pastel-text transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+
+        <h2 class="font-serif text-2xl font-medium text-pastel-heading mb-6">Data & Insights 📈</h2>
+
+        <p class="text-pastel-text mb-6">Transform your tracking data into meaningful insights. Understand your baby's
+            patterns and development with easy-to-read charts and analysis.</p>
+
+        <div class="space-y-4 mb-6">
+            <div class="p-4 bg-pastel-lightest rounded-lg">
+                <h3 class="font-medium text-pastel-heading mb-2">Growth Charts & Percentiles</h3>
+                <p class="text-sm text-pastel-textLight">• See how your baby compares to others</p>
+                <p class="text-sm text-pastel-textLight">• Track weight, height, and head circumference</p>
+                <p class="text-sm text-pastel-textLight">• Percentiles show healthy growth ranges</p>
+                <p class="text-sm text-pastel-textLight">• Charts update automatically with new data</p>
+            </div>
+
+            <div class="p-4 bg-pastel-lightest rounded-lg">
+                <h3 class="font-medium text-pastel-heading mb-2">Sleep Pattern Analysis</h3>
+                <p class="text-sm text-pastel-textLight">• View total sleep hours per day</p>
+                <p class="text-sm text-pastel-textLight">• Identify nap patterns and bedtime trends</p>
+                <p class="text-sm text-pastel-textLight">• Track longest sleep stretches</p>
+                <p class="text-sm text-pastel-textLight">• Spot improvements in sleep habits</p>
+            </div>
+
+            <div class="p-4 bg-pastel-lightest rounded-lg">
+                <h3 class="font-medium text-pastel-heading mb-2">Feeding Insights</h3>
+                <p class="text-sm text-pastel-textLight">• Monitor daily feeding amounts and frequency</p>
+                <p class="text-sm text-pastel-textLight">• Track nursing duration on each side</p>
+                <p class="text-sm text-pastel-textLight">• See feeding intervals and patterns</p>
+                <p class="text-sm text-pastel-textLight">• Helpful for establishing routines</p>
+            </div>
+
+            <div class="p-4 bg-pastel-lightest rounded-lg">
+                <h3 class="font-medium text-pastel-heading mb-2">Milestone Progress</h3>
+                <p class="text-sm text-pastel-textLight">• Track developmental achievements by age</p>
+                <p class="text-sm text-pastel-textLight">• Compare to typical milestone ranges</p>
+                <p class="text-sm text-pastel-textLight">• Celebrate each new accomplishment</p>
+                <p class="text-sm text-pastel-textLight">• Share progress with your pediatrician</p>
+            </div>
+        </div>
+
+        <div class="p-4 bg-pastel-secondary rounded-lg mb-6">
+            <h3 class="font-medium text-pastel-heading mb-2">📚 Understanding Your Data</h3>
+            <p class="text-sm text-pastel-textLight">• All babies develop at their own pace - use insights as guides,
+                not rules</p>
+            <p class="text-sm text-pastel-textLight">• Look for trends over time rather than daily variations</p>
+            <p class="text-sm text-pastel-textLight">• Export reports to share with healthcare providers</p>
+            <p class="text-sm text-pastel-textLight">• Regular tracking gives the most accurate insights</p>
+        </div>
+
+        <div class="flex gap-3 justify-center">
+            <button onclick="handleGoogleSignIn();"
+                    class="py-2 px-6 bg-pastel-primary text-white font-medium rounded-full hover:bg-pastel-primaryHover transition-colors">
+                Sign Up to View Insights
+            </button>
+            <button onclick="closeModal('dataInsightsModal'); showModal('helpCenterModal');"
+                    class="py-2 px-6 bg-white text-pastel-primary border-2 border-pastel-primary font-medium rounded-full hover:bg-pastel-lightest transition-colors">
+                Back to Help
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Tracking Features Modal -->
+<div id="trackingFeaturesModal"
+     class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl p-8 max-w-2xl w-full relative animate-fade-in-up max-h-[90vh] overflow-y-auto">
+        <button onclick="closeModal('trackingFeaturesModal')"
+                class="absolute top-4 right-4 text-pastel-textLight hover:text-pastel-text transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+
+        <h2 class="font-serif text-2xl font-medium text-pastel-heading mb-6">Tracking Features 📊</h2>
+
+        <p class="text-pastel-text mb-6">Track everything important about your baby's day. Regular tracking helps you
+            spot patterns and keep caregivers informed.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="p-4 bg-pastel-lightest rounded-lg">
+                <h3 class="font-medium text-pastel-heading mb-2">🍼 Feeding</h3>
+                <p class="text-sm text-pastel-textLight">• Track breast, bottle, or solid feeds</p>
+                <p class="text-sm text-pastel-textLight">• Log duration and amount consumed</p>
+                <p class="text-sm text-pastel-textLight">• Set feeding reminders and timers</p>
+            </div>
+
+            <div class="p-4 bg-pastel-lightest rounded-lg">
+                <h3 class="font-medium text-pastel-heading mb-2">😴 Sleep</h3>
+                <p class="text-sm text-pastel-textLight">• Record naps and nighttime sleep</p>
+                <p class="text-sm text-pastel-textLight">• Track sleep quality and location</p>
+                <p class="text-sm text-pastel-textLight">• View sleep patterns over time</p>
+            </div>
+
+            <div class="p-4 bg-pastel-lightest rounded-lg">
+                <h3 class="font-medium text-pastel-heading mb-2">🩲 Diapers</h3>
+                <p class="text-sm text-pastel-textLight">• Log wet and dirty diapers</p>
+                <p class="text-sm text-pastel-textLight">• Note unusual colors or consistency</p>
+                <p class="text-sm text-pastel-textLight">• Monitor diaper counts for health</p>
+            </div>
+
+            <div class="p-4 bg-pastel-lightest rounded-lg">
+                <h3 class="font-medium text-pastel-heading mb-2">🏥 Health</h3>
+                <p class="text-sm text-pastel-textLight">• Track medications and dosages</p>
+                <p class="text-sm text-pastel-textLight">• Record doctor visits and vaccines</p>
+                <p class="text-sm text-pastel-textLight">• Monitor symptoms and temperature</p>
+            </div>
+
+            <div class="p-4 bg-pastel-lightest rounded-lg">
+                <h3 class="font-medium text-pastel-heading mb-2">📏 Growth</h3>
+                <p class="text-sm text-pastel-textLight">• Log weight, height, and head size</p>
+                <p class="text-sm text-pastel-textLight">• View growth charts and percentiles</p>
+                <p class="text-sm text-pastel-textLight">• Compare to WHO standards</p>
+            </div>
+
+            <div class="p-4 bg-pastel-lightest rounded-lg">
+                <h3 class="font-medium text-pastel-heading mb-2">🎉 Milestones</h3>
+                <p class="text-sm text-pastel-textLight">• Capture first smile, steps, words</p>
+                <p class="text-sm text-pastel-textLight">• Add photos to milestone moments</p>
+                <p class="text-sm text-pastel-textLight">• Share achievements with family</p>
+            </div>
+        </div>
+
+        <div class="p-4 bg-pastel-secondary rounded-lg mb-6">
+            <h3 class="font-medium text-pastel-heading mb-2">💡 Quick Tips</h3>
+            <p class="text-sm text-pastel-textLight">• View your tracking history anytime in the calendar view</p>
+            <p class="text-sm text-pastel-textLight">• Export data to share with pediatricians</p>
+            <p class="text-sm text-pastel-textLight">• Consistent tracking reveals helpful patterns for better
+                routines</p>
+        </div>
+
+        <div class="flex gap-3 justify-center">
+            <button onclick="handleGoogleSignIn();"
+                    class="py-2 px-6 bg-pastel-primary text-white font-medium rounded-full hover:bg-pastel-primaryHover transition-colors">
+                Sign Up to Start Tracking
+            </button>
+            <button onclick="closeModal('trackingFeaturesModal'); showModal('helpCenterModal');"
+                    class="py-2 px-6 bg-white text-pastel-primary border-2 border-pastel-primary font-medium rounded-full hover:bg-pastel-lightest transition-colors">
+                Back to Help
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Getting Started Modal -->
+<div id="gettingStartedModal"
+     class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
+    <div class="bg-white rounded-2xl p-8 max-w-2xl w-full relative animate-fade-in-up max-h-[90vh] overflow-y-auto">
+        <button onclick="closeModal('gettingStartedModal')"
+                class="absolute top-4 right-4 text-pastel-textLight hover:text-pastel-text transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+
+        <h2 class="font-serif text-2xl font-medium text-pastel-heading mb-6">Getting Started 🍼</h2>
+
+        <p class="text-pastel-text mb-6">Welcome! Let's get you set up to track your baby's journey. It only takes a few
+            minutes to personalize your experience.</p>
+
+        <div class="space-y-4 mb-6">
+            <div class="p-4 bg-pastel-lightest rounded-lg">
+                <h3 class="font-medium text-pastel-heading mb-2">1. Create Your Baby's Profile</h3>
+                <p class="text-sm text-pastel-textLight">• Add your baby's name and birthdate</p>
+                <p class="text-sm text-pastel-textLight">• Upload a cute photo (optional)</p>
+                <p class="text-sm text-pastel-textLight">• Set feeding and sleep preferences</p>
+            </div>
+
+            <div class="p-4 bg-pastel-lightest rounded-lg">
+                <h3 class="font-medium text-pastel-heading mb-2">2. Start Your First Tracking</h3>
+                <p class="text-sm text-pastel-textLight">• Tap the + button to log activities</p>
+                <p class="text-sm text-pastel-textLight">• Use quick timers for feeding and sleep</p>
+                <p class="text-sm text-pastel-textLight">• Add notes to remember important details</p>
+            </div>
+
+            <div class="p-4 bg-pastel-lightest rounded-lg">
+                <h3 class="font-medium text-pastel-heading mb-2">3. Explore Main Features</h3>
+                <p class="text-sm text-pastel-textLight">• Dashboard shows today's activities at a glance</p>
+                <p class="text-sm text-pastel-textLight">• Growth charts track your baby's development</p>
+                <p class="text-sm text-pastel-textLight">• AI assistant answers your parenting questions</p>
+            </div>
+
+            <div class="p-4 bg-pastel-lightest rounded-lg">
+                <h3 class="font-medium text-pastel-heading mb-2">4. Customize Your Experience</h3>
+                <p class="text-sm text-pastel-textLight">• Choose your preferred units (metric or imperial)</p>
+                <p class="text-sm text-pastel-textLight">• Set reminders for feeding and medications</p>
+                <p class="text-sm text-pastel-textLight">• Pick themes and colors you love</p>
+            </div>
+        </div>
+
+        <div class="flex gap-3 justify-center">
+            <button onclick="handleGoogleSignIn();"
+                    class="py-2 px-6 bg-pastel-primary text-white font-medium rounded-full hover:bg-pastel-primaryHover transition-colors">
+                Sign Up Now
+            </button>
+            <button onclick="closeModal('gettingStartedModal'); showModal('helpCenterModal');"
+                    class="py-2 px-6 bg-white text-pastel-primary border-2 border-pastel-primary font-medium rounded-full hover:bg-pastel-lightest transition-colors">
+                Back to Help
+            </button>
         </div>
     </div>
 </div>
