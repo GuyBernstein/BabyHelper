@@ -86,7 +86,70 @@
         }
     </script>
     <style>
-        /* Custom styles for enhanced functionality */
+        /* Enhanced styles for sticky navigation */
+        .nav-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            background-color: rgba(253, 246, 240, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(180, 160, 150, 0.1);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        /* Hidden state for navigation */
+        .nav-wrapper.nav-hidden {
+            transform: translateY(-100%);
+        }
+
+        /* Add padding to body to account for fixed nav */
+        body {
+            padding-top: 80px; /* Adjust based on nav height */
+        }
+
+        /* Toggle button for hiding nav */
+        .nav-toggle-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 60;
+            background-color: rgba(255, 140, 105, 0.9);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(255, 140, 105, 0.3);
+        }
+
+        .nav-toggle-btn:hover {
+            background-color: #ff7043;
+            transform: scale(1.05);
+        }
+
+        .nav-toggle-btn.nav-hidden {
+            background-color: rgba(109, 93, 82, 0.9);
+        }
+
+        /* Fix for mobile menu */
+        .mobile-menu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background-color: rgba(253, 246, 240, 0.98);
+        }
+
+        .mobile-menu.active {
+            max-height: 400px; /* Increased height for mobile menu items */
+        }
+
         .blob-animation {
             animation: blob-move 15s infinite alternate;
         }
@@ -130,13 +193,6 @@
             }
         }
 
-        /* Mobile menu styles */
-        .mobile-menu {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-        }
-
         /* Screen reader only class */
         .sr-only {
             position: absolute;
@@ -175,7 +231,7 @@
         }
 
         .faq-content.active {
-            max-height: 500px; /* Adjust based on your content */
+            max-height: 500px;
             transition: max-height 0.3s ease-in;
         }
 
@@ -188,7 +244,6 @@
         .faq-button:hover {
             background-color: rgba(255, 140, 105, 0.05);
         }
-
 
         /* Demo preview styles - removed scale on hover */
         .demo-screen {
@@ -212,6 +267,19 @@
         }
     </style>
     <script>
+        // Toggle navigation visibility
+        function toggleNavigation() {
+            const nav = document.getElementById('mainNavigation');
+            const toggleBtn = document.querySelector('.nav-toggle-btn');
+
+            nav.classList.toggle('nav-hidden');
+            toggleBtn.classList.toggle('nav-hidden');
+
+            // Store preference in sessionStorage
+            const isHidden = nav.classList.contains('nav-hidden');
+            sessionStorage.setItem('navHidden', isHidden);
+        }
+
         // Mobile menu toggle
         function toggleMobileMenu() {
             const menu = document.getElementById('mobileMenu');
@@ -227,7 +295,16 @@
         function scrollToSection(sectionId) {
             const section = document.getElementById(sectionId);
             if (section) {
-                section.scrollIntoView({behavior: 'smooth'});
+                // Account for fixed nav height
+                const navHeight = document.getElementById('mainNavigation').offsetHeight;
+                const elementPosition = section.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - navHeight;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+
                 // Close mobile menu if open
                 const menu = document.getElementById('mobileMenu');
                 if (menu.classList.contains('active')) {
@@ -401,19 +478,6 @@
             images.forEach(img => imageObserver.observe(img));
         }
 
-        // Initialize on DOM load
-        window.addEventListener('DOMContentLoaded', function () {
-            animateCounters();
-            lazyLoadImages();
-            updateDemoPreview();
-            resetAutoAdvance();
-        });
-
-        // remove this
-        function showAuthModal() {
-            showModal('authModal');
-        }
-
         // Modal functions
         function showModal(modalId) {
             document.getElementById(modalId).classList.remove('hidden');
@@ -480,6 +544,14 @@
             }, 1500);
         }
 
+        // Initialize on DOM load
+        window.addEventListener('DOMContentLoaded', function () {
+            animateCounters();
+            lazyLoadImages();
+            updateDemoPreview();
+            resetAutoAdvance();
+        });
+
         // Close modals when clicking outside
         window.addEventListener('click', function (event) {
             const modals = [
@@ -495,81 +567,98 @@
                 }
             });
         });
+
+        // Check for stored navigation preference on page load
+        window.addEventListener('load', function () {
+            const navHidden = sessionStorage.getItem('navHidden') === 'true';
+            if (navHidden) {
+                document.getElementById('mainNavigation').classList.add('nav-hidden');
+                document.querySelector('.nav-toggle-btn').classList.add('nav-hidden');
+            }
+        });
     </script>
 </head>
 <body class="bg-pastel-lightest font-sans text-pastel-text">
-<!-- Skip Navigation Link for Accessibility -->
-<a href="#main-content"
-   class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-pastel-primary text-white px-4 py-2 rounded">
-    Skip to main content
-</a>
 
-<!-- Navigation -->
-<nav class="w-full py-4 px-4 md:px-8 opacity-0 animate-fade-in"
-     style="animation-delay: 0.1s; animation-fill-mode: forwards;">
-    <div class="max-w-7xl mx-auto flex justify-between items-center">
-        <a href="#" class="flex items-center space-x-2" aria-label="BabyHelper Home">
-            <div class="w-10 h-10 rounded-full bg-pastel-primary flex items-center justify-center text-white font-serif font-semibold text-xl">
-                B
+<!-- Navigation Toggle Button -->
+<button onclick="toggleNavigation()"
+        class="nav-toggle-btn"
+        aria-label="Toggle navigation visibility"
+        title="Hide/Show Navigation">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+    </svg>
+</button>
+
+<!-- Navigation with Sticky Wrapper -->
+<nav class="nav-wrapper" id="mainNavigation">
+    <div class="w-full py-4 px-4 md:px-8 opacity-0 animate-fade-in"
+         style="animation-delay: 0.1s; animation-fill-mode: forwards;">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="#" class="flex items-center space-x-2" aria-label="BabyHelper Home">
+                <div class="w-10 h-10 rounded-full bg-pastel-primary flex items-center justify-center text-white font-serif font-semibold text-xl">
+                    B
+                </div>
+                <span class="font-serif text-pastel-heading text-xl">BabyHelper</span>
+            </a>
+
+            <!-- Desktop Navigation -->
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#home" onclick="scrollToSection('home')"
+                   class="text-pastel-text hover:text-pastel-primary transition-colors">Home</a>
+                <a href="#features" onclick="scrollToSection('features')"
+                   class="text-pastel-text hover:text-pastel-primary transition-colors">Features</a>
+                <a href="#how-it-works" onclick="scrollToSection('how-it-works')"
+                   class="text-pastel-text hover:text-pastel-primary transition-colors">How It Works</a>
+                <a href="#architecture" onclick="scrollToSection('architecture')"
+                   class="text-pastel-text hover:text-pastel-primary transition-colors">Behind the Scenes</a>
+                <a href="#support" onclick="scrollToSection('support')"
+                   class="text-pastel-text hover:text-pastel-primary transition-colors">Support</a>
+                <button onclick="handleGoogleSignIn()"
+                        class="px-5 py-2 bg-white border border-pastel-light rounded-full text-pastel-primary hover:bg-pastel-light transition-all flex items-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    <span>Sign In</span>
+                </button>
             </div>
-            <span class="font-serif text-pastel-heading text-xl">BabyHelper</span>
-        </a>
 
-        <!-- Desktop Navigation -->
-        <div class="hidden md:flex items-center space-x-8">
-            <a href="#home" onclick="scrollToSection('home')"
-               class="text-pastel-text hover:text-pastel-primary transition-colors">Home</a>
-            <a href="#features" onclick="scrollToSection('features')"
-               class="text-pastel-text hover:text-pastel-primary transition-colors">Features</a>
-            <a href="#how-it-works" onclick="scrollToSection('how-it-works')"
-               class="text-pastel-text hover:text-pastel-primary transition-colors">How It Works</a>
-            <a href="#architecture" onclick="scrollToSection('architecture')"
-               class="text-pastel-text hover:text-pastel-primary transition-colors">Behind the Scenes</a>
-            <a href="#support" onclick="scrollToSection('support')"
-               class="text-pastel-text hover:text-pastel-primary transition-colors">Support</a>
-            <button onclick="handleGoogleSignIn()"
-                    class="px-5 py-2 bg-white border border-pastel-light rounded-full text-pastel-primary hover:bg-pastel-light transition-all flex items-center space-x-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            <!-- Mobile Menu Button -->
+            <button onclick="toggleMobileMenu()" class="md:hidden text-pastel-text focus:outline-none"
+                    aria-label="Toggle menu">
+                <svg id="hamburgerIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                     viewBox="0 0 24 24"
+                     stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                 </svg>
-                <span>Sign In</span>
+                <svg id="closeIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
             </button>
         </div>
 
-        <!-- Mobile Menu Button -->
-        <button onclick="toggleMobileMenu()" class="md:hidden text-pastel-text focus:outline-none"
-                aria-label="Toggle menu">
-            <svg id="hamburgerIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                 stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-            </svg>
-            <svg id="closeIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none"
-                 viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-        </button>
-    </div>
-
-    <!-- Mobile Menu -->
-    <div id="mobileMenu" class="mobile-menu md:hidden mt-4">
-        <div class="flex flex-col space-y-4 px-4 py-4">
-            <a href="#home" onclick="scrollToSection('home')"
-               class="text-pastel-text hover:text-pastel-primary transition-colors py-2">Home</a>
-            <a href="#features" onclick="scrollToSection('features')"
-               class="text-pastel-text hover:text-pastel-primary transition-colors py-2">Features</a>
-            <a href="#how-it-works" onclick="scrollToSection('how-it-works')"
-               class="text-pastel-text hover:text-pastel-primary transition-colors py-2">How It Works</a>
-            <a href="#architecture" onclick="scrollToSection('architecture')"
-               class="text-pastel-text hover:text-pastel-primary transition-colors py-2">Behind the Scenes</a>
-            <a href="#support" onclick="scrollToSection('support')"
-               class="text-pastel-text hover:text-pastel-primary transition-colors py-2">Support</a>
-            <button onclick="handleGoogleSignIn()"
-                    class="w-full px-5 py-2 bg-white border border-pastel-light rounded-full text-pastel-primary hover:bg-pastel-light transition-all">
-                Sign In
-            </button>
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="mobile-menu md:hidden mt-4">
+            <div class="flex flex-col space-y-4 px-4 py-4">
+                <a href="#home" onclick="scrollToSection('home')"
+                   class="text-pastel-text hover:text-pastel-primary transition-colors py-2">Home</a>
+                <a href="#features" onclick="scrollToSection('features')"
+                   class="text-pastel-text hover:text-pastel-primary transition-colors py-2">Features</a>
+                <a href="#how-it-works" onclick="scrollToSection('how-it-works')"
+                   class="text-pastel-text hover:text-pastel-primary transition-colors py-2">How It Works</a>
+                <a href="#architecture" onclick="scrollToSection('architecture')"
+                   class="text-pastel-text hover:text-pastel-primary transition-colors py-2">Behind the Scenes</a>
+                <a href="#support" onclick="scrollToSection('support')"
+                   class="text-pastel-text hover:text-pastel-primary transition-colors py-2">Support</a>
+                <button onclick="handleGoogleSignIn()"
+                        class="w-full px-5 py-2 bg-white border border-pastel-light rounded-full text-pastel-primary hover:bg-pastel-light transition-all">
+                    Sign In
+                </button>
+            </div>
         </div>
     </div>
 </nav>
