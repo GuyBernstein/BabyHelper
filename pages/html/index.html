@@ -180,7 +180,7 @@
             transition: transform 0.3s ease;
         }
 
-        /* Pricing card hover effect - removed scale transform */
+        /* Pricing card hover effect */
         .pricing-card {
             transition: box-shadow 0.3s ease;
         }
@@ -260,7 +260,7 @@
         // Auto-advance testimonials
         setInterval(() => {
             moveTestimonial(1);
-        }, 5000);
+        }, 7000);
 
         // FAQ accordion
         function toggleFAQ(index) {
@@ -298,7 +298,7 @@
             // Set new interval
             autoAdvanceInterval = setInterval(() => {
                 nextDemoStep();
-            }, 4000);
+            }, 5000);
         }
 
         function updateDemoPreview() {
@@ -330,7 +330,7 @@
         }
 
         // Auto-advance demo
-        setInterval(nextDemoStep, 3000);
+        setInterval(nextDemoStep, 5000);
 
         // Animate counters when in view
         function animateCounters() {
@@ -695,7 +695,7 @@
                                 </button>
                             </div>
 
-                            <!-- Sleep Screen - Made more compact -->
+                            <!-- Sleep Screen -->
                             <div class="demo-screen hidden absolute inset-0 p-4" id="sleep-screen">
                                 <h4 class="font-semibold text-pastel-heading mb-2 text-sm">Sleep Tracking</h4>
                                 <div class="bg-white p-3 rounded-lg mb-2">
@@ -749,7 +749,7 @@
                             </div>
                         </div>
 
-                        <!-- Demo Navigation Dots - Now clickable -->
+                        <!-- Demo Navigation Dots -->
                         <div class="flex justify-center mt-4 space-x-2">
                             <button onclick="goToDemoStep(0)"
                                     class="demo-dot w-2 h-2 rounded-full bg-pastel-primary transition-all hover:scale-125"></button>
@@ -797,7 +797,7 @@
     </div>
 </section>
 
-<!-- Features Section - New comprehensive features showcase -->
+<!-- Features Section -->
 <section id="features" class="py-20 bg-white">
     <div class="container mx-auto px-4 md:px-8">
         <div class="text-center mb-16">
@@ -901,7 +901,7 @@
                     </svg>
                 </div>
                 <h3 class="font-serif text-xl font-medium text-pastel-heading mb-3">Growth Monitoring</h3>
-                <p class="text-pastel-textLight mb-4">Track weight, height, and head circumference with WHO growth
+                <p class="text-pastel-textLight mb-4">Track weight and height with WHO growth
                     charts and percentile comparisons.</p>
                 <ul class="space-y-2 text-sm text-pastel-text">
                     <li class="flex items-center">
@@ -1077,7 +1077,7 @@
                     <div class="hidden md:block absolute top-10 left-[60%] w-full h-0.5 bg-pastel-light"></div>
                 </div>
                 <h3 class="font-serif text-xl font-medium text-pastel-heading mb-3">Create Your Account</h3>
-                <p class="text-pastel-textLight">Sign up with Google or email in seconds. Add your baby's details and
+                <p class="text-pastel-textLight">Sign up with Google in seconds. Add your baby's details and
                     customize your preferences.</p>
             </div>
 
@@ -1111,11 +1111,24 @@
 
         <!-- CTA -->
         <div class="text-center">
-            <button onclick="showAuthModal()"
-                    class="btn-hover-effect px-8 py-3 bg-pastel-primary text-white font-semibold rounded-full shadow-pastel transition-all duration-300 hover:bg-pastel-primaryHover hover:transform hover:-translate-y-1">
-                Get Started Free
+            <button
+                    onclick="handleGoogleSignIn()"
+                    class="inline-flex items-center whitespace-nowrap px-8 py-3 bg-pastel-primary text-white font-semibold rounded-full shadow-pastel transition-all duration-300 hover:bg-pastel-primaryHover hover:transform hover:-translate-y-1"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     class="h-5 w-5 mr-2"
+                     viewBox="0 0 24 24"
+                     fill="currentColor"
+                >
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                <span>Get Started Free</span>
             </button>
         </div>
+
     </div>
 </section>
 
@@ -1277,196 +1290,149 @@
     </div>
 </section>
 
-<!-- Pricing Section - New pricing plans -->
-<section id="pricing" class="py-20 bg-pastel-lightest">
+<!-- Architecture Section -->
+<section id="architecture" class="py-20 bg-pastel-lightest">
     <div class="container mx-auto px-4 md:px-8">
         <div class="text-center mb-16">
             <h2 class="font-serif text-3xl md:text-4xl lg:text-5xl font-medium text-pastel-heading mb-4">
-                Choose Your <span class="text-pastel-primary">Perfect Plan</span>
+                Behind the Scenes: <span class="text-pastel-primary">How I Built This Site</span>
             </h2>
-            <p class="text-lg text-pastel-textLight max-w-2xl mx-auto">
-                Start free and upgrade as your family grows. All plans include core features.
+            <p class="text-lg text-pastel-textLight max-w-3xl mx-auto">
+                Dive into the technical journey of creating this baby tracking application. Explore the architecture,
+                tools, and design decisions that bring this platform to life.
             </p>
         </div>
 
-        <!-- Pricing Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <!-- Free Plan -->
-            <div class="pricing-card bg-white p-8 rounded-2xl border border-pastel-light">
-                <h3 class="font-serif text-2xl font-medium text-pastel-heading mb-2">Basic</h3>
-                <p class="text-pastel-textLight mb-6">Perfect for getting started</p>
-                <div class="mb-6">
-                    <span class="text-4xl font-bold text-pastel-heading">$0</span>
-                    <span class="text-pastel-textLight">/month</span>
+        <!-- Architecture Walkthrough Video -->
+        <div class="max-w-5xl mx-auto mb-20">
+            <div class="bg-white p-8 rounded-2xl shadow-pastel-lg">
+                <h3 class="font-serif text-2xl md:text-3xl font-medium text-pastel-heading mb-4 text-center">
+                    Full Architecture Walkthrough
+                </h3>
+                <p class="text-pastel-textLight mb-8 text-center max-w-2xl mx-auto">
+                    Watch a comprehensive walkthrough of the site's architecture, tooling choices, and the design
+                    decisions that shaped this project.
+                </p>
+                <div class="video-wrapper rounded-xl overflow-hidden shadow-pastel" style="position: relative; padding-top: 56.25%;">
+                    <iframe
+                        src="https://www.youtube.com/embed/PLACEHOLDER_ID"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen
+                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+                    ></iframe>
                 </div>
-                <ul class="space-y-3 mb-8">
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-pastel-primary mr-3 flex-shrink-0 mt-0.5" fill="currentColor"
-                             viewBox="0 0 20 20">
-                            <path fill-rule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clip-rule="evenodd"/>
-                        </svg>
-                        <span class="text-pastel-text">Track 1 baby</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-pastel-primary mr-3 flex-shrink-0 mt-0.5" fill="currentColor"
-                             viewBox="0 0 20 20">
-                            <path fill-rule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clip-rule="evenodd"/>
-                        </svg>
-                        <span class="text-pastel-text">Basic tracking features</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-pastel-primary mr-3 flex-shrink-0 mt-0.5" fill="currentColor"
-                             viewBox="0 0 20 20">
-                            <path fill-rule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clip-rule="evenodd"/>
-                        </svg>
-                        <span class="text-pastel-text">7-day data history</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-pastel-primary mr-3 flex-shrink-0 mt-0.5" fill="currentColor"
-                             viewBox="0 0 20 20">
-                            <path fill-rule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clip-rule="evenodd"/>
-                        </svg>
-                        <span class="text-pastel-text">Email support</span>
-                    </li>
-                </ul>
-                <button onclick="showAuthModal()"
-                        class="w-full py-3 bg-white border-2 border-pastel-primary text-pastel-primary font-semibold rounded-full hover:bg-pastel-lightest transition-colors">
-                    Start Free
-                </button>
             </div>
+        </div>
 
-            <!-- Pro Plan -->
-            <div class="pricing-card bg-white p-8 rounded-2xl border-2 border-pastel-primary relative transform scale-105">
-                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-pastel-primary text-white px-4 py-1 rounded-full text-sm font-semibold">
-                    Most Popular
+        <!-- Architecture Diagram Section -->
+        <div class="max-w-6xl mx-auto mb-20">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="order-2 lg:order-1">
+                    <div class="image-wrapper bg-white p-4 rounded-2xl shadow-pastel">
+                        <img src="PLACEHOLDER_IMAGE_URL" alt="Architecture Diagram" class="responsive-image w-full h-auto rounded-lg">
+                    </div>
                 </div>
-                <h3 class="font-serif text-2xl font-medium text-pastel-heading mb-2">Pro</h3>
-                <p class="text-pastel-textLight mb-6">For growing families</p>
-                <div class="mb-6">
-                    <span class="text-4xl font-bold text-pastel-heading">$9.99</span>
-                    <span class="text-pastel-textLight">/month</span>
+                <div class="order-1 lg:order-2">
+                    <h3 class="font-serif text-2xl md:text-3xl font-medium text-pastel-heading mb-4">
+                        System Architecture Overview
+                    </h3>
+                    <p class="text-pastel-text mb-6">
+                        The application is built on a modern, scalable architecture designed to handle real-time data
+                        tracking and provide a seamless user experience across all devices.
+                    </p>
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <svg class="w-5 h-5 text-pastel-primary mr-3 flex-shrink-0 mt-0.5" fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                      clip-rule="evenodd"/>
+                            </svg>
+                            <span class="text-pastel-text">React-based frontend for dynamic user interfaces</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-5 h-5 text-pastel-primary mr-3 flex-shrink-0 mt-0.5" fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                      clip-rule="evenodd"/>
+                            </svg>
+                            <span class="text-pastel-text">Cloud-native backend for scalability</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-5 h-5 text-pastel-primary mr-3 flex-shrink-0 mt-0.5" fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                      clip-rule="evenodd"/>
+                            </svg>
+                            <span class="text-pastel-text">Real-time data synchronization across devices</span>
+                        </li>
+                    </ul>
                 </div>
-                <ul class="space-y-3 mb-8">
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-pastel-primary mr-3 flex-shrink-0 mt-0.5" fill="currentColor"
-                             viewBox="0 0 20 20">
-                            <path fill-rule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clip-rule="evenodd"/>
-                        </svg>
-                        <span class="text-pastel-text">Track up to 3 babies</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-pastel-primary mr-3 flex-shrink-0 mt-0.5" fill="currentColor"
-                             viewBox="0 0 20 20">
-                            <path fill-rule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clip-rule="evenodd"/>
-                        </svg>
-                        <span class="text-pastel-text">All tracking features</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-pastel-primary mr-3 flex-shrink-0 mt-0.5" fill="currentColor"
-                             viewBox="0 0 20 20">
-                            <path fill-rule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clip-rule="evenodd"/>
-                        </svg>
-                        <span class="text-pastel-text">Unlimited data history</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-pastel-primary mr-3 flex-shrink-0 mt-0.5" fill="currentColor"
-                             viewBox="0 0 20 20">
-                            <path fill-rule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clip-rule="evenodd"/>
-                        </svg>
-                        <span class="text-pastel-text">Smart insights & AI tips</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-pastel-primary mr-3 flex-shrink-0 mt-0.5" fill="currentColor"
-                             viewBox="0 0 20 20">
-                            <path fill-rule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clip-rule="evenodd"/>
-                        </svg>
-                        <span class="text-pastel-text">Priority support</span>
-                    </li>
-                </ul>
-                <button onclick="showAuthModal()"
-                        class="w-full py-3 bg-pastel-primary text-white font-semibold rounded-full hover:bg-pastel-primaryHover transition-colors">
-                    Start 7-Day Free Trial
-                </button>
             </div>
+        </div>
 
-            <!-- Family Plan -->
-            <div class="pricing-card bg-white p-8 rounded-2xl border border-pastel-light">
-                <h3 class="font-serif text-2xl font-medium text-pastel-heading mb-2">Family</h3>
-                <p class="text-pastel-textLight mb-6">For large families</p>
-                <div class="mb-6">
-                    <span class="text-4xl font-bold text-pastel-heading">$19.99</span>
-                    <span class="text-pastel-textLight">/month</span>
+        <!-- Feature Deep Dive -->
+        <div class="max-w-5xl mx-auto">
+            <div class="bg-white p-8 rounded-2xl shadow-pastel-lg">
+                <h3 class="font-serif text-2xl md:text-3xl font-medium text-pastel-heading mb-4 text-center">
+                    Feature Deep Dive: Smart Insights Engine
+                </h3>
+                <p class="text-pastel-textLight mb-8 text-center max-w-2xl mx-auto">
+                    Explore how we built the AI-powered insights feature that helps parents understand their baby's
+                    patterns and provides personalized recommendations.
+                </p>
+                <div class="video-wrapper rounded-xl overflow-hidden shadow-pastel" style="position: relative; padding-top: 56.25%;">
+                    <iframe
+                        src="https://www.youtube.com/embed/PLACEHOLDER_ID"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen
+                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+                    ></iframe>
                 </div>
-                <ul class="space-y-3 mb-8">
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-pastel-primary mr-3 flex-shrink-0 mt-0.5" fill="currentColor"
-                             viewBox="0 0 20 20">
-                            <path fill-rule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clip-rule="evenodd"/>
-                        </svg>
-                        <span class="text-pastel-text">Unlimited babies</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-pastel-primary mr-3 flex-shrink-0 mt-0.5" fill="currentColor"
-                             viewBox="0 0 20 20">
-                            <path fill-rule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clip-rule="evenodd"/>
-                        </svg>
-                        <span class="text-pastel-text">Everything in Pro</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-pastel-primary mr-3 flex-shrink-0 mt-0.5" fill="currentColor"
-                             viewBox="0 0 20 20">
-                            <path fill-rule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clip-rule="evenodd"/>
-                        </svg>
-                        <span class="text-pastel-text">Unlimited family members</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-pastel-primary mr-3 flex-shrink-0 mt-0.5" fill="currentColor"
-                             viewBox="0 0 20 20">
-                            <path fill-rule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clip-rule="evenodd"/>
-                        </svg>
-                        <span class="text-pastel-text">Advanced analytics</span>
-                    </li>
-                    <li class="flex items-start">
-                        <svg class="w-5 h-5 text-pastel-primary mr-3 flex-shrink-0 mt-0.5" fill="currentColor"
-                             viewBox="0 0 20 20">
-                            <path fill-rule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clip-rule="evenodd"/>
-                        </svg>
-                        <span class="text-pastel-text">24/7 phone support</span>
-                    </li>
-                </ul>
-                <button onclick="showAuthModal()"
-                        class="w-full py-3 bg-white border-2 border-pastel-primary text-pastel-primary font-semibold rounded-full hover:bg-pastel-lightest transition-colors">
-                    Contact Sales
-                </button>
+
+                <!-- Tech Stack Grid -->
+                <div class="mt-12">
+                    <h4 class="font-serif text-xl font-medium text-pastel-heading mb-6 text-center">
+                        Key Technologies Used
+                    </h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="text-center p-4 bg-pastel-lightest rounded-lg">
+                            <div class="text-pastel-primary font-semibold mb-1">Frontend</div>
+                            <div class="text-sm text-pastel-textLight">React & Tailwind</div>
+                        </div>
+                        <div class="text-center p-4 bg-pastel-lightest rounded-lg">
+                            <div class="text-pastel-primary font-semibold mb-1">Backend</div>
+                            <div class="text-sm text-pastel-textLight">Node.js & Express</div>
+                        </div>
+                        <div class="text-center p-4 bg-pastel-lightest rounded-lg">
+                            <div class="text-pastel-primary font-semibold mb-1">Database</div>
+                            <div class="text-sm text-pastel-textLight">PostgreSQL</div>
+                        </div>
+                        <div class="text-center p-4 bg-pastel-lightest rounded-lg">
+                            <div class="text-pastel-primary font-semibold mb-1">AI/ML</div>
+                            <div class="text-sm text-pastel-textLight">TensorFlow</div>
+                        </div>
+                    </div>
+                </div>
             </div>
+        </div>
+
+        <!-- Call to Action -->
+        <div class="text-center mt-16">
+            <p class="text-lg text-pastel-text mb-6">
+                Interested in the technical details? Have questions about the implementation?
+            </p>
+            <button onclick="window.location.href='#contact'"
+                    class="inline-flex items-center px-8 py-3 bg-pastel-primary text-white font-semibold rounded-full hover:bg-pastel-primaryHover transition-colors btn-hover-effect">
+                <span>Get in Touch</span>
+                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                </svg>
+            </button>
         </div>
     </div>
 </section>
