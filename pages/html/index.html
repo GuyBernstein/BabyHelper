@@ -174,6 +174,21 @@
             transition: max-height 0.3s ease-out;
         }
 
+        .faq-content.active {
+            max-height: 500px; /* Adjust based on your content */
+            transition: max-height 0.3s ease-in;
+        }
+
+        /* Smooth rotation for the arrow icon */
+        .rotate-180 {
+            transform: rotate(180deg);
+        }
+
+        /* Better hover state for FAQ items */
+        .faq-button:hover {
+            background-color: rgba(255, 140, 105, 0.05);
+        }
+
 
         /* Demo preview styles - removed scale on hover */
         .demo-screen {
@@ -267,6 +282,19 @@
             const content = document.getElementById(`faq-content-${index}`);
             const icon = document.getElementById(`faq-icon-${index}`);
 
+            // Close all other FAQs
+            for (let i = 1; i <= 6; i++) {
+                if (i !== index) {
+                    const otherContent = document.getElementById(`faq-content-${i}`);
+                    const otherIcon = document.getElementById(`faq-icon-${i}`);
+                    if (otherContent && otherIcon) {
+                        otherContent.classList.remove('active');
+                        otherIcon.classList.remove('rotate-180');
+                    }
+                }
+            }
+
+            // Toggle current FAQ
             content.classList.toggle('active');
             icon.classList.toggle('rotate-180');
         }
@@ -1313,13 +1341,14 @@
                     Watch a comprehensive walkthrough of the site's architecture, tooling choices, and the design
                     decisions that shaped this project.
                 </p>
-                <div class="video-wrapper rounded-xl overflow-hidden shadow-pastel" style="position: relative; padding-top: 56.25%;">
+                <div class="video-wrapper rounded-xl overflow-hidden shadow-pastel"
+                     style="position: relative; padding-top: 56.25%;">
                     <iframe
-                        src="https://www.youtube.com/embed/PLACEHOLDER_ID"
-                        frameborder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowfullscreen
-                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+                            src="https://www.youtube.com/embed/PLACEHOLDER_ID"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen
+                            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
                     ></iframe>
                 </div>
             </div>
@@ -1330,7 +1359,8 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div class="order-2 lg:order-1">
                     <div class="image-wrapper bg-white p-4 rounded-2xl shadow-pastel">
-                        <img src="PLACEHOLDER_IMAGE_URL" alt="Architecture Diagram" class="responsive-image w-full h-auto rounded-lg">
+                        <img src="PLACEHOLDER_IMAGE_URL" alt="Architecture Diagram"
+                             class="responsive-image w-full h-auto rounded-lg">
                     </div>
                 </div>
                 <div class="order-1 lg:order-2">
@@ -1384,13 +1414,14 @@
                     Explore how we built the AI-powered insights feature that helps parents understand their baby's
                     patterns and provides personalized recommendations.
                 </p>
-                <div class="video-wrapper rounded-xl overflow-hidden shadow-pastel" style="position: relative; padding-top: 56.25%;">
+                <div class="video-wrapper rounded-xl overflow-hidden shadow-pastel"
+                     style="position: relative; padding-top: 56.25%;">
                     <iframe
-                        src="https://www.youtube.com/embed/PLACEHOLDER_ID"
-                        frameborder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowfullscreen
-                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+                            src="https://www.youtube.com/embed/PLACEHOLDER_ID"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen
+                            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
                     ></iframe>
                 </div>
 
@@ -1430,22 +1461,23 @@
                     class="inline-flex items-center px-8 py-3 bg-pastel-primary text-white font-semibold rounded-full hover:bg-pastel-primaryHover transition-colors btn-hover-effect">
                 <span>Get in Touch</span>
                 <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
                 </svg>
             </button>
         </div>
     </div>
 </section>
 
-<!-- FAQ Section - New accordion-style FAQ -->
+<!-- FAQ section -->
 <section id="faq" class="py-20 bg-white">
     <div class="container mx-auto px-4 md:px-8">
         <div class="text-center mb-16">
             <h2 class="font-serif text-3xl md:text-4xl lg:text-5xl font-medium text-pastel-heading mb-4">
-                Frequently Asked <span class="text-pastel-primary">Questions</span>
+                Real Questions from <span class="text-pastel-primary">Real Parents</span>
             </h2>
             <p class="text-lg text-pastel-textLight max-w-2xl mx-auto">
-                Everything you need to know about BabyHelper.
+                We know you're exhausted. Here are quick answers to help you get started without the hassle.
             </p>
         </div>
 
@@ -1454,97 +1486,144 @@
             <!-- FAQ 1 -->
             <div class="bg-pastel-lightest rounded-lg">
                 <button onclick="toggleFAQ(1)"
-                        class="w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none">
-                    <h3 class="font-medium text-pastel-heading">Is BabyHelper really free to use?</h3>
+                        class="faq-button w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none rounded-lg transition-colors">
+                    <h3 class="font-medium text-pastel-heading pr-4">Do I really need another app when I can barely
+                        remember to shower?</h3>
                     <svg id="faq-icon-1" xmlns="http://www.w3.org/2000/svg"
-                         class="h-5 w-5 text-pastel-primary transition-transform" fill="none" viewBox="0 0 24 24"
+                         class="h-5 w-5 text-pastel-primary transition-transform flex-shrink-0" fill="none"
+                         viewBox="0 0 24 24"
                          stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
                 <div id="faq-content-1" class="faq-content px-6">
-                    <p class="text-pastel-textLight pb-4">Yes! BabyHelper offers a free Basic plan that includes core
-                        tracking features for one baby. You can track feeding, sleep, diapers, and growth with 7 days of
-                        data history. Upgrade to Pro or Family plans for additional features like unlimited history,
-                        multiple babies, and smart insights.</p>
+                    <p class="text-pastel-textLight pb-4">We get it. This app is designed BY sleep-deprived parents FOR
+                        sleep-deprived parents. One-tap tracking means you can log a feeding while holding baby in one
+                        arm. No complicated menus, no subscriptions, no ads. Just simple tracking that helps you answer
+                        "When did baby last eat?" without relying on your exhausted brain. It's free, open-source, and
+                        works offline - because we know your WiFi might be as unreliable as your sleep schedule.</p>
                 </div>
             </div>
 
             <!-- FAQ 2 -->
             <div class="bg-pastel-lightest rounded-lg">
                 <button onclick="toggleFAQ(2)"
-                        class="w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none">
-                    <h3 class="font-medium text-pastel-heading">Can both parents use the app?</h3>
+                        class="faq-button w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none rounded-lg transition-colors">
+                    <h3 class="font-medium text-pastel-heading pr-4">How fast can I actually log something at 3 AM?</h3>
                     <svg id="faq-icon-2" xmlns="http://www.w3.org/2000/svg"
-                         class="h-5 w-5 text-pastel-primary transition-transform" fill="none" viewBox="0 0 24 24"
+                         class="h-5 w-5 text-pastel-primary transition-transform flex-shrink-0" fill="none"
+                         viewBox="0 0 24 24"
                          stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
                 <div id="faq-content-2" class="faq-content px-6">
-                    <p class="text-pastel-textLight pb-4">Absolutely! BabyHelper supports family sharing, allowing both
-                        parents, grandparents, and caregivers to access and update baby's information. All changes sync
-                        in real-time across devices, ensuring everyone stays informed. You can set different permission
-                        levels for each family member.</p>
+                    <p class="text-pastel-textLight pb-4">Two taps. Seriously. Open app → tap what you're tracking.
+                        That's it. We designed BabyHelper with bleary-eyed, one-handed operation in mind. Big buttons,
+                        high contrast for dark rooms, and it remembers your last entries. No typing required. You can
+                        even use voice commands if your hands are full. The app auto-saves everything, so if you fall
+                        asleep mid-entry (it happens!), your data is safe.</p>
                 </div>
             </div>
 
             <!-- FAQ 3 -->
             <div class="bg-pastel-lightest rounded-lg">
                 <button onclick="toggleFAQ(3)"
-                        class="w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none">
-                    <h3 class="font-medium text-pastel-heading">Is my baby's data secure?</h3>
+                        class="faq-button w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none rounded-lg transition-colors">
+                    <h3 class="font-medium text-pastel-heading pr-4">What if my partner tracks something and forgets to
+                        tell me?</h3>
                     <svg id="faq-icon-3" xmlns="http://www.w3.org/2000/svg"
-                         class="h-5 w-5 text-pastel-primary transition-transform" fill="none" viewBox="0 0 24 24"
+                         class="h-5 w-5 text-pastel-primary transition-transform flex-shrink-0" fill="none"
+                         viewBox="0 0 24 24"
                          stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
                 <div id="faq-content-3" class="faq-content px-6">
-                    <p class="text-pastel-textLight pb-4">Your baby's privacy and data security are our top priorities.
-                        We use bank-level encryption to protect all data, never share or sell your information to third
-                        parties, and comply with COPPA and GDPR regulations. You have full control over your data and
-                        can export or delete it at any time.</p>
+                    <p class="text-pastel-textLight pb-4">Real-time sync means you'll see their entries instantly on
+                        your device. No more "Did you feed the baby?" texts at work. Everyone with access sees the same
+                        info - parents, grandparents, babysitters. You can even get gentle notifications like "Baby
+                        hasn't eaten in 3 hours" if you want them. Perfect for shift changes between caregivers or when
+                        you're both too tired to communicate properly.</p>
                 </div>
             </div>
 
             <!-- FAQ 4 -->
             <div class="bg-pastel-lightest rounded-lg">
                 <button onclick="toggleFAQ(4)"
-                        class="w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none">
-                    <h3 class="font-medium text-pastel-heading">What devices does BabyHelper support?</h3>
+                        class="faq-button w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none rounded-lg transition-colors">
+                    <h3 class="font-medium text-pastel-heading pr-4">Will this actually help me get more sleep?</h3>
                     <svg id="faq-icon-4" xmlns="http://www.w3.org/2000/svg"
-                         class="h-5 w-5 text-pastel-primary transition-transform" fill="none" viewBox="0 0 24 24"
+                         class="h-5 w-5 text-pastel-primary transition-transform flex-shrink-0" fill="none"
+                         viewBox="0 0 24 24"
                          stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
                 <div id="faq-content-4" class="faq-content px-6">
-                    <p class="text-pastel-textLight pb-4">BabyHelper works on all modern devices including iPhone, iPad,
-                        Android phones and tablets, and web browsers. Your data syncs seamlessly across all devices, so
-                        you can track on your phone while out and review insights on your tablet or computer at
-                        home.</p>
+                    <p class="text-pastel-textLight pb-4">While we can't make your baby sleep longer (we wish!),
+                        BabyHelper helps you spot patterns. See when baby typically gets hungry or sleepy, and plan
+                        accordingly. Many parents find they can squeeze in an extra 30-60 minutes of sleep by
+                        anticipating baby's needs. The app also helps at doctor visits - instead of guessing how many
+                        wet diapers yesterday, you'll have actual data. Less mental load = better rest when you do get
+                        it.</p>
                 </div>
             </div>
 
             <!-- FAQ 5 -->
             <div class="bg-pastel-lightest rounded-lg">
                 <button onclick="toggleFAQ(5)"
-                        class="w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none">
-                    <h3 class="font-medium text-pastel-heading">Can I track multiple babies?</h3>
+                        class="faq-button w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none rounded-lg transition-colors">
+                    <h3 class="font-medium text-pastel-heading pr-4">What's the catch? Why is it really free?</h3>
                     <svg id="faq-icon-5" xmlns="http://www.w3.org/2000/svg"
-                         class="h-5 w-5 text-pastel-primary transition-transform" fill="none" viewBox="0 0 24 24"
+                         class="h-5 w-5 text-pastel-primary transition-transform flex-shrink-0" fill="none"
+                         viewBox="0 0 24 24"
                          stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
                 <div id="faq-content-5" class="faq-content px-6">
-                    <p class="text-pastel-textLight pb-4">Yes! The Basic plan supports tracking for one baby. With the
-                        Pro plan, you can track up to 3 babies, and the Family plan offers unlimited baby profiles. Each
-                        baby has their own profile with separate tracking data, growth charts, and insights. Perfect for
-                        twins, triplets, or growing families!</p>
+                    <p class="text-pastel-textLight pb-4">No catch. A group of parent-developers built this because we
+                        needed it and existing apps were either expensive, complicated, or full of ads. It's
+                        open-source, meaning anyone can verify there's no data selling or hidden agenda. We run on
+                        donations from grateful parents who can afford to chip in. Your data stays on your device unless
+                        you choose to sync. No ads, no premium features, no guilt trips. Just parents helping parents
+                        survive the early years.</p>
                 </div>
             </div>
+
+            <!-- FAQ 6 - New addition -->
+            <div class="bg-pastel-lightest rounded-lg">
+                <button onclick="toggleFAQ(6)"
+                        class="faq-button w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none rounded-lg transition-colors">
+                    <h3 class="font-medium text-pastel-heading pr-4">I'm barely keeping it together. Is this actually
+                        simple to use?</h3>
+                    <svg id="faq-icon-6" xmlns="http://www.w3.org/2000/svg"
+                         class="h-5 w-5 text-pastel-primary transition-transform flex-shrink-0" fill="none"
+                         viewBox="0 0 24 24"
+                         stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div id="faq-content-6" class="faq-content px-6">
+                    <p class="text-pastel-textLight pb-4">Dead simple. No account creation, no tutorial needed.
+                        Download, open, tap. The home screen shows only what matters RIGHT NOW - when baby last ate,
+                        slept, and pooped. Everything else is tucked away until you need it. We tested this with parents
+                        running on 2 hours of sleep. If they could use it, anyone can. Plus, if you mess up an entry,
+                        fixing it takes one tap. We know perfection isn't possible with a newborn.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-12">
+            <p class="text-pastel-textLight">
+                Still have questions?
+                <button onclick="showContactModal()"
+                        class="text-pastel-primary hover:text-pastel-primaryHover underline">Ask our community of
+                    parents
+                </button>
+                - someone's probably been there at 2 AM too.
+            </p>
         </div>
     </div>
 </section>
