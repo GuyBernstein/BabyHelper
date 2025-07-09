@@ -86,7 +86,6 @@
         }
     </script>
     <style>
-        /* Enhanced styles for sticky navigation */
         .nav-wrapper {
             position: fixed;
             top: 0;
@@ -110,7 +109,7 @@
             padding-top: 80px; /* Adjust based on nav height */
         }
 
-        /* Toggle button for hiding nav */
+        /* Toggle button for hiding nav - Desktop only */
         .nav-toggle-btn {
             position: fixed;
             top: 20px;
@@ -121,12 +120,18 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 2px 10px rgba(255, 140, 105, 0.3);
+        }
+
+        /* Only apply flex display on medium screens and up */
+        @media (min-width: 768px) {
+            .nav-toggle-btn {
+                display: flex !important;
+            }
         }
 
         .nav-toggle-btn:hover {
@@ -580,9 +585,9 @@
 </head>
 <body class="bg-pastel-lightest font-sans text-pastel-text">
 
-<!-- Navigation Toggle Button -->
+<!-- Navigation Toggle Button - Only visible on desktop -->
 <button onclick="toggleNavigation()"
-        class="nav-toggle-btn"
+        class="nav-toggle-btn hidden md:block"
         aria-label="Toggle navigation visibility"
         title="Hide/Show Navigation">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
