@@ -173,6 +173,134 @@
                 transform: scale(0.95) translateY(10px);
             }
         }
+
+        /* Flow section transitions */
+        .flow-section {
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Card hover effects */
+        .baby-card {
+            transition: all 0.3s ease;
+        }
+
+        .baby-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Progress indicator styles */
+        .progress-step {
+            position: relative;
+            flex: 1;
+            text-align: center;
+        }
+
+        .progress-step::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: #ffe8d9;
+            z-index: -1;
+        }
+
+        .progress-step:last-child::after {
+            display: none;
+        }
+
+        .progress-step.active::after {
+            background: #ff8c69;
+        }
+
+        .progress-step-circle {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 8px;
+            border-radius: 50%;
+            background: #ffe8d9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.active .progress-step-circle {
+            background: #ff8c69;
+            color: white;
+        }
+
+        .progress-step.completed .progress-step-circle {
+            background: #10b981;
+            color: white;
+        }
+
+        /* Enhanced form styles */
+        .form-group {
+            position: relative;
+        }
+
+        .form-group label {
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus + label,
+        .form-group input:not(:placeholder-shown) + label {
+            transform: translateY(-20px) scale(0.85);
+            color: #ff8c69;
+        }
+
+        /* Invitation card animations */
+        .invitation-card {
+            transition: all 0.3s ease;
+        }
+
+        .invitation-card.processing {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .invitation-card.accepted {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+
+        .invitation-card.declined {
+            opacity: 0.5;
+        }
+
+        /* Modal backdrop blur */
+        .modal-backdrop {
+            backdrop-filter: blur(4px);
+        }
+
+        /* Success animation */
+        @keyframes successPulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .success-icon {
+            animation: successPulse 0.6s ease-out;
+        }
     </style>
 </head>
 <body class="bg-pastel-lightest font-sans text-pastel-text min-h-screen">
@@ -194,311 +322,34 @@
     </div>
 </nav>
 
-<!-- Onboarding Content -->
-<div class="max-w-4xl mx-auto px-4 py-12">
-    <!-- Welcome Section -->
+<!-- Onboarding Structure -->
+<!-- Main Content Container -->
+<div class="max-w-7xl mx-auto px-4 py-12">
+    <!-- Welcome Section (remains the same) -->
     <div class="text-center mb-8">
         <h1 class="font-serif text-4xl md:text-5xl font-medium text-pastel-heading mb-4">
             Welcome to BabyHelper, <span id="userName" class="text-pastel-primary">Parent</span>!
         </h1>
         <p class="text-lg text-pastel-textLight">
-            Let's get your account set up. You can skip any step and complete it later in settings.
+            Let's get your account set up in just a few steps
         </p>
         <p class="text-sm text-pastel-textLight mt-2">
             Signed in as: <span id="userEmail" class="font-medium"></span>
         </p>
     </div>
 
-    <!-- Progress Bar -->
-    <div class="mb-8">
-        <button onclick="onboardingApp.handleSkipAllClick()"
-                class="text-sm text-pastel-primary hover:text-pastel-primaryHover font-medium transition-colors flex items-center space-x-1">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                 stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-            </svg>
-            <span>Skip All Steps</span>
-        </button>
-        <div class="w-full bg-pastel-light rounded-full h-2 flex space-x-1">
-            <div id="progress-1" class="progress-segment flex-1 bg-pastel-primary rounded-full"></div>
-            <div id="progress-2" class="progress-segment flex-1 bg-pastel-light rounded-full"></div>
-            <div id="progress-3" class="progress-segment flex-1 bg-pastel-light rounded-full"></div>
-        </div>
+    <!-- Dynamic Progress Indicator -->
+    <div id="progress-indicator" class="mb-8 hidden">
+        <!-- This will be dynamically populated based on the current flow state -->
     </div>
 
-    <!-- Step 1: Baby Information -->
-    <div id="step-1" class="step-container">
-        <div class="bg-white rounded-2xl shadow-lg p-8 border border-pastel-light">
-            <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 rounded-full bg-pastel-primary flex items-center justify-center text-white font-semibold text-lg">
-                        1
-                    </div>
-                    <h2 class="font-serif text-2xl text-pastel-heading ml-4">Add Your Baby's Information</h2>
-                </div>
-                <button onclick="onboardingApp.skipCurrentStep()"
-                        class="text-sm text-pastel-textLight hover:text-pastel-text transition-colors">
-                    Skip This Step
-                </button>
-            </div>
-
-            <!-- Error container for step 1 -->
-            <div id="step1-error" class="hidden mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p class="text-red-700 text-sm"></p>
-            </div>
-
-            <form id="babyInfoForm" class="space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="babyName" class="block text-sm font-medium text-pastel-text mb-2">Baby's
-                            Name</label>
-                        <input type="text" id="babyName" placeholder="Emma" maxlength="100"
-                               class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
-                        <span class="text-xs text-red-500 mt-1 hidden" id="babyName-error"></span>
-                    </div>
-                    <div>
-                        <label for="babyDob" class="block text-sm font-medium text-pastel-text mb-2">Date of
-                            Birth</label>
-                        <input type="date" id="babyDob"
-                               class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
-                        <span class="text-xs text-red-500 mt-1 hidden" id="babyDob-error"></span>
-                    </div>
-                    <div>
-                        <label for="babyGender" class="block text-sm font-medium text-pastel-text mb-2">Gender</label>
-                        <select id="babyGender"
-                                class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
-                            <option value="">Select gender</option>
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                        </select>
-                        <span class="text-xs text-red-500 mt-1 hidden" id="babyGender-error"></span>
-                    </div>
-                    <div>
-                        <label for="babyWeight" class="block text-sm font-medium text-pastel-text mb-2">Current Weight
-                            (kg)</label>
-                        <input type="number" id="babyWeight" step="0.1" placeholder="3.2" min="0.5" max="50"
-                               class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
-                        <span class="text-xs text-red-500 mt-1 hidden" id="babyWeight-error"></span>
-                    </div>
-                    <div>
-                        <label for="babyHeight" class="block text-sm font-medium text-pastel-text mb-2">Current Height
-                            (cm)</label>
-                        <input type="number" id="babyHeight" step="0.1" placeholder="49.2" min="20" max="150"
-                               class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
-                        <span class="text-xs text-red-500 mt-1 hidden" id="babyHeight-error"></span>
-                    </div>
-                </div>
-
-                <div class="flex justify-end space-x-4 mt-8">
-                    <button type="button" onclick="onboardingApp.nextStep()" id="step1-submit"
-                            class="px-8 py-3 bg-pastel-primary text-white font-semibold rounded-lg hover:bg-pastel-primaryHover transition-colors flex items-center space-x-2">
-                        <span>Next Step</span>
-                        <div class="spinner hidden"></div>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Step 2: Co-parenting Setup -->
-    <div id="step-2" class="step-container step-hidden">
-        <div class="bg-white rounded-2xl shadow-lg p-8 border border-pastel-light">
-            <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 rounded-full bg-pastel-accent2 flex items-center justify-center text-white font-semibold text-lg">
-                        2
-                    </div>
-                    <h2 class="font-serif text-2xl text-pastel-heading ml-4">Invite a Co-parent</h2>
-                </div>
-                <button onclick="onboardingApp.skipCurrentStep()"
-                        class="text-sm text-pastel-textLight hover:text-pastel-text transition-colors">
-                    Skip This Step
-                </button>
-            </div>
-
-            <!-- Benefits -->
-            <div class="bg-pastel-lightest rounded-lg p-4 mb-6">
-                <h3 class="font-semibold text-pastel-heading mb-3">Benefits of Co-parenting</h3>
-                <div class="space-y-2">
-                    <div class="flex items-start space-x-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-primary mt-0.5 flex-shrink-0"
-                             viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd"
-                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                  clip-rule="evenodd"/>
-                        </svg>
-                        <p class="text-sm text-pastel-text">Share baby care responsibilities with your partner</p>
-                    </div>
-                    <div class="flex items-start space-x-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-primary mt-0.5 flex-shrink-0"
-                             viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd"
-                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                  clip-rule="evenodd"/>
-                        </svg>
-                        <p class="text-sm text-pastel-text">Real-time syncing keeps everyone updated</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Error container for step 2 -->
-            <div id="step2-error" class="hidden mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p class="text-red-700 text-sm"></p>
-            </div>
-
-            <form id="coParentForm" class="space-y-4">
-                <div>
-                    <label for="coParentEmail" class="block text-sm font-medium text-pastel-text mb-2">Co-parent's
-                        Email</label>
-                    <div class="flex space-x-2">
-                        <input type="email" id="coParentEmail" placeholder="partner@example.com" maxlength="255"
-                               class="flex-1 px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
-                        <button type="button" onclick="onboardingApp.sendInvite()" id="invite-submit"
-                                class="px-6 py-2 bg-pastel-secondary text-pastel-primary font-medium rounded-lg hover:bg-pastel-accent1 hover:text-white transition-colors flex items-center space-x-2">
-                            <span>Send Invite</span>
-                            <div class="spinner hidden"></div>
-                        </button>
-                    </div>
-                    <span class="text-xs text-red-500 mt-1 hidden" id="coParentEmail-error"></span>
-                </div>
-
-                <!-- Invited List -->
-                <div id="invitedList" class="hidden">
-                    <h3 class="font-semibold text-pastel-heading mb-2">Pending Invitations</h3>
-                    <div id="invitationsList" class="space-y-2">
-                        <!-- Invitations will be dynamically added here -->
-                    </div>
-                </div>
-            </form>
-
-            <div class="flex justify-between mt-8">
-                <button type="button" onclick="onboardingApp.previousStep()"
-                        class="px-6 py-3 border border-pastel-light text-pastel-text font-medium rounded-lg hover:bg-pastel-lightest transition-colors">
-                    Previous
-                </button>
-                <button type="button" onclick="onboardingApp.nextStep()"
-                        class="px-8 py-3 bg-pastel-primary text-white font-semibold rounded-lg hover:bg-pastel-primaryHover transition-colors">
-                    Next Step
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Step 3: Check Co-parent Invitations -->
-    <div id="step-3" class="step-container step-hidden">
-        <div class="bg-white rounded-2xl shadow-lg p-8 border border-pastel-light">
-            <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 rounded-full bg-pastel-accent1 flex items-center justify-center text-white font-semibold text-lg">
-                        3
-                    </div>
-                    <h2 class="font-serif text-2xl text-pastel-heading ml-4">Co-parent Invitations</h2>
-                </div>
-                <button onclick="onboardingApp.skipCurrentStep()"
-                        class="text-sm text-pastel-textLight hover:text-pastel-text transition-colors">
-                    Skip This Step
-                </button>
-            </div>
-
-            <p class="text-pastel-text mb-6">
-                Check if you have any pending invitations to be a co-parent for another user's baby.
-            </p>
-
-            <!-- Loading State -->
-            <div id="invitationsLoading" class="text-center py-8">
-                <div class="inline-flex items-center space-x-2">
-                    <div class="spinner"></div>
-                    <span class="text-pastel-textLight">Checking for invitations...</span>
-                </div>
-            </div>
-
-            <!-- No Invitations State -->
-            <div id="noInvitations" class="hidden text-center py-8">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-pastel-light mx-auto mb-4" fill="none"
-                     viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-                </svg>
-                <p class="text-pastel-textLight">No pending invitations at this time.</p>
-            </div>
-
-            <!-- Invitations List -->
-            <div id="pendingInvitations" class="hidden space-y-4">
-                <!-- Invitations will be dynamically loaded here -->
-            </div>
-
-            <div class="flex justify-between mt-8">
-                <button type="button" onclick="onboardingApp.previousStep()"
-                        class="px-6 py-3 border border-pastel-light text-pastel-text font-medium rounded-lg hover:bg-pastel-lightest transition-colors">
-                    Previous
-                </button>
-                <button type="button" onclick="onboardingApp.completeOnboarding()" id="complete-button"
-                        class="px-8 py-3 bg-pastel-primary text-white font-semibold rounded-lg hover:bg-pastel-primaryHover transition-colors flex items-center space-x-2">
-                    <span>Complete Setup</span>
-                    <div class="spinner hidden"></div>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Features Preview -->
-<div id="featuresPreview" class="bg-white py-16 mt-16">
-    <div class="max-w-6xl mx-auto px-4">
-        <h3 class="font-serif text-3xl text-pastel-heading text-center mb-12">
-            What You Can Do with BabyHelper
-        </h3>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="text-center">
-                <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-pastel-lightest flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-pastel-primary" fill="none"
-                         viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
-                <h4 class="font-semibold text-lg text-pastel-heading mb-2">Track Everything</h4>
-                <p class="text-pastel-textLight">Log feedings, diaper changes, sleep times, and more with just a
-                    tap.</p>
-            </div>
-
-            <div class="text-center">
-                <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-pastel-lightest flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-pastel-accent1" fill="none"
-                         viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                    </svg>
-                </div>
-                <h4 class="font-semibold text-lg text-pastel-heading mb-2">View Insights</h4>
-                <p class="text-pastel-textLight">See patterns and trends in your baby's routine to better understand
-                    their needs.</p>
-            </div>
-
-            <div class="text-center">
-                <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-pastel-lightest flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-pastel-accent2" fill="none"
-                         viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                    </svg>
-                </div>
-                <h4 class="font-semibold text-lg text-pastel-heading mb-2">Share Care</h4>
-                <p class="text-pastel-textLight">Collaborate with partners and caregivers for seamless baby care
-                    coordination.</p>
-            </div>
-
-            <div class="text-center mt-8 text-sm text-pastel-textLight">
-                <p>Remember: You can always access these settings from your dashboard later.</p>
-                <p class="mt-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24"
-                         stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    Tip: Check "Don't show this page again" above to skip onboarding in future visits.
-                </p>
+    <!-- Dynamic Content Area -->
+    <div id="dynamic-content" class="min-h-[400px]">
+        <!-- Content will be dynamically loaded here based on flow state -->
+        <div class="text-center py-16">
+            <div class="inline-flex items-center space-x-2">
+                <div class="spinner w-8 h-8"></div>
+                <span class="text-pastel-textLight text-lg">Loading your setup...</span>
             </div>
         </div>
     </div>
@@ -506,82 +357,6 @@
 
 <!-- Toast Container -->
 <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50"></div>
-
-<!-- Skip Modal -->
-<div id="skipModal" class="fixed inset-0 z-50 hidden">
-    <!-- Backdrop -->
-    <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onclick="onboardingApp.closeSkipModal()"></div>
-
-    <!-- Modal Content -->
-    <div class="fixed inset-0 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full transform transition-all">
-            <!-- Modal Header -->
-            <div class="p-6 border-b border-pastel-light">
-                <h3 class="font-serif text-2xl text-pastel-heading">Skip Setup?</h3>
-            </div>
-
-            <!-- Modal Body -->
-            <div class="p-6">
-                <p class="text-pastel-text mb-6">
-                    You can complete these setup steps later from your dashboard settings.
-                </p>
-
-                <!-- Skip Options -->
-                <div class="space-y-3">
-                    <!-- Skip Once Option -->
-                    <button onclick="onboardingApp.skipOnce()"
-                            class="w-full p-4 text-left border border-pastel-light rounded-lg hover:bg-pastel-lightest transition-colors group">
-                        <div class="flex items-start space-x-3">
-                            <div class="w-5 h-5 rounded-full border-2 border-pastel-primary mt-0.5 group-hover:bg-pastel-primary group-hover:bg-opacity-20"></div>
-                            <div class="flex-1">
-                                <h4 class="font-semibold text-pastel-heading">Skip for now</h4>
-                                <p class="text-sm text-pastel-textLight mt-1">
-                                    You'll see this setup guide next time you log in
-                                </p>
-                            </div>
-                        </div>
-                    </button>
-
-                    <!-- Skip Forever Option -->
-                    <button onclick="onboardingApp.skipForever()"
-                            class="w-full p-4 text-left border border-pastel-light rounded-lg hover:bg-pastel-lightest transition-colors group">
-                        <div class="flex items-start space-x-3">
-                            <div class="w-5 h-5 rounded-full border-2 border-pastel-primary mt-0.5 group-hover:bg-pastel-primary group-hover:bg-opacity-20"></div>
-                            <div class="flex-1">
-                                <h4 class="font-semibold text-pastel-heading">Don't show again</h4>
-                                <p class="text-sm text-pastel-textLight mt-1">
-                                    Skip onboarding and go directly to dashboard on future logins
-                                </p>
-                            </div>
-                        </div>
-                    </button>
-                </div>
-
-                <!-- Info Note -->
-                <div class="mt-6 p-3 bg-pastel-lightest rounded-lg">
-                    <div class="flex items-start space-x-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-primary mt-0.5 flex-shrink-0"
-                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <p class="text-xs text-pastel-textLight">
-                            You can always access these settings from your dashboard under Profile Settings
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="p-6 border-t border-pastel-light flex justify-end">
-                <button onclick="onboardingApp.closeSkipModal()"
-                        class="px-6 py-2 text-pastel-text hover:text-pastel-heading transition-colors">
-                    Cancel
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 <script>
     /**
      * BabyHelper Onboarding Application
@@ -646,7 +421,11 @@
                     babyInfo: {},
                     coParents: [],
                     acceptedInvitations: []
-                }
+                },
+                flowState: null,
+                pendingInvitations: [],
+                invitedBabyNames: [],
+                acceptedInvitations: []
             };
 
             // ============================================================================
@@ -1072,19 +851,6 @@
                 },
 
                 /**
-                 * Show step error
-                 * @param {number} step - Step number
-                 * @param {string} message - Error message
-                 */
-                showStepError(step, message) {
-                    const errorEl = document.getElementById(`step${step}-error`);
-                    if (errorEl) {
-                        errorEl.querySelector('p').textContent = message;
-                        errorEl.classList.remove('hidden');
-                    }
-                },
-
-                /**
                  * Show toast notification
                  * @param {string} message - Message to display
                  * @param {string} type - Message type (success, error, warning, info)
@@ -1394,84 +1160,6 @@
                     }
                 },
 
-                /**
-                 * Save baby information
-                 */
-                async saveBabyInfo() {
-                    const validationResult = validation.validateBabyInfo();
-                    if (!validationResult.isValid) {
-                        throw new Error('Please correct the errors before continuing');
-                    }
-
-                    const formData = {
-                        fullname: document.getElementById('babyName').value.trim(),
-                        birthdate: utils.formatDateForAPI(document.getElementById('babyDob').value),
-                        sex: document.getElementById('babyGender').value,
-                        weight: parseFloat(document.getElementById('babyWeight').value),
-                        height: parseFloat(document.getElementById('babyHeight').value)
-                    };
-
-                    ui.setButtonLoading('step1-submit', true);
-
-                    try {
-                        const savedBaby = await api.endpoints.createBaby(formData);
-
-                        state.data.babyInfo = {
-                            baby_id: savedBaby.id,
-                            name: savedBaby.fullname,
-                            dob: savedBaby.birthdate,
-                            gender: savedBaby.sex,
-                            weight: savedBaby.weight,
-                            height: savedBaby.height
-                        };
-
-                        storage.saveProgress();
-                        ui.showToast('Baby information saved successfully!');
-
-                    } finally {
-                        ui.setButtonLoading('step1-submit', false);
-                    }
-                },
-
-                /**
-                 * Send co-parent invitation
-                 */
-                async sendCoparentInvite() {
-                    if (!state.data.babyInfo?.baby_id) {
-                        throw new Error('Please add baby information first or skip this step');
-                    }
-
-                    const validationResult = validation.validateCoparentEmail();
-                    if (!validationResult.isValid) {
-                        throw new Error(validationResult.error);
-                    }
-
-                    const email = document.getElementById('coParentEmail').value.trim();
-
-                    ui.setButtonLoading('invite-submit', true);
-
-                    try {
-                        const result = await api.endpoints.sendCoparentInvite({
-                            baby_id: state.data.babyInfo.baby_id,
-                            email: email
-                        });
-                        // Extract notification_id using regex
-                        const match = result.message.match(/notification: (\d+)$/);
-                        const notification_id = match ? parseInt(match[1]) : null;
-
-                        state.data.coParents.push({
-                            email: email,
-                            notificationId: notification_id
-                        });
-                        storage.saveProgress();
-                        ui.updateInvitationsList();
-                        document.getElementById('coParentEmail').value = '';
-                        ui.showToast('Invitation sent successfully!');
-
-                    } finally {
-                        ui.setButtonLoading('invite-submit', false);
-                    }
-                },
 
                 /**
                  * Load pending invitations
@@ -1610,8 +1298,14 @@
                     // Set global auth token
                     window.authToken = idToken;
 
-                    // Initialize first step
-                    steps.show(1);
+                    // Instead of showing step 1, initialize the new flow
+                    RevisedOnboardingFlow.initializeFlow().catch(error => {
+                        console.error('Failed to initialize onboarding:', error);
+                        ui.showToast('Error loading setup. Please refresh the page.', MESSAGE_TYPES.ERROR);
+                    });
+
+                    // Initialize validators
+                    BabyNameValidator.init();
 
                     // Load saved progress
                     storage.loadProgress();
@@ -1660,167 +1354,6 @@
                         }
                     });
                 },
-
-                /**
-                 * Navigate to next step
-                 */
-                async nextStep() {
-                    if (state.currentStep >= state.totalSteps) return;
-
-                    try {
-                        switch (state.currentStep) {
-                            case 1:
-                                await steps.saveBabyInfo();
-                                steps.show(state.currentStep + 1);
-                                break;
-                            case 2:
-                                // Step 2 doesn't require validation, just move to next
-                                steps.show(state.currentStep + 1);
-                                break;
-                        }
-                    } catch (error) {
-                        ui.showStepError(state.currentStep, error.message);
-                        ui.showToast(error.message, MESSAGE_TYPES.ERROR);
-                    }
-                },
-
-                /**
-                 * Navigate to previous step
-                 */
-                previousStep() {
-                    if (state.currentStep > 1) {
-                        steps.show(state.currentStep - 1);
-                    }
-                },
-
-                /**
-                 * Skip current step
-                 */
-                skipCurrentStep() {
-                    if (state.currentStep < state.totalSteps) {
-                        steps.show(state.currentStep + 1);
-                    } else {
-                        this.completeOnboarding();
-                    }
-                },
-
-                /**
-                 * Handle skip all click - show modal
-                 */
-                handleSkipAllClick() {
-                    this.showSkipModal();
-                },
-
-                /**
-                 * Show the skip modal
-                 */
-                showSkipModal() {
-                    const modal = document.getElementById('skipModal');
-                    if (modal) {
-                        modal.classList.remove('hidden');
-                        modal.classList.add('modal-enter');
-
-                        // Add content animation class
-                        const content = modal.querySelector('.bg-white');
-                        if (content) {
-                            content.classList.add('modal-content');
-                        }
-                    }
-                },
-
-                /**
-                 * Close the skip modal
-                 */
-                closeSkipModal() {
-                    const modal = document.getElementById('skipModal');
-                    if (modal) {
-                        modal.classList.add('modal-exit');
-
-                        setTimeout(() => {
-                            modal.classList.add('hidden');
-                            modal.classList.remove('modal-enter', 'modal-exit');
-                        }, 200);
-                    }
-                },
-
-                /**
-                 * Skip onboarding just for this session
-                 */
-                skipOnce() {
-                    this.closeSkipModal();
-
-                    // Clear progress and redirect
-                    storage.clearProgress();
-                    sessionStorage.setItem('onboardingComplete', 'true');
-
-                    ui.showToast('Skipping setup. You can complete it next time!', MESSAGE_TYPES.INFO);
-
-                    setTimeout(() => {
-                        window.location.href = '/dashboard';
-                    }, 1000);
-                },
-
-                /**
-                 * Skip onboarding permanently
-                 */
-                async skipForever() {
-                    this.closeSkipModal();
-
-                    ui.showToast('Saving preference...', MESSAGE_TYPES.INFO);
-
-                    try {
-                        // Save preference to backend
-                        await api.endpoints.updateUserPreference({skip_onboarding: true});
-
-                        // Update session storage
-                        sessionStorage.setItem('skipOnboarding', 'true');
-
-                        // Clear progress and redirect
-                        storage.clearProgress();
-                        sessionStorage.setItem('onboardingComplete', 'true');
-
-                        ui.showToast('Setup skipped. Going to dashboard...', MESSAGE_TYPES.SUCCESS);
-
-                        setTimeout(() => {
-                            window.location.href = '/dashboard';
-                        }, 1000);
-
-                    } catch (error) {
-                        console.error('Failed to save preference:', error);
-                        ui.showToast('Failed to save preference, but continuing to dashboard', MESSAGE_TYPES.WARNING);
-
-                        // Continue to dashboard even if preference save fails
-                        setTimeout(() => {
-                            window.location.href = '/dashboard';
-                        }, 1500);
-                    }
-                },
-
-                /**
-                 * Save user preference to skip onboarding
-                 */
-                async saveSkipPreference() {
-                    try {
-                        await api.endpoints.updateUserPreference({skip_onboarding: true});
-                        sessionStorage.setItem('skipOnboarding', 'true');
-                    } catch (error) {
-                        console.error('Failed to save skip preference:', error);
-                        throw error;
-                    }
-                },
-
-                /**
-                 * Send co-parent invitation
-                 */
-                async sendInvite() {
-                    try {
-                        await steps.sendCoparentInvite();
-                    } catch (error) {
-                        ui.showStepError(2, error.message);
-                        ui.showToast(error.message, MESSAGE_TYPES.ERROR);
-                    }
-                },
-
 
                 /**
                  * Respond to pending invitation
@@ -1943,13 +1476,2098 @@
                         sessionStorage.clear();
                         window.location.href = '/';
                     }
-                }
+                },
+                api: api,
+                ui: ui,
+                storage: storage,
+                validation: validation,
+                utils: utils,
+                MESSAGE_TYPES: MESSAGE_TYPES
             };
         })();
 
-    // Initialize on DOM ready
+    // Revised Onboarding Flow Controller
+    const RevisedOnboardingFlow = {
+        // Flow states
+        FLOW_STATES: {
+            CHECK_INVITATIONS: 'check_invitations',
+            CHOOSE_ACTION: 'choose_action',
+            ADD_BABY: 'add_baby',
+            INVITE_COPARENT: 'invite_coparent',
+            REVIEW_COMPLETE: 'review_complete'
+        },
+
+        // Data structure for managing multiple babies
+        state: {
+            currentFlowState: null,
+            pendingInvitations: [],
+            addedBabies: [],
+            currentBabyIndex: null,
+            invitedBabyNames: [], // Names from pending invitations
+            acceptedInvitations: [],
+            skipOnboarding: false
+        },
+
+        /**
+         * Initialize the revised onboarding flow
+         */
+        async initializeFlow() {
+            // Step 1: Check for pending invitations first
+            await this.checkPendingInvitations();
+
+            // Step 2: Determine initial flow state
+            if (this.state.pendingInvitations.length > 0) {
+                this.setFlowState(this.FLOW_STATES.CHECK_INVITATIONS);
+            } else {
+                this.setFlowState(this.FLOW_STATES.CHOOSE_ACTION);
+            }
+        },
+
+        /**
+         * Check for pending invitations and extract baby names
+         */
+        async checkPendingInvitations() {
+            try {
+                const invitations = await onboardingApp.api.endpoints.getPendingInvitations();
+                this.state.pendingInvitations = invitations;
+
+                // Extract baby names from invitations for validation
+                this.state.invitedBabyNames = invitations.map(inv =>
+                    inv.baby_name.toLowerCase().trim()
+                );
+
+                return invitations;
+            } catch (error) {
+                console.error('Error checking invitations:', error);
+                return [];
+            }
+        },
+
+        /**
+         * Set the current flow state and update UI
+         */
+        setFlowState(newState) {
+            this.state.currentFlowState = newState;
+            this.updateUIForState(newState);
+        },
+
+        /**
+         * Update UI based on current flow state
+         */
+        updateUIForState(flowState) {
+            // Hide all sections first
+            document.querySelectorAll('.flow-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+
+            // Show relevant section
+            switch (flowState) {
+                case this.FLOW_STATES.CHECK_INVITATIONS:
+                    this.showInvitationsSection();
+                    break;
+                case this.FLOW_STATES.CHOOSE_ACTION:
+                    this.showChooseActionSection();
+                    break;
+                case this.FLOW_STATES.ADD_BABY:
+                    this.showAddBabySection();
+                    break;
+                case this.FLOW_STATES.INVITE_COPARENT:
+                    this.showInviteCoparentSection();
+                    break;
+                case this.FLOW_STATES.REVIEW_COMPLETE:
+                    this.showReviewCompleteSection();
+                    break;
+            }
+        },
+
+        /**
+         * Validate baby name against existing invitations
+         */
+        validateBabyName(babyName) {
+            const normalizedName = babyName.toLowerCase().trim();
+
+            // Check if this name exists in pending invitations
+            if (this.state.invitedBabyNames.includes(normalizedName)) {
+                return {
+                    isValid: false,
+                    error: `You have a pending invitation for a baby named "${babyName}". Please accept the invitation instead of creating a new entry.`,
+                    suggestAction: 'view_invitations'
+                };
+            }
+
+            // Check if already added in this session
+            const alreadyAdded = this.state.addedBabies.some(baby =>
+                baby.name.toLowerCase() === normalizedName
+            );
+
+            if (alreadyAdded) {
+                return {
+                    isValid: false,
+                    error: `You've already added "${babyName}" in this session.`
+                };
+            }
+
+            return {isValid: true};
+        },
+
+        /**
+         * Add a new baby with validation
+         */
+        async addBaby(babyData) {
+            // Validate name first
+            const nameValidation = this.validateBabyName(babyData.name);
+            if (!nameValidation.isValid) {
+                throw new Error(nameValidation.error);
+            }
+
+            // Save baby to backend
+            const savedBaby = await onboardingApp.api.endpoints.createBaby({
+                fullname: babyData.name,
+                birthdate: babyData.birthdate,
+                sex: babyData.gender,
+                weight: babyData.weight,
+                height: babyData.height
+            });
+
+            // Add to local state
+            this.state.addedBabies.push({
+                id: savedBaby.id,
+                name: savedBaby.fullname,
+                coparents: []
+            });
+
+            this.state.currentBabyIndex = this.state.addedBabies.length - 1;
+
+            return savedBaby;
+        },
+
+        /**
+         * Show action menu after invitations or initial setup
+         */
+        showChooseActionSection() {
+            const content = `
+            <div class="text-center space-y-6">
+                <h2 class="font-serif text-3xl text-pastel-heading">
+                    What would you like to do?
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                    <!-- Add New Baby Option -->
+                    <button onclick="RevisedOnboardingFlow.startAddBaby()"
+                            class="p-6 bg-white rounded-xl border-2 border-pastel-light hover:border-pastel-primary transition-all group">
+                        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-pastel-lightest group-hover:bg-pastel-secondary transition-colors flex items-center justify-center">
+                            <svg class="w-8 h-8 text-pastel-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                        </div>
+                        <h3 class="font-semibold text-lg text-pastel-heading mb-2">Add a Baby</h3>
+                        <p class="text-sm text-pastel-textLight">Register a new baby to your account</p>
+                    </button>
+
+                    <!-- View Invitations Option (if any exist) -->
+                    ${this.state.pendingInvitations.length > 0 ? `
+                        <button onclick="RevisedOnboardingFlow.viewInvitations()"
+                                class="p-6 bg-white rounded-xl border-2 border-pastel-light hover:border-pastel-accent1 transition-all group relative">
+                            <span class="absolute top-4 right-4 bg-pastel-primary text-white text-xs px-2 py-1 rounded-full">
+                                ${this.state.pendingInvitations.length}
+                            </span>
+                            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-pastel-lightest group-hover:bg-pastel-accent1 group-hover:bg-opacity-20 transition-colors flex items-center justify-center">
+                                <svg class="w-8 h-8 text-pastel-accent1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <h3 class="font-semibold text-lg text-pastel-heading mb-2">View Invitations</h3>
+                            <p class="text-sm text-pastel-textLight">You have pending co-parent invitations</p>
+                        </button>
+                    ` : ''}
+                </div>
+
+                <!-- Summary of current progress -->
+                ${this.state.addedBabies.length > 0 ? `
+                    <div class="mt-8 p-4 bg-pastel-lightest rounded-lg">
+                        <h4 class="font-medium text-pastel-heading mb-2">Babies Added:</h4>
+                        <div class="space-y-2">
+                            ${this.state.addedBabies.map(baby => `
+                                <div class="flex items-center justify-between text-sm">
+                                    <span>${baby.name}</span>
+                                    <span class="text-pastel-textLight">
+                                        ${baby.coparents.length} co-parent${baby.coparents.length !== 1 ? 's' : ''} invited
+                                    </span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- Complete or Skip Setup -->
+                <div class="mt-8">
+                    ${(this.state.addedBabies.length > 0 || this.state.acceptedInvitations.length > 0) ? `
+                        <button onclick="RevisedOnboardingFlow.completeSetup()"
+                                class="px-8 py-3 bg-pastel-primary text-white font-semibold rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                            Complete Setup
+                        </button>
+                    ` : `
+                        <div class="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+                            <button onclick="CompletionFlow.goToDashboard()"
+                                    class="w-full sm:w-auto px-8 py-3 bg-pastel-primary text-white font-semibold rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                                Go to Dashboard
+                            </button>
+
+                            <div class="flex items-center space-x-3">
+                                <input type="checkbox"
+                                       id="skip-onboarding-checkbox"
+                                       class="w-4 h-4 text-pastel-primary rounded focus:ring-pastel-primary">
+                                <label for="skip-onboarding-checkbox" class="text-sm text-pastel-text">
+                                    Don't show this setup again
+                                </label>
+                            </div>
+                        </div>
+                    `}
+                </div>
+
+            </div>
+        `;
+
+            document.getElementById('dynamic-content').innerHTML = content;
+        },
+
+        /**
+         * Show invitations section
+         */
+        showInvitationsSection() {
+            // Update progress indicator
+            this.updateProgressIndicator('invitations');
+
+            // Use the ConditionalInvitations component to display invitations
+            ConditionalInvitations.displayInvitations();
+        },
+
+        /**
+         * Show add baby section
+         */
+        showAddBabySection() {
+            // Update progress indicator
+            this.updateProgressIndicator('add_baby');
+
+            const content = `
+        <div class="max-w-2xl mx-auto flow-section">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h2 class="font-serif text-3xl text-pastel-heading mb-2">
+                    Add Your Baby's Information
+                </h2>
+                <p class="text-pastel-textLight">
+                    Let's get to know your little one
+                </p>
+            </div>
+
+            <!-- Baby Info Form -->
+            <div class="bg-white rounded-xl shadow-lg p-8 border border-pastel-light">
+                <form id="babyInfoForm" onsubmit="event.preventDefault(); return false;">
+                    <!-- Name field with real-time validation -->
+                    <div class="mb-6">
+                        <label for="babyName" class="block text-sm font-medium text-pastel-text mb-2">
+                            Baby's Name
+                        </label>
+                        <input type="text"
+                               id="babyName"
+                               name="babyName"
+                               placeholder="Enter baby's name"
+                               class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary"
+                               required>
+                        <div id="name-validation-feedback"></div>
+                        <span id="babyName-error" class="hidden text-xs text-red-500 mt-1"></span>
+                    </div>
+
+                    <!-- Date of Birth -->
+                    <div class="mb-6">
+                        <label for="babyDob" class="block text-sm font-medium text-pastel-text mb-2">
+                            Date of Birth
+                        </label>
+                        <input type="date"
+                               id="babyDob"
+                               name="babyDob"
+                               max="${new Date().toISOString().split('T')[0]}"
+                               class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary"
+                               required>
+                        <span id="babyDob-error" class="hidden text-xs text-red-500 mt-1"></span>
+                    </div>
+
+                    <!-- Gender -->
+                    <div class="mb-6">
+                        <label for="babyGender" class="block text-sm font-medium text-pastel-text mb-2">
+                            Gender
+                        </label>
+                        <select id="babyGender"
+                                name="babyGender"
+                                class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary"
+                                required>
+                            <option value="">Select gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <span id="babyGender-error" class="hidden text-xs text-red-500 mt-1"></span>
+                    </div>
+
+                    <!-- Birth Measurements -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label for="babyWeight" class="block text-sm font-medium text-pastel-text mb-2">
+                                Birth Weight (kg)
+                            </label>
+                            <input type="number"
+                                   id="babyWeight"
+                                   name="babyWeight"
+                                   step="0.01"
+                                   min="0.5"
+                                   max="10"
+                                   placeholder="3.5"
+                                   class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary"
+                                   required>
+                            <span id="babyWeight-error" class="hidden text-xs text-red-500 mt-1"></span>
+                        </div>
+                        <div>
+                            <label for="babyHeight" class="block text-sm font-medium text-pastel-text mb-2">
+                                Birth Height (cm)
+                            </label>
+                            <input type="number"
+                                   id="babyHeight"
+                                   name="babyHeight"
+                                   step="0.1"
+                                   min="30"
+                                   max="70"
+                                   placeholder="50"
+                                   class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary"
+                                   required>
+                            <span id="babyHeight-error" class="hidden text-xs text-red-500 mt-1"></span>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="flex justify-between items-center">
+                        <button type="button"
+                                onclick="RevisedOnboardingFlow.showChooseActionSection()"
+                                class="text-pastel-textLight hover:text-pastel-text transition-colors">
+                            ← Back
+                        </button>
+                        <button type="button"
+                                id="save-baby-button"
+                                onclick="RevisedOnboardingFlow.saveBabyAndContinue()"
+                                class="px-6 py-2 bg-pastel-primary text-white font-medium rounded-lg hover:bg-pastel-primaryHover transition-colors flex items-center space-x-2">
+                            <span>Save & Continue</span>
+                            <div class="spinner hidden"></div>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+
+            document.getElementById('dynamic-content').innerHTML = content;
+
+            // Re-initialize the validator for the new form
+            BabyNameValidator.init();
+
+            // Re-attach validation listeners
+            onboardingApp.attachValidationListeners();
+        },
+
+        /**
+         * Show invite co-parent section
+         */
+        showInviteCoparentSection() {
+            // Update progress indicator
+            this.updateProgressIndicator('invite_coparent');
+
+            const currentBaby = this.state.addedBabies[this.state.currentBabyIndex];
+
+            if (!currentBaby) {
+                // No baby selected, go back to action menu
+                this.showChooseActionSection();
+                return;
+            }
+
+            const content = `
+        <div class="max-w-2xl mx-auto flow-section">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h2 class="font-serif text-3xl text-pastel-heading mb-2">
+                    Invite Co-parents for ${onboardingApp.utils.escapeHtml(currentBaby.name)}
+                </h2>
+                <p class="text-pastel-textLight">
+                    Share baby care responsibilities with your partner or family
+                </p>
+            </div>
+
+            <!-- Invite Form -->
+            <div class="bg-white rounded-xl shadow-lg p-8 border border-pastel-light">
+                <form id="coParentForm" onsubmit="event.preventDefault(); return false;">
+                    <!-- Email Input -->
+                    <div class="mb-6">
+                        <label for="coParentEmail" class="block text-sm font-medium text-pastel-text mb-2">
+                            Co-parent's Email Address
+                        </label>
+                        <input type="email"
+                               id="coParentEmail"
+                               name="coParentEmail"
+                               placeholder="partner@gmail.com"
+                               class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+                        <span id="coParentEmail-error" class="hidden text-xs text-red-500 mt-1"></span>
+                        <p class="text-xs text-pastel-textLight mt-2">
+                            They'll receive an email invitation to join as a co-parent
+                        </p>
+                    </div>
+
+                    <!-- Send Button -->
+                    <div class="flex justify-center">
+                        <button type="button"
+                                id="invite-submit"
+                                onclick="RevisedOnboardingFlow.sendCoparentInviteForCurrentBaby()"
+                                class="px-6 py-2 bg-pastel-primary text-white font-medium rounded-lg hover:bg-pastel-primaryHover transition-colors flex items-center space-x-2">
+                            <span>Send Invitation</span>
+                            <div class="spinner hidden"></div>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Invited List -->
+                <div id="invitedList" class="${currentBaby.coparents.length === 0 ? 'hidden' : ''} mt-8">
+                    <h3 class="font-medium text-pastel-heading mb-3">Sent Invitations</h3>
+                    <div id="invitationsList" class="space-y-2">
+                        ${currentBaby.coparents.map((coparent, index) => `
+                            <div class="p-3 bg-pastel-lightest rounded-lg flex justify-between items-center">
+                                <span class="text-sm text-pastel-text">${onboardingApp.utils.escapeHtml(coparent.email)}</span>
+                                ${coparent.notificationId ? `
+                                    <button onclick="RevisedOnboardingFlow.removeCoparentInvite(${this.state.currentBabyIndex}, ${index})"
+                                            class="text-xs text-red-500 hover:text-red-700 font-medium transition-colors">
+                                        Remove
+                                    </button>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Info Box -->
+                <div class="mt-8 p-4 bg-pastel-lightest rounded-lg">
+                    <div class="flex items-start space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-primary mt-0.5 flex-shrink-0"
+                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <div class="text-sm text-pastel-textLight">
+                            <p>You can invite multiple co-parents now or add more later from your dashboard.</p>
+                            <p class="mt-1">Co-parents will be able to track and log baby activities.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="mt-8 flex justify-between items-center">
+                    <button onclick="RevisedOnboardingFlow.showChooseActionSection()"
+                            class="text-pastel-textLight hover:text-pastel-text transition-colors">
+                        ← Back to Menu
+                    </button>
+                    <button onclick="RevisedOnboardingFlow.skipInvitesAndContinue()"
+                            class="px-6 py-2 border border-pastel-light text-pastel-text font-medium rounded-lg hover:bg-pastel-lightest transition-colors">
+                        Continue
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+            document.getElementById('dynamic-content').innerHTML = content;
+
+            // Re-attach validation listeners
+            onboardingApp.attachValidationListeners();
+        },
+
+        /**
+         * Start add baby flow from action menu
+         */
+        startAddBaby() {
+            this.setFlowState(this.FLOW_STATES.ADD_BABY);
+        },
+
+        /**
+         * View invitations from action menu
+         */
+        viewInvitations() {
+            this.setFlowState(this.FLOW_STATES.CHECK_INVITATIONS);
+        },
+
+        /**
+         * Complete setup and go to review
+         */
+        completeSetup() {
+            // If user has added babies or accepted invitations, show review
+            if (this.state.addedBabies.length > 0 || this.state.acceptedInvitations.length > 0) {
+                this.setFlowState(this.FLOW_STATES.REVIEW_COMPLETE);
+            } else {
+                // No setup done, just complete onboarding
+                onboardingApp.completeOnboarding(false);
+            }
+        },
+
+        /**
+         * Show review and complete section
+         */
+        showReviewCompleteSection() {
+            // Update progress indicator
+            this.updateProgressIndicator('complete');
+
+            // Use the CompletionFlow component
+            CompletionFlow.showReviewCompleteSection();
+        },
+
+        /**
+         * Update progress indicator based on flow state
+         */
+        updateProgressIndicator(currentSection) {
+            const progressContainer = document.getElementById('progress-indicator');
+            if (!progressContainer) return;
+
+            // Define progress steps based on what the user is doing
+            let steps = [];
+
+            if (this.state.pendingInvitations.length > 0) {
+                steps.push({id: 'invitations', label: 'Review Invitations', icon: '📨'});
+            }
+
+            if (this.state.addedBabies.length > 0 || currentSection === 'add_baby') {
+                steps.push({id: 'add_baby', label: 'Add Baby', icon: '👶'});
+            }
+
+            if (this.state.addedBabies.some(b => b.coparents.length > 0) || currentSection === 'invite_coparent') {
+                steps.push({id: 'invite_coparent', label: 'Invite Co-parents', icon: '👥'});
+            }
+
+            steps.push({id: 'complete', label: 'Complete', icon: '✅'});
+
+            // Generate progress HTML
+            progressContainer.innerHTML = `
+        <div class="flex items-center justify-center">
+            <div class="flex items-center space-x-4">
+                ${steps.map((step, index) => `
+                    <div class="flex items-center">
+                        <div class="flex flex-col items-center">
+                            <div class="w-10 h-10 rounded-full ${currentSection === step.id ? 'bg-pastel-primary text-white' : 'bg-pastel-light text-pastel-textLight'}
+                                        flex items-center justify-center font-medium transition-all">
+                                <span class="text-lg">${step.icon}</span>
+                            </div>
+                            <span class="text-xs mt-2 ${currentSection === step.id ? 'text-pastel-primary font-medium' : 'text-pastel-textLight'}">
+                                ${step.label}
+                            </span>
+                        </div>
+                        ${index < steps.length - 1 ? `
+                            <div class="w-16 h-0.5 ${index < steps.findIndex(s => s.id === currentSection) ? 'bg-pastel-primary' : 'bg-pastel-light'}
+                                        mx-2 mt-[-20px]"></div>
+                        ` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+            progressContainer.classList.remove('hidden');
+        },
+
+        /**
+         * Save baby and continue to next step
+         */
+        async saveBabyAndContinue() {
+            try {
+                // Validate the form first
+                const validationResult = onboardingApp.validation.validateBabyInfo();
+                if (!validationResult.isValid) {
+                    throw new Error('Please correct the errors before continuing');
+                }
+
+                // Check baby name validation state
+                if (BabyNameValidator.currentState === BabyNameValidator.VALIDATION_STATES.INVALID) {
+                    throw new Error('Please resolve the baby name conflict before continuing');
+                }
+
+                // Prepare baby data
+                const babyData = {
+                    name: document.getElementById('babyName').value.trim(),
+                    birthdate: onboardingApp.utils.formatDateForAPI(document.getElementById('babyDob').value),
+                    gender: document.getElementById('babyGender').value,
+                    weight: parseFloat(document.getElementById('babyWeight').value),
+                    height: parseFloat(document.getElementById('babyHeight').value)
+                };
+
+                // Show loading state
+                onboardingApp.ui.setButtonLoading('save-baby-button', true);
+
+                // Add the baby
+                await this.addBaby(babyData);
+
+                // Save progress
+                onboardingApp.storage.saveProgress();
+
+                // Show success
+                onboardingApp.ui.showToast('Baby information saved successfully!', onboardingApp.MESSAGE_TYPES.SUCCESS);
+
+                // Move to invite co-parent step
+                this.setFlowState(this.FLOW_STATES.INVITE_COPARENT);
+
+            } catch (error) {
+                onboardingApp.ui.showToast(error.message, onboardingApp.MESSAGE_TYPES.ERROR);
+                onboardingApp.ui.setButtonLoading('save-baby-button', false);
+            }
+        },
+
+        /**
+         * Send co-parent invite for current baby
+         */
+        async sendCoparentInviteForCurrentBaby() {
+            const currentBaby = this.state.addedBabies[this.state.currentBabyIndex];
+
+            if (!currentBaby) {
+                onboardingApp.ui.showToast('No baby selected', onboardingApp.MESSAGE_TYPES.ERROR);
+                return;
+            }
+
+            const validationResult = onboardingApp.validation.validateCoparentEmail();
+            if (!validationResult.isValid) {
+                onboardingApp.ui.showToast(validationResult.error, onboardingApp.MESSAGE_TYPES.ERROR);
+                return;
+            }
+
+            const email = document.getElementById('coParentEmail').value.trim();
+
+            // Check if already invited for this baby
+            if (currentBaby.coparents.some(cp => cp.email === email)) {
+                onboardingApp.ui.showFieldError('coParentEmail', 'Already invited for this baby');
+                return;
+            }
+
+            onboardingApp.ui.setButtonLoading('invite-submit', true);
+
+            try {
+                const result = await onboardingApp.api.endpoints.sendCoparentInvite({
+                    baby_id: currentBaby.id,
+                    email: email
+                });
+
+                // Extract notification ID
+                const match = result.message.match(/notification: (\d+)$/);
+                const notificationId = match ? parseInt(match[1]) : null;
+
+                // Add to current baby's coparents
+                currentBaby.coparents.push({
+                    email: email,
+                    notificationId: notificationId,
+                    status: 'pending'
+                });
+
+                // Save progress
+                onboardingApp.storage.saveProgress();
+
+                // Clear input
+                document.getElementById('coParentEmail').value = '';
+
+                // Update UI
+                this.showInviteCoparentSection();
+
+                onboardingApp.ui.showToast('Invitation sent successfully!', onboardingApp.MESSAGE_TYPES.SUCCESS);
+
+            } catch (error) {
+                onboardingApp.ui.showToast(error.message, onboardingApp.MESSAGE_TYPES.ERROR);
+            } finally {
+                onboardingApp.ui.setButtonLoading('invite-submit', false);
+            }
+        },
+
+        /**
+         * Remove co-parent invite
+         */
+        async removeCoparentInvite(babyIndex, coparentIndex) {
+            const baby = this.state.addedBabies[babyIndex];
+            const coparent = baby.coparents[coparentIndex];
+
+            if (!confirm(`Remove invitation to ${coparent.email}?`)) {
+                return;
+            }
+
+            try {
+                if (coparent.notificationId) {
+                    await onboardingApp.api.endpoints.removeNotification(coparent.notificationId);
+                }
+
+                // Remove from local state
+                baby.coparents.splice(coparentIndex, 1);
+
+                // Save progress
+                onboardingApp.storage.saveProgress();
+
+                // Refresh UI
+                this.showInviteCoparentSection();
+
+                onboardingApp.ui.showToast('Invitation removed', onboardingApp.MESSAGE_TYPES.SUCCESS);
+
+            } catch (error) {
+                onboardingApp.ui.showToast('Failed to remove invitation: ' + error.message, onboardingApp.MESSAGE_TYPES.ERROR);
+            }
+        },
+
+        /**
+         * Skip invites and continue
+         */
+        skipInvitesAndContinue() {
+            this.showChooseActionSection();
+        }
+    };
+
+    // Baby Name Validator Component with Real-time Checking
+    const BabyNameValidator = {
+        // Validation states
+        VALIDATION_STATES: {
+            IDLE: 'idle',
+            CHECKING: 'checking',
+            VALID: 'valid',
+            INVALID: 'invalid',
+            WARNING: 'warning'
+        },
+
+        currentState: null,
+        validationTimeout: null,
+
+        /**
+         * Initialize the validator with real-time checking
+         */
+        init() {
+            const nameInput = document.getElementById('babyName');
+            if (!nameInput) return;
+
+            // Add real-time validation
+            nameInput.addEventListener('input', (e) => {
+                this.validateNameRealtime(e.target.value);
+            });
+
+            // Add blur validation for final check
+            nameInput.addEventListener('blur', (e) => {
+                this.validateNameComplete(e.target.value);
+            });
+        },
+
+        /**
+         * Real-time validation with debouncing
+         */
+        validateNameRealtime(name) {
+            // Clear previous timeout
+            if (this.validationTimeout) {
+                clearTimeout(this.validationTimeout);
+            }
+
+            // Reset state if empty
+            if (!name.trim()) {
+                this.updateValidationUI(this.VALIDATION_STATES.IDLE);
+                return;
+            }
+
+            // Show checking state
+            this.updateValidationUI(this.VALIDATION_STATES.CHECKING);
+
+            // Debounce the validation
+            this.validationTimeout = setTimeout(() => {
+                this.performValidation(name);
+            }, 500);
+        },
+
+        /**
+         * Complete validation on blur
+         */
+        validateNameComplete(name) {
+            if (!name.trim()) {
+                this.updateValidationUI(this.VALIDATION_STATES.INVALID, 'Baby name is required');
+                return;
+            }
+
+            this.performValidation(name);
+        },
+
+        /**
+         * Perform the actual validation
+         */
+        performValidation(name) {
+            const normalizedName = name.toLowerCase().trim();
+
+            // Check basic validation rules
+            if (name.length > 100) {
+                this.updateValidationUI(this.VALIDATION_STATES.INVALID, 'Name must be less than 100 characters');
+                return;
+            }
+
+            if (!/^[a-zA-Z\s'-]+$/.test(name)) {
+                this.updateValidationUI(this.VALIDATION_STATES.INVALID, 'Name can only contain letters, spaces, hyphens, and apostrophes');
+                return;
+            }
+
+            // Check against pending invitations
+            const invitedBaby = RevisedOnboardingFlow.state.pendingInvitations.find(inv =>
+                inv.baby_name.toLowerCase() === normalizedName
+            );
+
+            if (invitedBaby) {
+                this.showInvitationConflict(invitedBaby);
+                return;
+            }
+
+            // Check for similar names (fuzzy matching)
+            const similarInvitation = this.findSimilarInvitation(normalizedName);
+            if (similarInvitation) {
+                this.showSimilarNameWarning(similarInvitation);
+                return;
+            }
+
+            // Check if already added in this session
+            const alreadyAdded = RevisedOnboardingFlow.state.addedBabies.some(baby =>
+                baby.name.toLowerCase() === normalizedName
+            );
+
+            if (alreadyAdded) {
+                this.updateValidationUI(this.VALIDATION_STATES.INVALID, 'You\'ve already added this baby');
+                return;
+            }
+
+            // All checks passed
+            this.updateValidationUI(this.VALIDATION_STATES.VALID, 'Name is available');
+        },
+
+        /**
+         * Find similar baby names in invitations (fuzzy matching)
+         */
+        findSimilarInvitation(name) {
+            const threshold = 0.8; // 80% similarity threshold
+
+            for (const invitation of RevisedOnboardingFlow.state.pendingInvitations) {
+                const similarity = this.calculateSimilarity(name, invitation.baby_name.toLowerCase());
+                if (similarity >= threshold) {
+                    return invitation;
+                }
+            }
+
+            return null;
+        },
+
+        /**
+         * Calculate string similarity (Levenshtein distance based)
+         */
+        calculateSimilarity(str1, str2) {
+            const longer = str1.length > str2.length ? str1 : str2;
+            const shorter = str1.length > str2.length ? str2 : str1;
+
+            if (longer.length === 0) return 1.0;
+
+            const editDistance = this.levenshteinDistance(longer, shorter);
+            return (longer.length - editDistance) / longer.length;
+        },
+
+        /**
+         * Calculate Levenshtein distance between two strings
+         */
+        levenshteinDistance(str1, str2) {
+            const matrix = [];
+
+            for (let i = 0; i <= str2.length; i++) {
+                matrix[i] = [i];
+            }
+
+            for (let j = 0; j <= str1.length; j++) {
+                matrix[0][j] = j;
+            }
+
+            for (let i = 1; i <= str2.length; i++) {
+                for (let j = 1; j <= str1.length; j++) {
+                    if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1,
+                            matrix[i][j - 1] + 1,
+                            matrix[i - 1][j] + 1
+                        );
+                    }
+                }
+            }
+
+            return matrix[str2.length][str1.length];
+        },
+
+        /**
+         * Show invitation conflict UI
+         */
+        showInvitationConflict(invitation) {
+            const validationContainer = document.getElementById('name-validation-feedback');
+            if (!validationContainer) return;
+
+            validationContainer.innerHTML = `
+            <div class="mt-2 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div class="flex items-start space-x-3">
+                    <svg class="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-yellow-800">
+                            You have a pending invitation for this baby
+                        </p>
+                        <p class="text-sm text-yellow-700 mt-1">
+                            ${invitation.inviter_name} has invited you to be a co-parent for ${invitation.baby_name}.
+                        </p>
+                        <button onclick="BabyNameValidator.switchToInvitations(${invitation.invitation_id})"
+                                class="mt-2 text-sm font-medium text-yellow-800 hover:text-yellow-900 underline">
+                            View invitation →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+            this.currentState = this.VALIDATION_STATES.INVALID;
+            this.updateNameInputUI(false);
+        },
+
+        /**
+         * Show similar name warning
+         */
+        showSimilarNameWarning(invitation) {
+            const validationContainer = document.getElementById('name-validation-feedback');
+            if (!validationContainer) return;
+
+            validationContainer.innerHTML = `
+            <div class="mt-2 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div class="flex items-start space-x-3">
+                    <svg class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-blue-800">
+                            Similar name found in invitations
+                        </p>
+                        <p class="text-sm text-blue-700 mt-1">
+                            Did you mean "${invitation.baby_name}" from ${invitation.inviter_name}?
+                        </p>
+                        <div class="mt-2 space-x-3">
+                            <button onclick="BabyNameValidator.switchToInvitations(${invitation.invitation_id})"
+                                    class="text-sm font-medium text-blue-800 hover:text-blue-900 underline">
+                                Yes, view invitation
+                            </button>
+                            <button onclick="BabyNameValidator.dismissWarning()"
+                                    class="text-sm font-medium text-gray-600 hover:text-gray-700">
+                                No, continue with this name
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+            this.currentState = this.VALIDATION_STATES.WARNING;
+            this.updateNameInputUI(true); // Allow continuation with warning
+        },
+
+        /**
+         * Update validation UI based on state
+         */
+        updateValidationUI(state, message = '') {
+            const validationContainer = document.getElementById('name-validation-feedback');
+            const nameInput = document.getElementById('babyName');
+
+            if (!validationContainer || !nameInput) return;
+
+            this.currentState = state;
+
+            // Clear previous validation
+            validationContainer.innerHTML = '';
+
+            switch (state) {
+                case this.VALIDATION_STATES.CHECKING:
+                    validationContainer.innerHTML = `
+                    <div class="mt-1 flex items-center space-x-2 text-sm text-pastel-textLight">
+                        <div class="spinner w-4 h-4"></div>
+                        <span>Checking name availability...</span>
+                    </div>
+                `;
+                    break;
+
+                case this.VALIDATION_STATES.VALID:
+                    validationContainer.innerHTML = `
+                    <div class="mt-1 flex items-center space-x-2 text-sm text-green-600">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>${message}</span>
+                    </div>
+                `;
+                    this.updateNameInputUI(true);
+                    break;
+
+                case this.VALIDATION_STATES.INVALID:
+                    validationContainer.innerHTML = `
+                    <div class="mt-1 flex items-center space-x-2 text-sm text-red-600">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>${message}</span>
+                    </div>
+                `;
+                    this.updateNameInputUI(false);
+                    break;
+
+                case this.VALIDATION_STATES.IDLE:
+                    this.updateNameInputUI(true);
+                    break;
+            }
+        },
+
+        /**
+         * Update name input field UI based on validation state
+         */
+        updateNameInputUI(isValid) {
+            const nameInput = document.getElementById('babyName');
+            if (!nameInput) return;
+
+            if (isValid) {
+                nameInput.classList.remove('border-red-500', 'border-yellow-500');
+                nameInput.classList.add('border-pastel-light');
+            } else {
+                nameInput.classList.remove('border-pastel-light');
+                nameInput.classList.add('border-red-500');
+            }
+        },
+
+        /**
+         * Switch to invitations view
+         */
+        switchToInvitations(invitationId) {
+            RevisedOnboardingFlow.setFlowState(RevisedOnboardingFlow.FLOW_STATES.CHECK_INVITATIONS);
+            // Optionally highlight the specific invitation
+            setTimeout(() => {
+                const invitationElement = document.querySelector(`[data-invitation-id="${invitationId}"]`);
+                if (invitationElement) {
+                    invitationElement.scrollIntoView({behavior: 'smooth', block: 'center'});
+                    invitationElement.classList.add('ring-2', 'ring-pastel-primary', 'ring-opacity-50');
+                }
+            }, 300);
+        },
+
+        /**
+         * Dismiss warning and continue
+         */
+        dismissWarning() {
+            this.updateValidationUI(this.VALIDATION_STATES.VALID, 'You can use this name');
+        }
+    };
+
+    // Multi-Baby Manager Component
+    const MultiBabyManager = {
+        // Current baby being edited
+        currentBaby: null,
+
+        /**
+         * Show baby management interface
+         */
+        showBabyManagementUI() {
+            const container = document.getElementById('dynamic-content');
+
+            container.innerHTML = `
+            <div class="max-w-5xl mx-auto">
+                <!-- Header -->
+                <div class="text-center mb-8">
+                    <h2 class="font-serif text-3xl text-pastel-heading mb-2">
+                        Manage Your Babies
+                    </h2>
+                    <p class="text-pastel-textLight">
+                        Add babies to your account and invite co-parents for each one
+                    </p>
+                </div>
+
+                <!-- Baby Cards Grid -->
+                <div id="baby-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    ${this.renderBabyCards()}
+                    ${this.renderAddBabyCard()}
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-center space-x-4 mt-8">
+                    <button onclick="RevisedOnboardingFlow.showChooseActionSection()"
+                            class="px-6 py-3 border border-pastel-light text-pastel-text font-medium rounded-lg hover:bg-pastel-lightest transition-colors">
+                        Back to Menu
+                    </button>
+                    <button onclick="RevisedOnboardingFlow.completeSetup()"
+                            class="px-8 py-3 bg-pastel-primary text-white font-semibold rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                        Complete Setup
+                    </button>
+                </div>
+            </div>
+        `;
+        },
+
+        /**
+         * Render baby cards
+         */
+        renderBabyCards() {
+            return RevisedOnboardingFlow.state.addedBabies.map((baby, index) => `
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-pastel-light relative group"
+                 data-baby-index="${index}">
+                <!-- Edit Button -->
+                <button onclick="MultiBabyManager.editBaby(${index})"
+                        class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <svg class="w-5 h-5 text-pastel-textLight hover:text-pastel-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                </button>
+
+                <!-- Baby Avatar -->
+                <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-pastel-secondary to-pastel-accent1 flex items-center justify-center">
+                    <span class="text-2xl font-serif font-semibold text-white">
+                        ${baby.name.charAt(0).toUpperCase()}
+                    </span>
+                </div>
+
+                <!-- Baby Info -->
+                <h3 class="font-serif text-xl text-pastel-heading text-center mb-4">
+                    ${baby.name}
+                </h3>
+
+                <!-- Co-parents Section -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-pastel-text">Co-parents</span>
+                        <button onclick="MultiBabyManager.showAddCoparentModal(${index})"
+                                class="text-xs text-pastel-primary hover:text-pastel-primaryHover font-medium">
+                            + Add
+                        </button>
+                    </div>
+
+                    ${baby.coparents.length > 0 ? `
+                        <div class="space-y-1">
+                            ${baby.coparents.map((coparent, cpIndex) => `
+                                <div class="flex items-center justify-between p-2 bg-pastel-lightest rounded-lg text-sm">
+                                    <span class="text-pastel-text truncate">${coparent.email}</span>
+                                    <button onclick="MultiBabyManager.removeCoparent(${index}, ${cpIndex})"
+                                            class="text-red-500 hover:text-red-700 ml-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <p class="text-sm text-pastel-textLight text-center py-2">
+                            No co-parents added yet
+                        </p>
+                    `}
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="mt-4 pt-4 border-t border-pastel-light grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                        <span class="text-pastel-textLight">Added:</span>
+                        <span class="text-pastel-text ml-1">${new Date().toLocaleDateString()}</span>
+                    </div>
+                    <div>
+                        <span class="text-pastel-textLight">Status:</span>
+                        <span class="text-green-600 ml-1">Active</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        },
+
+        /**
+         * Render add baby card
+         */
+        renderAddBabyCard() {
+            return `
+            <button onclick="MultiBabyManager.showAddBabyForm()"
+                    class="bg-white rounded-xl shadow-lg p-6 border-2 border-dashed border-pastel-light hover:border-pastel-primary transition-all group">
+                <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-pastel-lightest group-hover:bg-pastel-secondary transition-colors flex items-center justify-center">
+                    <svg class="w-10 h-10 text-pastel-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </div>
+                <h3 class="font-serif text-xl text-pastel-heading text-center mb-2">
+                    Add Another Baby
+                </h3>
+                <p class="text-sm text-pastel-textLight text-center">
+                    Click to register a new baby
+                </p>
+            </button>
+        `;
+        },
+
+        /**
+         * Show add co-parent modal
+         */
+        showAddCoparentModal(babyIndex) {
+            const baby = RevisedOnboardingFlow.state.addedBabies[babyIndex];
+
+            const modal = document.createElement('div');
+            modal.id = 'coparent-modal';
+            modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4';
+            modal.innerHTML = `
+            <!-- Backdrop -->
+            <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+                 onclick="MultiBabyManager.closeCoparentModal()"></div>
+
+            <!-- Modal Content -->
+            <div class="bg-white rounded-2xl shadow-xl max-w-md w-full transform transition-all relative">
+                <div class="p-6">
+                    <h3 class="font-serif text-2xl text-pastel-heading mb-2">
+                        Add Co-parent for ${baby.name}
+                    </h3>
+                    <p class="text-sm text-pastel-textLight mb-6">
+                        Invite someone to share baby care responsibilities
+                    </p>
+
+                    <form onsubmit="event.preventDefault(); MultiBabyManager.addCoparent(${babyIndex});">
+                        <div class="mb-4">
+                            <label for="modal-coparent-email" class="block text-sm font-medium text-pastel-text mb-2">
+                                Co-parent's Email
+                            </label>
+                            <input type="email"
+                                   id="modal-coparent-email"
+                                   placeholder="partner@gmail.com"
+                                   class="w-full px-4 py-2 border border-pastel-light rounded-lg focus:outline-none focus:ring-2 focus:ring-pastel-primary"
+                                   required>
+                            <div id="modal-email-error" class="hidden mt-1 text-xs text-red-500"></div>
+                        </div>
+
+                        <!-- Existing co-parents list -->
+                        ${baby.coparents.length > 0 ? `
+                            <div class="mb-4 p-3 bg-pastel-lightest rounded-lg">
+                                <p class="text-xs text-pastel-textLight mb-2">Already invited:</p>
+                                <div class="space-y-1">
+                                    ${baby.coparents.map(cp => `
+                                        <div class="text-sm text-pastel-text">${cp.email}</div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <div class="flex justify-end space-x-3">
+                            <button type="button"
+                                    onclick="MultiBabyManager.closeCoparentModal()"
+                                    class="px-6 py-2 text-pastel-text hover:text-pastel-heading transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                    class="px-6 py-2 bg-pastel-primary text-white font-medium rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                                Send Invitation
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+
+            document.body.appendChild(modal);
+
+            // Focus email input
+            setTimeout(() => {
+                document.getElementById('modal-coparent-email').focus();
+            }, 100);
+        },
+
+        /**
+         * Add co-parent to specific baby
+         */
+        async addCoparent(babyIndex) {
+            const baby = RevisedOnboardingFlow.state.addedBabies[babyIndex];
+            const emailInput = document.getElementById('modal-coparent-email');
+            const email = emailInput.value.trim();
+            const errorDiv = document.getElementById('modal-email-error');
+
+            // Reset error
+            errorDiv.classList.add('hidden');
+
+            // Validate email
+            if (!onboardingApp.utils.isValidGmail(email)) {
+                errorDiv.textContent = 'Please enter a valid Gmail address';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            // Check if already added
+            if (baby.coparents.some(cp => cp.email === email)) {
+                errorDiv.textContent = 'This person is already a co-parent for this baby';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            // Check if it's the user's email
+            const userEmail = sessionStorage.getItem('userEmail');
+            if (email === userEmail) {
+                errorDiv.textContent = 'You cannot invite yourself as a co-parent';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                // Send invitation
+                const result = await onboardingApp.api.endpoints.sendCoparentInvite({
+                    baby_id: baby.id,
+                    email: email
+                });
+
+                // Extract notification ID
+                const match = result.message.match(/notification: (\d+)$/);
+                const notificationId = match ? parseInt(match[1]) : null;
+
+                // Add to baby's coparents
+                baby.coparents.push({
+                    email: email,
+                    notificationId: notificationId,
+                    status: 'pending'
+                });
+
+                // Save progress
+                onboardingApp.storage.saveProgress();
+
+                // Close modal and refresh UI
+                this.closeCoparentModal();
+                this.showBabyManagementUI();
+
+                onboardingApp.ui.showToast(`Invitation sent to ${email}`, onboardingApp.MESSAGE_TYPES.SUCCESS);
+
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.classList.remove('hidden');
+            }
+        },
+
+        /**
+         * Remove co-parent from specific baby
+         */
+        async removeCoparent(babyIndex, coparentIndex) {
+            const baby = RevisedOnboardingFlow.state.addedBabies[babyIndex];
+            const coparent = baby.coparents[coparentIndex];
+
+            if (!confirm(`Remove ${coparent.email} as a co-parent for ${baby.name}?`)) {
+                return;
+            }
+
+            try {
+                // If there's a notification ID, remove it
+                if (coparent.notificationId) {
+                    await onboardingApp.api.endpoints.removeNotification(coparent.notificationId);
+                }
+
+                // Remove from local state
+                baby.coparents.splice(coparentIndex, 1);
+
+                // Save progress
+                onboardingApp.storage.saveProgress();
+
+                // Refresh UI
+                this.showBabyManagementUI();
+
+                onboardingApp.ui.showToast('Co-parent removed successfully', onboardingApp.MESSAGE_TYPES.SUCCESS);
+
+            } catch (error) {
+                onboardingApp.ui.showToast('Failed to remove co-parent: ' + error.message, onboardingApp.MESSAGE_TYPES.ERROR);
+            }
+        },
+
+        /**
+         * Close co-parent modal
+         */
+        closeCoparentModal() {
+            const modal = document.getElementById('coparent-modal');
+            if (modal) {
+                modal.remove();
+            }
+        },
+
+        /**
+         * Show add baby form in a slide-over panel
+         */
+        showAddBabyForm() {
+            RevisedOnboardingFlow.setFlowState(RevisedOnboardingFlow.FLOW_STATES.ADD_BABY);
+        },
+
+        /**
+         * Edit existing baby
+         */
+        editBaby(babyIndex) {
+            const baby = RevisedOnboardingFlow.state.addedBabies[babyIndex];
+            this.currentBaby = baby;
+
+            // Show edit form with pre-filled data
+            RevisedOnboardingFlow.setFlowState(RevisedOnboardingFlow.FLOW_STATES.ADD_BABY);
+
+            // Pre-fill form after a short delay
+            setTimeout(() => {
+                document.getElementById('babyName').value = baby.name;
+                // Pre-fill other fields if stored
+            }, 100);
+        }
+    };
+
+    // Conditional Invitation Display Component
+    const ConditionalInvitations = {
+        // Track which invitations have been interacted with
+        processedInvitations: new Set(),
+
+        /**
+         * Display invitations with smart grouping
+         */
+        displayInvitations() {
+            const container = document.getElementById('dynamic-content');
+            const invitations = RevisedOnboardingFlow.state.pendingInvitations;
+
+            // Group invitations by inviter
+            const groupedInvitations = this.groupInvitationsByInviter(invitations);
+
+            container.innerHTML = `
+            <div class="max-w-4xl mx-auto">
+                <!-- Header -->
+                <div class="text-center mb-8">
+                    <h2 class="font-serif text-3xl text-pastel-heading mb-2">
+                        You Have ${invitations.length} Pending Invitation${invitations.length !== 1 ? 's' : ''}
+                    </h2>
+                    <p class="text-pastel-textLight">
+                        Accept invitations to become a co-parent and share baby care responsibilities
+                    </p>
+                </div>
+
+                <!-- Quick Actions Bar -->
+                <div class="mb-6 p-4 bg-pastel-lightest rounded-lg flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <button onclick="ConditionalInvitations.acceptAllInvitations()"
+                                class="text-sm font-medium text-pastel-primary hover:text-pastel-primaryHover">
+                            Accept All
+                        </button>
+                        <button onclick="ConditionalInvitations.declineAllInvitations()"
+                                class="text-sm font-medium text-pastel-textLight hover:text-pastel-text">
+                            Decline All
+                        </button>
+                    </div>
+                    <button onclick="RevisedOnboardingFlow.showChooseActionSection()"
+                            class="text-sm text-pastel-textLight hover:text-pastel-text">
+                        Skip for now →
+                    </button>
+                </div>
+
+                <!-- Invitations List -->
+                <div id="invitations-list" class="space-y-4">
+                    ${this.renderGroupedInvitations(groupedInvitations)}
+                </div>
+
+                <!-- Navigation -->
+                <div class="mt-8 flex justify-center">
+                    <button onclick="ConditionalInvitations.continueAfterInvitations()"
+                            class="px-8 py-3 bg-pastel-primary text-white font-semibold rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                        Continue
+                    </button>
+                </div>
+            </div>
+        `;
+        },
+
+        /**
+         * Group invitations by inviter for better UX
+         */
+        groupInvitationsByInviter(invitations) {
+            const grouped = {};
+
+            invitations.forEach(inv => {
+                const key = inv.inviter_email;
+                if (!grouped[key]) {
+                    grouped[key] = {
+                        inviterName: inv.inviter_name,
+                        inviterEmail: inv.inviter_email,
+                        invitations: []
+                    };
+                }
+                grouped[key].invitations.push(inv);
+            });
+
+            return grouped;
+        },
+
+        /**
+         * Render grouped invitations
+         */
+        renderGroupedInvitations(groupedInvitations) {
+            return Object.values(groupedInvitations).map(group => `
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-pastel-light">
+                <!-- Inviter Info -->
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <h3 class="font-semibold text-lg text-pastel-heading">
+                            ${onboardingApp.utils.escapeHtml(group.inviterName)}
+                        </h3>
+                        <p class="text-sm text-pastel-textLight">
+                            ${onboardingApp.utils.escapeHtml(group.inviterEmail)}
+                        </p>
+                    </div>
+                    ${group.invitations.length > 1 ? `
+                        <span class="text-sm text-pastel-primary font-medium">
+                            ${group.invitations.length} babies
+                        </span>
+                    ` : ''}
+                </div>
+
+                <!-- Baby Invitations -->
+                <div class="space-y-3">
+                    ${group.invitations.map(inv => this.renderInvitationCard(inv)).join('')}
+                </div>
+            </div>
+        `).join('');
+        },
+
+        /**
+         * Render individual invitation card
+         */
+        renderInvitationCard(invitation) {
+            const isProcessed = this.processedInvitations.has(invitation.invitation_id);
+
+            return `
+            <div class="p-4 bg-pastel-lightest rounded-lg ${isProcessed ? 'opacity-50' : ''}"
+                 data-invitation-id="${invitation.invitation_id}">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <!-- Baby Avatar -->
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-pastel-secondary to-pastel-accent1 flex items-center justify-center">
+                            <span class="text-lg font-serif font-semibold text-white">
+                                ${invitation.baby_name.charAt(0).toUpperCase()}
+                            </span>
+                        </div>
+
+                        <!-- Baby Info -->
+                        <div>
+                            <h4 class="font-medium text-pastel-heading">
+                                ${onboardingApp.utils.escapeHtml(invitation.baby_name)}
+                            </h4>
+                            <p class="text-xs text-pastel-textLight">
+                                Invited ${onboardingApp.utils.formatDateForDisplay(invitation.created_at)}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex items-center space-x-2">
+                        ${!isProcessed ? `
+                            <button onclick="ConditionalInvitations.acceptInvitation(${invitation.invitation_id})"
+                                    class="px-4 py-2 bg-pastel-primary text-white text-sm font-medium rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                                Accept
+                            </button>
+                            <button onclick="ConditionalInvitations.declineInvitation(${invitation.invitation_id})"
+                                    class="px-4 py-2 border border-pastel-light text-pastel-text text-sm font-medium rounded-lg hover:bg-pastel-lightest transition-colors">
+                                Decline
+                            </button>
+                        ` : `
+                            <span class="text-sm text-pastel-textLight">
+                                ${RevisedOnboardingFlow.state.acceptedInvitations.includes(invitation.invitation_id) ? 'Accepted' : 'Declined'}
+                            </span>
+                        `}
+                    </div>
+                </div>
+            </div>
+        `;
+        },
+
+        /**
+         * Accept a single invitation
+         */
+        async acceptInvitation(invitationId) {
+            try {
+                // Update UI immediately
+                this.updateInvitationUI(invitationId, 'processing');
+
+                // Make API call
+                await onboardingApp.api.endpoints.respondToInvitation(invitationId, true);
+                await onboardingApp.api.endpoints.markNotificationAsRead(invitationId);
+
+                // Update state
+                RevisedOnboardingFlow.state.acceptedInvitations.push(invitationId);
+                this.processedInvitations.add(invitationId);
+
+                // Update UI
+                this.updateInvitationUI(invitationId, 'accepted');
+
+                // Remove the invitation name from the validation list
+                const invitation = RevisedOnboardingFlow.state.pendingInvitations.find(
+                    inv => inv.invitation_id === invitationId
+                );
+                if (invitation) {
+                    const nameIndex = RevisedOnboardingFlow.state.invitedBabyNames.indexOf(
+                        invitation.baby_name.toLowerCase().trim()
+                    );
+                    if (nameIndex > -1) {
+                        RevisedOnboardingFlow.state.invitedBabyNames.splice(nameIndex, 1);
+                    }
+                }
+
+                onboardingApp.ui.showToast('Invitation accepted!', onboardingApp.MESSAGE_TYPES.SUCCESS);
+
+                // Check if all invitations are processed
+                this.checkAllProcessed();
+
+            } catch (error) {
+                this.updateInvitationUI(invitationId, 'error');
+                onboardingApp.ui.showToast('Failed to accept invitation: ' + error.message, onboardingApp.MESSAGE_TYPES.ERROR);
+            }
+        },
+
+        /**
+         * Decline a single invitation
+         */
+        async declineInvitation(invitationId) {
+            try {
+                // Update UI immediately
+                this.updateInvitationUI(invitationId, 'processing');
+
+                // Make API call
+                await onboardingApp.api.endpoints.respondToInvitation(invitationId, false);
+                await onboardingApp.api.endpoints.markNotificationAsRead(invitationId);
+
+                // Update state
+                this.processedInvitations.add(invitationId);
+
+                // Update UI
+                this.updateInvitationUI(invitationId, 'declined');
+
+                // Remove the invitation name from the validation list
+                const invitation = RevisedOnboardingFlow.state.pendingInvitations.find(
+                    inv => inv.invitation_id === invitationId
+                );
+                if (invitation) {
+                    const nameIndex = RevisedOnboardingFlow.state.invitedBabyNames.indexOf(
+                        invitation.baby_name.toLowerCase().trim()
+                    );
+                    if (nameIndex > -1) {
+                        RevisedOnboardingFlow.state.invitedBabyNames.splice(nameIndex, 1);
+                    }
+                }
+
+                onboardingApp.ui.showToast('Invitation declined', onboardingApp.MESSAGE_TYPES.INFO);
+
+                // Check if all invitations are processed
+                this.checkAllProcessed();
+
+            } catch (error) {
+                this.updateInvitationUI(invitationId, 'error');
+                onboardingApp.ui.showToast('Failed to decline invitation: ' + error.message, onboardingApp.MESSAGE_TYPES.ERROR);
+            }
+        },
+
+        /**
+         * Accept all pending invitations
+         */
+        async acceptAllInvitations() {
+            const unprocessed = RevisedOnboardingFlow.state.pendingInvitations.filter(
+                inv => !this.processedInvitations.has(inv.invitation_id)
+            );
+
+            if (confirm(`Accept all ${unprocessed.length} pending invitations?`)) {
+                for (const invitation of unprocessed) {
+                    await this.acceptInvitation(invitation.invitation_id);
+                }
+            }
+        },
+
+        /**
+         * Decline all pending invitations
+         */
+        async declineAllInvitations() {
+            const unprocessed = RevisedOnboardingFlow.state.pendingInvitations.filter(
+                inv => !this.processedInvitations.has(inv.invitation_id)
+            );
+
+            if (confirm(`Decline all ${unprocessed.length} pending invitations?`)) {
+                for (const invitation of unprocessed) {
+                    await this.declineInvitation(invitation.invitation_id);
+                }
+            }
+        },
+
+        /**
+         * Update invitation UI state
+         */
+        updateInvitationUI(invitationId, state) {
+            const invCard = document.querySelector(`[data-invitation-id="${invitationId}"]`);
+            if (!invCard) return;
+
+            const buttonsContainer = invCard.querySelector('.flex.items-center.space-x-2');
+            if (!buttonsContainer) return;
+
+            switch (state) {
+                case 'processing':
+                    buttonsContainer.innerHTML = `
+                    <div class="flex items-center space-x-2 text-sm text-pastel-textLight">
+                        <div class="spinner w-4 h-4"></div>
+                        <span>Processing...</span>
+                    </div>
+                `;
+                    break;
+
+                case 'accepted':
+                    invCard.classList.add('opacity-50');
+                    buttonsContainer.innerHTML = `
+                    <span class="text-sm text-green-600 font-medium">✓ Accepted</span>
+                `;
+                    break;
+
+                case 'declined':
+                    invCard.classList.add('opacity-50');
+                    buttonsContainer.innerHTML = `
+                    <span class="text-sm text-pastel-textLight">Declined</span>
+                `;
+                    break;
+
+                case 'error':
+                    // Re-enable buttons on error
+                    location.reload(); // Simple recovery
+                    break;
+            }
+        },
+
+        /**
+         * Check if all invitations have been processed
+         */
+        checkAllProcessed() {
+            const allProcessed = RevisedOnboardingFlow.state.pendingInvitations.every(
+                inv => this.processedInvitations.has(inv.invitation_id)
+            );
+
+            if (allProcessed) {
+                // Auto-continue after a short delay
+                setTimeout(() => {
+                    this.continueAfterInvitations();
+                }, 1500);
+            }
+        },
+
+        /**
+         * Continue to next step after processing invitations
+         */
+        continueAfterInvitations() {
+            RevisedOnboardingFlow.setFlowState(RevisedOnboardingFlow.FLOW_STATES.CHOOSE_ACTION);
+        }
+    };
+
+    // Enhanced Completion Flow Component
+    const CompletionFlow = {
+        /**
+         * Show the review and complete section
+         */
+        showReviewCompleteSection() {
+            const container = document.getElementById('dynamic-content');
+            const summary = this.generateSummary();
+
+            container.innerHTML = `
+            <div class="max-w-4xl mx-auto">
+                <!-- Success Header -->
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+                        <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                    <h2 class="font-serif text-3xl text-pastel-heading mb-2">
+                        Setup Complete! 🎉
+                    </h2>
+                    <p class="text-pastel-textLight">
+                        Here's a summary of your BabyHelper account
+                    </p>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    ${this.renderSummaryCards(summary)}
+                </div>
+
+                <!-- Detailed Summary -->
+                ${summary.babies.length > 0 || summary.acceptedBabies.length > 0 ? `
+                    <div class="bg-white rounded-xl shadow-lg p-6 border border-pastel-light mb-8">
+                        <h3 class="font-serif text-xl text-pastel-heading mb-4">Your Babies</h3>
+
+                        <!-- Added Babies -->
+                        ${summary.babies.length > 0 ? `
+                            <div class="mb-6">
+                                <h4 class="font-medium text-pastel-text mb-3">Babies you created:</h4>
+                                <div class="space-y-3">
+                                    ${summary.babies.map(baby => `
+                                        <div class="p-4 bg-pastel-lightest rounded-lg">
+                                            <div class="flex items-center justify-between">
+                                                <div>
+                                                    <h5 class="font-semibold text-pastel-heading">
+                                                        ${onboardingApp.utils.escapeHtml(baby.name)}
+                                                    </h5>
+                                                    <p class="text-sm text-pastel-textLight">
+                                                        ${baby.coparents.length} co-parent${baby.coparents.length !== 1 ? 's' : ''} invited
+                                                    </p>
+                                                </div>
+                                                <span class="text-xs text-green-600 font-medium">
+                                                    Primary caregiver
+                                                </span>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <!-- Accepted Invitations -->
+                        ${summary.acceptedBabies.length > 0 ? `
+                            <div>
+                                <h4 class="font-medium text-pastel-text mb-3">Babies you're co-parenting:</h4>
+                                <div class="space-y-3">
+                                    ${summary.acceptedBabies.map(baby => `
+                                        <div class="p-4 bg-pastel-lightest rounded-lg">
+                                            <div class="flex items-center justify-between">
+                                                <div>
+                                                    <h5 class="font-semibold text-pastel-heading">
+                                                        ${onboardingApp.utils.escapeHtml(baby.baby_name)}
+                                                    </h5>
+                                                    <p class="text-sm text-pastel-textLight">
+                                                        Invited by ${onboardingApp.utils.escapeHtml(baby.inviter_name)}
+                                                    </p>
+                                                </div>
+                                                <span class="text-xs text-pastel-primary font-medium">
+                                                    Co-parent
+                                                </span>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                ` : ''}
+
+                <!-- Next Steps -->
+                <div class="bg-pastel-lightest rounded-xl p-6 mb-8">
+                    <h3 class="font-serif text-xl text-pastel-heading mb-4">What's Next?</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${this.getNextSteps(summary).map(step => `
+                            <div class="flex items-start space-x-3">
+                                <div class="w-6 h-6 rounded-full bg-pastel-primary bg-opacity-20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <span class="text-xs text-pastel-primary font-bold">${step.number}</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-pastel-heading">${step.title}</h4>
+                                    <p class="text-sm text-pastel-textLight">${step.description}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+                    <button onclick="CompletionFlow.goToDashboard()"
+                            class="w-full sm:w-auto px-8 py-3 bg-pastel-primary text-white font-semibold rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                        Go to Dashboard
+                    </button>
+
+                    <div class="flex items-center space-x-3">
+                        <input type="checkbox"
+                               id="skip-onboarding-checkbox"
+                               class="w-4 h-4 text-pastel-primary rounded focus:ring-pastel-primary">
+                        <label for="skip-onboarding-checkbox" class="text-sm text-pastel-text">
+                            Don't show this setup again
+                        </label>
+                    </div>
+                </div>
+            </div>
+        `;
+        },
+
+        /**
+         * Generate summary data
+         */
+        generateSummary() {
+            const acceptedBabies = RevisedOnboardingFlow.state.pendingInvitations.filter(
+                inv => RevisedOnboardingFlow.state.acceptedInvitations.includes(inv.invitation_id)
+            );
+
+            const totalCoparents = RevisedOnboardingFlow.state.addedBabies.reduce(
+                (sum, baby) => sum + baby.coparents.length, 0
+            );
+
+            return {
+                babies: RevisedOnboardingFlow.state.addedBabies,
+                acceptedBabies: acceptedBabies,
+                totalBabies: RevisedOnboardingFlow.state.addedBabies.length + acceptedBabies.length,
+                totalCoparents: totalCoparents,
+                declinedInvitations: ConditionalInvitations.processedInvitations.size - acceptedBabies.length
+            };
+        },
+
+        /**
+         * Render summary cards
+         */
+        renderSummaryCards(summary) {
+            const cards = [
+                {
+                    icon: `<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>`,
+                    label: 'Total Babies',
+                    value: summary.totalBabies,
+                    color: 'pastel-primary'
+                },
+                {
+                    icon: `<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>`,
+                    label: 'Co-parents Invited',
+                    value: summary.totalCoparents,
+                    color: 'pastel-accent1'
+                },
+                {
+                    icon: `<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>`,
+                    label: 'Setup Progress',
+                    value: '100%',
+                    color: 'green-600'
+                }
+            ];
+
+            return cards.map(card => `
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-pastel-light text-center">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-${card.color} bg-opacity-20 flex items-center justify-center text-${card.color}">
+                    ${card.icon}
+                </div>
+                <p class="text-3xl font-bold text-pastel-heading mb-1">${card.value}</p>
+                <p class="text-sm text-pastel-textLight">${card.label}</p>
+            </div>
+        `).join('');
+        },
+
+        /**
+         * Get next steps based on user's setup
+         */
+        getNextSteps(summary) {
+            const steps = [];
+
+            if (summary.totalBabies > 0) {
+                steps.push({
+                    number: 1,
+                    title: 'Start Tracking',
+                    description: 'Log your first feeding, diaper change, or sleep session'
+                });
+
+                if (summary.totalCoparents > 0) {
+                    steps.push({
+                        number: 2,
+                        title: 'Wait for Co-parents',
+                        description: 'They\'ll receive invitations to join'
+                    });
+                } else {
+                    steps.push({
+                        number: 2,
+                        title: 'Ask AI About Your Baby',
+                        description: 'Get quick answers and tips about sleep, feeding, and development'
+                    });
+                }
+            } else {
+                steps.push({
+                    number: 1,
+                    title: 'Add a Baby',
+                    description: 'Go to Settings to add your first baby'
+                });
+
+                steps.push({
+                    number: 2,
+                    title: 'Invite a Co-parent',
+                    description: 'Send an invitation so someone can help track baby care'
+                });
+            }
+
+            steps.push({
+                number: steps.length + 1,
+                title: 'Explore Features',
+                description: 'Check out growth charts, reports, and insights'
+            });
+
+            steps.push({
+                number: steps.length + 1,
+                title: 'Customize Settings',
+                description: 'Update your name, photo, and account details'
+            });
+
+            return steps;
+        },
+
+        /**
+         * Complete setup and go to dashboard
+         */
+        async goToDashboard() {
+            try {
+                // Check if user wants to skip onboarding in future
+                const skipCheckbox = document.getElementById('skip-onboarding-checkbox');
+                if (skipCheckbox && skipCheckbox.checked) {
+                    await this.saveSkipPreference();
+                }
+
+                // Mark onboarding as complete
+                sessionStorage.setItem('onboardingComplete', 'true');
+
+                // Clear any saved progress
+                onboardingApp.storage.clearProgress();
+
+                // Show success message
+                onboardingApp.ui.showToast('Welcome to BabyHelper! Redirecting...', onboardingApp.MESSAGE_TYPES.SUCCESS);
+
+                // Redirect to dashboard
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 1500);
+
+            } catch (error) {
+                console.error('Error completing setup:', error);
+                onboardingApp.ui.showToast('Completing setup... Redirecting to dashboard', onboardingApp.MESSAGE_TYPES.INFO);
+
+                // Redirect anyway after error
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 2000);
+            }
+        },
+
+        /**
+         * Save skip preference
+         */
+        async saveSkipPreference() {
+            try {
+                await onboardingApp.api.endpoints.updateUserPreference({skip_onboarding: true});
+                sessionStorage.setItem('skipOnboarding', 'true');
+            } catch (error) {
+                console.error('Failed to save skip preference:', error);
+                // Continue anyway - not critical
+            }
+        }
+    };
+
+    // Wait for all components to be loaded
     window.addEventListener('DOMContentLoaded', () => {
+        // Initialize the revised flow
+        RevisedOnboardingFlow.initializeFlow().catch(error => {
+            console.error('Failed to initialize onboarding:', error);
+            onboardingApp.ui.showToast('Error loading setup. Please refresh the page.', onboardingApp.MESSAGE_TYPES.ERROR);
+        });
+
+        // Initialize validators
+        BabyNameValidator.init();
         onboardingApp.init();
+
+        // Set up global error handling
+        window.addEventListener('unhandledrejection', event => {
+            console.error('Unhandled promise rejection:', event.reason);
+            onboardingApp.ui.showToast('An unexpected error occurred. Please try again.', onboardingApp.MESSAGE_TYPES.ERROR);
+        });
     });
 </script>
 </body>
