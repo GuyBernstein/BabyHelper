@@ -322,7 +322,7 @@
         // OAuth handler functions
         async function handleGoogleSignIn() {
             try {
-                const response = await fetch('/auth/login');
+                const response = await fetch('/auth/login/json');
                 const data = await response.json();
 
                 if (data.login_url) {

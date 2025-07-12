@@ -56,6 +56,235 @@ def generate_error_html(title: str, message: str, details: str = None) -> str:
     """
 
 
+def generate_login_html(auth_url: str) -> str:
+    """Generate login page HTML"""
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Sign In - Baby Tracker</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            * {{
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }}
+
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }}
+
+            .login-container {{
+                background: white;
+                border-radius: 20px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+                padding: 50px;
+                max-width: 450px;
+                width: 100%;
+                text-align: center;
+                animation: slideIn 0.5s ease-out;
+            }}
+
+            @keyframes slideIn {{
+                from {{
+                    opacity: 0;
+                    transform: translateY(30px);
+                }}
+                to {{
+                    opacity: 1;
+                    transform: translateY(0);
+                }}
+            }}
+
+            .logo {{
+                font-size: 48px;
+                margin-bottom: 20px;
+                animation: bounce 1s ease-in-out;
+            }}
+
+            @keyframes bounce {{
+                0%, 100% {{ transform: translateY(0); }}
+                50% {{ transform: translateY(-10px); }}
+            }}
+
+            h1 {{
+                color: #333;
+                margin-bottom: 10px;
+                font-size: 28px;
+            }}
+
+            .subtitle {{
+                color: #666;
+                margin-bottom: 40px;
+                font-size: 16px;
+            }}
+
+            .google-btn {{
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                background-color: #4285f4;
+                color: white;
+                text-decoration: none;
+                padding: 14px 24px;
+                border-radius: 8px;
+                font-weight: 500;
+                font-size: 16px;
+                transition: all 0.3s ease;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                width: 100%;
+                gap: 12px;
+            }}
+
+            .google-btn:hover {{
+                background-color: #357ae8;
+                box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+                transform: translateY(-1px);
+            }}
+
+            .google-icon {{
+                width: 20px;
+                height: 20px;
+                background: white;
+                border-radius: 2px;
+                padding: 2px;
+            }}
+
+            .features {{
+                margin-top: 50px;
+                padding-top: 30px;
+                border-top: 1px solid #eee;
+            }}
+
+            .features-title {{
+                color: #666;
+                font-size: 14px;
+                margin-bottom: 20px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }}
+
+            .feature-list {{
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+                gap: 20px;
+                margin-top: 20px;
+            }}
+
+            .feature {{
+                text-align: center;
+            }}
+
+            .feature-icon {{
+                font-size: 32px;
+                margin-bottom: 8px;
+            }}
+
+            .feature-text {{
+                font-size: 14px;
+                color: #666;
+            }}
+
+            .privacy-note {{
+                margin-top: 30px;
+                font-size: 12px;
+                color: #999;
+                line-height: 1.5;
+            }}
+
+            .privacy-note a {{
+                color: #4285f4;
+                text-decoration: none;
+            }}
+
+            .privacy-note a:hover {{
+                text-decoration: underline;
+            }}
+
+            /* Responsive design */
+            @media (max-width: 480px) {{
+                .login-container {{
+                    padding: 30px;
+                }}
+
+                h1 {{
+                    font-size: 24px;
+                }}
+
+                .feature-list {{
+                    grid-template-columns: repeat(2, 1fr);
+                }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="login-container">
+            <div class="logo">👶</div>
+            <h1>Welcome to Baby Tracker</h1>
+            <p class="subtitle">Track your baby's daily activities and milestones</p>
+
+            <a href="{auth_url}" class="google-btn">
+                <svg class="google-icon" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Sign in with Google
+            </a>
+
+            <div class="features">
+                <p class="features-title">Track Everything</p>
+                <div class="feature-list">
+                    <div class="feature">
+                        <div class="feature-icon">🍼</div>
+                        <div class="feature-text">Feeding</div>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">😴</div>
+                        <div class="feature-text">Sleep</div>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">👶</div>
+                        <div class="feature-text">Diapers</div>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-icon">📏</div>
+                        <div class="feature-text">Growth</div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="privacy-note">
+                By signing in, you agree to our <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>.
+                We use Google authentication to keep your data secure.
+            </p>
+        </div>
+
+        <script>
+            // Clear any existing authentication data when on login page
+            sessionStorage.clear();
+
+            // Add loading state when clicking sign in
+            document.querySelector('.google-btn').addEventListener('click', function(e) {{
+                this.innerHTML = '<span>Redirecting to Google...</span>';
+                this.style.opacity = '0.7';
+                this.style.pointerEvents = 'none';
+            }});
+        </script>
+    </body>
+    </html>
+    """
+
+
 def generate_success_redirect_html(user: User, id_token: str) -> str:
     """Generate success redirect HTML"""
     # Determine redirect URL based on skip_onboarding preference
@@ -126,9 +355,18 @@ def generate_success_redirect_html(user: User, id_token: str) -> str:
     """
 
 
-@router.get("/login", response_model=Dict[str, str])
+@router.get("/login")
 async def login_route():
-    """Get Google OAuth login URL (open this URL in your browser)"""
+    """Display Google OAuth login page"""
+    auth_url = f"https://accounts.google.com/o/oauth2/auth?response_type=code&client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&scope=openid email profile&access_type=offline"
+
+    # Return HTML login page instead of JSON
+    return HTMLResponse(content=generate_login_html(auth_url))
+
+
+@router.get("/login/json", response_model=Dict[str, str])
+async def login_json_route():
+    """Get Google OAuth login URL as JSON (for API clients)"""
     auth_url = f"https://accounts.google.com/o/oauth2/auth?response_type=code&client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&scope=openid email profile&access_type=offline"
     return {
         "message": "Open this URL in your browser to login with Google",
@@ -291,3 +529,90 @@ async def update_user_active_status(
         )
 
     return result
+
+
+@router.get("/logout")
+async def logout():
+    """Display logout confirmation page"""
+    return HTMLResponse(content="""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Logged Out - Baby Tracker</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+
+            .logout-container {
+                background: white;
+                border-radius: 20px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+                padding: 50px;
+                max-width: 450px;
+                width: 100%;
+                text-align: center;
+            }
+
+            .check-icon {
+                width: 80px;
+                height: 80px;
+                margin: 0 auto 20px;
+                background: #4ade80;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 40px;
+            }
+
+            h1 {
+                color: #333;
+                margin-bottom: 10px;
+            }
+
+            p {
+                color: #666;
+                margin-bottom: 30px;
+            }
+
+            .btn {
+                display: inline-block;
+                padding: 14px 32px;
+                background-color: #4285f4;
+                color: white;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: 500;
+                transition: all 0.3s ease;
+            }
+
+            .btn:hover {
+                background-color: #357ae8;
+                transform: translateY(-1px);
+            }
+        </style>
+        <script>
+            // Clear all session storage on logout
+            sessionStorage.clear();
+        </script>
+    </head>
+    <body>
+        <div class="logout-container">
+            <div class="check-icon">✓</div>
+            <h1>You've been logged out</h1>
+            <p>Thanks for using Baby Tracker. Your session has been securely ended.</p>
+            <a href="/" class="btn">Return to Home</a>
+        </div>
+    </body>
+    </html>
+    """)
