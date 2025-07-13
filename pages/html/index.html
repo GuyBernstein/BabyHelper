@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta property="og:type" content="Technology information">
-    <meta name="image" property="og:image"
-          content="../media/baby_photo.jpg">
     <meta name="author" content="Guy Bernstein">
+    <meta name="image" property="og:image" content="https://guyberstein.github.io/html/assets/images/logo.png">
     <meta name="title" property="og:title" content="BabyHelper - Your Baby Care Companion">
     <title>BabyHelper - Your Baby Care Companion</title>
     <meta name="description" property="og:description"
@@ -333,7 +332,7 @@
                 }
             } catch (error) {
                 console.error('Error initiating Google sign-in:', error);
-                alert('Failed to initiate Google sign-in. Please try again.');
+                alert('This feature will be ready soon. Please try again later.');
             }
         }
 
@@ -731,7 +730,8 @@
                                 class="btn-hover-effect px-8 py-3 bg-pastel-primary text-white font-semibold rounded-full shadow-pastel transition-all duration-300 hover:bg-pastel-primaryHover hover:transform hover:-translate-y-1 text-center">
                             Sign Up
                         </button>
-                        <a href="#demo" onclick="scrollToSection('demo')"
+<!--                        <a href="#demo" onclick="scrollToSection('demo')"-->
+                        <button onclick="handleGoogleSignIn()"
                            class="px-8 py-3 bg-white border border-pastel-light text-pastel-text font-semibold rounded-full hover:bg-pastel-light transition-all duration-300 flex items-center justify-center space-x-2">
                             <span>See Demo</span>
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
@@ -740,7 +740,7 @@
                                       d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
                                       clip-rule="evenodd"/>
                             </svg>
-                        </a>
+                        </button>
                     </div>
                     <div class="mt-12 flex items-center opacity-0 animate-fade-in"
                          style="animation-delay: 1.2s; animation-fill-mode: forwards;">
@@ -1479,17 +1479,22 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div class="order-2 lg:order-1">
                     <div class="image-wrapper bg-white p-4 rounded-2xl shadow-pastel">
-                        <img src="PLACEHOLDER_IMAGE_URL" alt="Architecture Diagram"
+                        <img src="../media/system-architecture.png" alt="Architecture Diagram"
                              class="responsive-image w-full h-auto rounded-lg">
                     </div>
+                    <p class="text-pastel-textLight text-sm">
+                        <br>The event-driven architecture ensures that insights are generated in real-time as data flows
+                        through the system, providing parents with immediate, actionable recommendations.
+                    </p>
                 </div>
                 <div class="order-1 lg:order-2">
                     <h3 class="font-serif text-2xl md:text-3xl font-medium text-pastel-heading mb-4">
                         System Architecture Overview
                     </h3>
                     <p class="text-pastel-text mb-6">
-                        The application is built on a modern, scalable architecture designed to handle real-time data
-                        tracking and provide a seamless user experience across all devices.
+                        The application leverages a modern microservices architecture with event-driven
+                        communication,
+                        ensuring scalability and real-time responsiveness across all components.
                     </p>
                     <ul class="space-y-3">
                         <li class="flex items-start">
@@ -1497,27 +1502,36 @@
                                  viewBox="0 0 20 20">
                                 <path fill-rule="evenodd"
                                       d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                      clip-rule="evenodd"/>
+                                      clip-rule="evenodd"></path>
                             </svg>
-                            <span class="text-pastel-text">React-based frontend for dynamic user interfaces</span>
+                            <span class="text-pastel-text"><strong>FastAPI Backend:</strong> High-performance Python framework orchestrating all system interactions</span>
                         </li>
                         <li class="flex items-start">
                             <svg class="w-5 h-5 text-pastel-primary mr-3 flex-shrink-0 mt-0.5" fill="currentColor"
                                  viewBox="0 0 20 20">
                                 <path fill-rule="evenodd"
                                       d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                      clip-rule="evenodd"/>
+                                      clip-rule="evenodd"></path>
                             </svg>
-                            <span class="text-pastel-text">Cloud-native backend for scalability</span>
+                            <span class="text-pastel-text"><strong>Apache Kafka:</strong> Event streaming platform enabling real-time data synchronization</span>
                         </li>
                         <li class="flex items-start">
                             <svg class="w-5 h-5 text-pastel-primary mr-3 flex-shrink-0 mt-0.5" fill="currentColor"
                                  viewBox="0 0 20 20">
                                 <path fill-rule="evenodd"
                                       d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                      clip-rule="evenodd"/>
+                                      clip-rule="evenodd"></path>
                             </svg>
-                            <span class="text-pastel-text">Real-time data synchronization across devices</span>
+                            <span class="text-pastel-text"><strong>PostgreSQL & Amazon S3:</strong> Dual storage strategy for structured data and media files</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg class="w-5 h-5 text-pastel-primary mr-3 flex-shrink-0 mt-0.5" fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                      clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-pastel-text"><strong>Anthropic Claude Integration:</strong> AI-powered insights analyzing baby patterns via Kafka event processing</span>
                         </li>
                     </ul>
                 </div>
@@ -1528,11 +1542,11 @@
         <div class="max-w-5xl mx-auto">
             <div class="bg-white p-8 rounded-2xl shadow-pastel-lg">
                 <h3 class="font-serif text-2xl md:text-3xl font-medium text-pastel-heading mb-4 text-center">
-                    Feature Deep Dive: Smart Insights Engine
+                    Step-by-Step System Walkthrough
                 </h3>
                 <p class="text-pastel-textLight mb-8 text-center max-w-2xl mx-auto">
-                    Explore how we built the AI-powered insights feature that helps parents understand their baby's
-                    patterns and provides personalized recommendations.
+                    Learn how to navigate the baby tracking system, from logging your first entry to viewing
+                    AI-generated insights and personalized recommendations for your baby's care.
                 </p>
                 <div class="video-wrapper rounded-xl overflow-hidden shadow-pastel"
                      style="position: relative; padding-top: 56.25%;">
@@ -1545,27 +1559,53 @@
                     ></iframe>
                 </div>
 
-                <!-- Tech Stack Grid -->
-                <div class="mt-12">
+                <!-- Complete Tech Stack -->
+                <div class="mt-10">
                     <h4 class="font-serif text-xl font-medium text-pastel-heading mb-6 text-center">
-                        Key Technologies Used
+                        Complete Technology Stack
                     </h4>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="text-center p-4 bg-pastel-lightest rounded-lg">
-                            <div class="text-pastel-primary font-semibold mb-1">Frontend</div>
-                            <div class="text-sm text-pastel-textLight">React & Tailwind</div>
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                        <div class="text-center p-3 bg-pastel-lightest rounded-lg">
+                            <div class="text-pastel-primary font-semibold mb-1 text-sm">Frontend</div>
+                            <div class="text-xs text-pastel-textLight">HTML, JS, Tailwind</div>
                         </div>
-                        <div class="text-center p-4 bg-pastel-lightest rounded-lg">
-                            <div class="text-pastel-primary font-semibold mb-1">Backend</div>
-                            <div class="text-sm text-pastel-textLight">Node.js & Express</div>
+                        <div class="text-center p-3 bg-pastel-lightest rounded-lg">
+                            <div class="text-pastel-primary font-semibold mb-1 text-sm">Framework</div>
+                            <div class="text-xs text-pastel-textLight">FastAPI (Python)</div>
                         </div>
-                        <div class="text-center p-4 bg-pastel-lightest rounded-lg">
-                            <div class="text-pastel-primary font-semibold mb-1">Database</div>
-                            <div class="text-sm text-pastel-textLight">PostgreSQL</div>
+                        <div class="text-center p-3 bg-pastel-lightest rounded-lg">
+                            <div class="text-pastel-primary font-semibold mb-1 text-sm">Database</div>
+                            <div class="text-xs text-pastel-textLight">PostgreSQL</div>
                         </div>
-                        <div class="text-center p-4 bg-pastel-lightest rounded-lg">
-                            <div class="text-pastel-primary font-semibold mb-1">AI/ML</div>
-                            <div class="text-sm text-pastel-textLight">TensorFlow</div>
+                        <div class="text-center p-3 bg-pastel-lightest rounded-lg">
+                            <div class="text-pastel-primary font-semibold mb-1 text-sm">Storage</div>
+                            <div class="text-xs text-pastel-textLight">Amazon S3</div>
+                        </div>
+                        <div class="text-center p-3 bg-pastel-lightest rounded-lg">
+                            <div class="text-pastel-primary font-semibold mb-1 text-sm">Streaming</div>
+                            <div class="text-xs text-pastel-textLight">Apache Kafka</div>
+                        </div>
+                        <div class="text-center p-3 bg-pastel-lightest rounded-lg">
+                            <div class="text-pastel-primary font-semibold mb-1 text-sm">AI/LLM</div>
+                            <div class="text-xs text-pastel-textLight">Anthropic Claude</div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+                        <div class="text-center p-3 bg-pastel-lightest rounded-lg">
+                            <div class="text-pastel-primary font-semibold mb-1 text-sm">Auth</div>
+                            <div class="text-xs text-pastel-textLight">OAuth2</div>
+                        </div>
+                        <div class="text-center p-3 bg-pastel-lightest rounded-lg">
+                            <div class="text-pastel-primary font-semibold mb-1 text-sm">Container</div>
+                            <div class="text-xs text-pastel-textLight">Docker</div>
+                        </div>
+                        <div class="text-center p-3 bg-pastel-lightest rounded-lg">
+                            <div class="text-pastel-primary font-semibold mb-1 text-sm">API Docs</div>
+                            <div class="text-xs text-pastel-textLight">Swagger</div>
+                        </div>
+                        <div class="text-center p-3 bg-pastel-lightest rounded-lg">
+                            <div class="text-pastel-primary font-semibold mb-1 text-sm">Testing</div>
+                            <div class="text-xs text-pastel-textLight">Postman</div>
                         </div>
                     </div>
                 </div>
@@ -1588,6 +1628,7 @@
         </div>
     </div>
 </section>
+
 
 <!-- FAQ section -->
 <section id="faq" class="py-20 bg-white">
