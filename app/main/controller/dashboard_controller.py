@@ -22,7 +22,7 @@ from app.main.service.dashboard_service import (
 from app.main.service.oauth_service import get_current_user
 
 
-@router.get("/", response_model=Dict[str, Any])
+@router.get("/dash", response_model=Dict[str, Any])
 async def get_dashboard(
         baby_id: Optional[int] = Query(None, description="Filter data for a specific baby"),
         timeframe: Optional[TimeFrame] = Query(None, description="Timeframe for data (today, week, month)"),

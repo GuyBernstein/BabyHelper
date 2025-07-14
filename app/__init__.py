@@ -50,6 +50,15 @@ def create_app():
         allow_headers=["*"],
     )
 
+    # Mount static files BEFORE defining routes
+    # This is important for proper resolution
+    if Path("pages").exists():
+        # Mount the entire pages directory at root for assets
+        app.mount("/pages", StaticFiles(directory="pages"), name="pages")
+
+        # Also mount at /static for backward compatibility
+        app.mount("/static", StaticFiles(directory="pages"), name="static")
+
     # Include routers
     app.include_router(baby_router)
     app.include_router(user_router)
@@ -69,10 +78,6 @@ def create_app():
     app.include_router(dashboard_router)
     app.include_router(tool_router)
     app.include_router(query_router)
-
-    # Mount static files directory (this will serve all files in the pages directory)
-    if Path("pages").exists():
-        app.mount("/static", StaticFiles(directory="pages"), name="static")
 
     # Helper function to generate error HTML
     def generate_error_html(title: str, message: str, suggestion: str = None) -> str:
@@ -225,83 +230,32 @@ def create_app():
 
     @app.get("/")
     async def root():
-        """Root endpoint serving static HTML file"""
-        html_file_path = Path("pages/html/index.html")
-
-        if not html_file_path.exists():
-            return HTMLResponse(
-                content=generate_error_html(
-                    "404",
-                    "Home page not found",
-                    "The main page is missing. Please contact support."
-                ),
-                status_code=404
-            )
-
-        return FileResponse(html_file_path, media_type="text/html")
+        """Redirect to static HTML file to maintain relative paths"""
+        return FileResponse("pages/html/index.html", media_type="text/html")
 
     @app.get("/onboarding")
     async def onboarding():
-        """Onboarding endpoint with authentication check"""
-        html_file_path = Path("pages/html/onboarding.html")
-
-        if not html_file_path.exists():
-            return HTMLResponse(
-                content=generate_error_html(
-                    "404",
-                    "Onboarding page not found",
-                    "The onboarding page is missing. Please contact support."
-                ),
-                status_code=404
-            )
-
-        # Return HTML that checks for authentication client-side
-        return FileResponse(html_file_path, media_type="text/html")
+        """Redirect to static HTML file to maintain relative paths"""
+        return FileResponse("pages/html/onboarding.html", media_type="text/html")
 
     @app.get("/dashboard")
     async def dashboard():
-        """Dashboard endpoint with authentication check"""
-        html_file_path = Path("pages/html/dashboard.html")
+        """Redirect to static HTML file to maintain relative paths"""
+        return FileResponse("pages/html/dashboard.html", media_type="text/html")
 
-        if not html_file_path.exists():
-            return HTMLResponse(
-                content=generate_error_html(
-                    "404",
-                    "Dashboard page not found",
-                    "The dashboard page is currently under construction."
-                ),
-                status_code=404
-            )
+    @app.get("/system-architecture.png")
+    async def serve_architecture_image():
+        """Serve the architecture image directly"""
+        return FileResponse("pages/media/system-architecture.png", media_type="image/png")
 
-        # Return the dashboard HTML - authentication will be checked client-side
-        return FileResponse(html_file_path, media_type="text/html")
+    @app.get("/js/auth.js")
+    async def serve_auth_script():
+        """Serve the auth JavaScript file"""
+        return FileResponse("pages/js/auth.js", media_type="application/javascript")
 
-    # Add more protected page routes as needed
-    @app.get("/profile")
-    async def profile():
-        """Profile page with authentication check"""
-        html_file_path = Path("pages/html/profile.html")
-
-        if not html_file_path.exists():
-            return HTMLResponse(
-                content=generate_error_html(
-                    "404",
-                    "Profile page not found",
-                    "The profile page is currently under construction."
-                ),
-                status_code=404
-            )
-
-        return FileResponse(html_file_path, media_type="text/html")
-
-    # Custom 404 handler for better UX
+    # Custom 404 handler
     @app.exception_handler(404)
     async def custom_404_handler(request: Request, exc):
-        # Check if it's an API call
-        if request.url.path.startswith("/api/"):
-            return {"detail": "API endpoint not found"}
-
-        # For web pages, return a nice HTML error page
         return HTMLResponse(
             content=generate_error_html(
                 "404",
@@ -314,13 +268,18 @@ def create_app():
     # Custom 401 handler for authentication errors
     @app.exception_handler(401)
     async def custom_401_handler(request: Request, exc):
-        # For web pages, redirect to login
-        return RedirectResponse(url="/auth/login", status_code=302)
+        return HTMLResponse(
+            content=generate_error_html(
+                "401",
+                "Authentication Required",
+                "You need to sign in to access this page."
+            ),
+            status_code=401
+        )
 
     # Custom 403 handler for forbidden/not authenticated errors
     @app.exception_handler(403)
     async def custom_403_handler(request: Request, exc):
-        # For web pages, show a nice error page with login option
         return HTMLResponse(
             content=generate_error_html(
                 "403",
@@ -333,14 +292,25 @@ def create_app():
     # Custom 405 handler for forbidden/not authenticated errors for trying to use methods
     @app.exception_handler(405)
     async def custom_405_handler(request: Request, exc):
-        # For web pages, show a nice error page with login option
         return HTMLResponse(
             content=generate_error_html(
                 "405",
                 "Authentication Required to use this method.",
-                "You need to sign in to access this page."
+                "You need to sign in to access this method."
             ),
             status_code=405
+        )
+
+    # Custom 500 handler
+    @app.exception_handler(500)
+    async def custom_500_handler(request: Request, exc):
+        return HTMLResponse(
+            content=generate_error_html(
+                "500",
+                "Internal Server Error",
+                "Go back to Safety"
+            ),
+            status_code=500
         )
 
     return app

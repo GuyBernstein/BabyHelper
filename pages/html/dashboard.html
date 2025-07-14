@@ -99,11 +99,49 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 140, 105, 0.2);
+            border-top-color: #ff8c69;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 <body class="bg-pastel-lightest font-sans text-pastel-text">
+
+<!-- Loading Overlay (shown until auth check completes) -->
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="text-center">
+        <div class="spinner mx-auto mb-4"></div>
+        <p class="text-pastel-textLight">Loading your dashboard...</p>
+    </div>
+</div>
+
 <!-- Navigation Header -->
-<nav class="bg-white shadow-pastel sticky top-0 z-50">
+<nav id="mainNav" class="bg-white shadow-pastel sticky top-0 z-50 hidden">
     <div class="max-w-7xl mx-auto px-4 py-3">
         <div class="flex items-center justify-between">
             <div class="flex items-center space-x-3">
@@ -111,23 +149,54 @@
                     B
                 </div>
                 <div>
-                    <h1 class="font-serif text-lg text-pastel-heading">Good Morning, Sarah!</h1>
-                    <p class="text-xs text-pastel-textLight">Emma is 6 months old today 🎉</p>
+                    <h1 id="welcomeMessage" class="font-serif text-lg text-pastel-heading">Welcome!</h1>
+                    <p class="text-xs text-pastel-textLight" id="babyStatus">Loading...</p>
                 </div>
             </div>
-            <button class="p-2 rounded-full hover:bg-pastel-light transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-text" fill="none" viewBox="0 0 24 24"
-                     stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-            </button>
+            <div class="flex items-center space-x-3">
+                <!-- User Avatar -->
+                <img src="https://randomuser.me/api/portraits/women/68.jpg" id="userPicture"
+                     class="w-8 h-8 rounded-full hidden" alt="User profile">
+
+                <!-- Settings Dropdown -->
+                <div class="relative">
+                    <button id="settingsButton" class="p-2 rounded-full hover:bg-pastel-light transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-text" fill="none"
+                             viewBox="0 0 24 24"
+                             stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div id="settingsDropdown"
+                         class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-pastel-light">
+                        <div class="py-1">
+                            <a href="/profile"
+                               class="block px-4 py-2 text-sm text-pastel-text hover:bg-pastel-lightest">
+                                Profile Settings
+                            </a>
+                            <a href="/babies" class="block px-4 py-2 text-sm text-pastel-text hover:bg-pastel-lightest">
+                                Manage Babies
+                            </a>
+                            <hr class="my-1 border-pastel-light">
+                            <button id="logoutButton"
+                                    class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</nav><!-- Main Dashboard Content -->
-<div class="max-w-7xl mx-auto px-4 py-6">
+</nav>
+
+<!-- Main Dashboard Content -->
+<div id="mainContent" class="max-w-7xl mx-auto px-4 py-6 hidden">
     <!-- Today's Summary Cards -->
     <section class="mb-8 animate-fade-in">
         <h2 class="font-serif text-xl text-pastel-heading mb-4">Today's Summary</h2>
@@ -512,59 +581,200 @@
     <span class="absolute right-full mr-3 bg-gray-800 text-white text-sm px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Quick Add Activity</span>
 </button>
 
+<script src="../js/auth.js"
+        data-auto-init="false"></script>
+
 <script>
-    // Initialize dashboard interactions
-    document.addEventListener('DOMContentLoaded', function () {
-        // Quick action button animations
-        const quickActionBtns = document.querySelectorAll('.quick-action-btn');
-        quickActionBtns.forEach(btn => {
-            btn.addEventListener('click', function () {
-                // Visual feedback
-                this.classList.add('animate-pulse');
-                setTimeout(() => {
-                    this.classList.remove('animate-pulse');
-                }, 500);
-            });
-        });
+    // Dashboard initialization and functionality
+    const Dashboard = {
+        // State
+        state: {
+            currentBaby: null,
+            babies: [],
+            activities: []
+        },
 
-        // Photo carousel smooth scroll
-        const photoCarousel = document.querySelector('.photo-carousel');
-        if (photoCarousel) {
-            let isDown = false;
-            let startX;
-            let scrollLeft;
+        // Initialize dashboard after authentication
+        async init() {
+            try {
+                // Show main content and hide loading overlay
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('mainNav').classList.remove('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
 
-            photoCarousel.addEventListener('mousedown', (e) => {
-                isDown = true;
-                startX = e.pageX - photoCarousel.offsetLeft;
-                scrollLeft = photoCarousel.scrollLeft;
+                // Update UI with user info
+                this.updateUserInterface();
+
+                // Load dashboard data
+                await this.loadDashboardData();
+
+                // Setup event listeners
+                this.setupEventListeners();
+
+            } catch (error) {
+                console.error('Dashboard initialization error:', error);
+                this.showError('Failed to load dashboard. Please refresh the page.');
+            }
+        },
+
+        // Update UI with user information
+        updateUserInterface() {
+            const user = BabyHelperAuth.auth.getCurrentUser();
+
+            if (user.name) {
+                const firstName = user.name.split(' ')[0];
+                const greeting = this.getGreeting();
+                document.getElementById('welcomeMessage').textContent = `${greeting}, ${firstName}!`;
+            }
+
+            if (user.picture) {
+                const pictureEl = document.getElementById('userPicture');
+                pictureEl.src = user.picture;
+                pictureEl.classList.remove('hidden');
+            }
+        },
+
+        // Get time-based greeting
+        getGreeting() {
+            const hour = new Date().getHours();
+            if (hour < 12) return 'Good Morning';
+            if (hour < 17) return 'Good Afternoon';
+            return 'Good Evening';
+        },
+
+        // Load dashboard data
+        async loadDashboardData() {
+            try {
+                // Load babies
+                const babies = await BabyHelperAuth.api.endpoints.getBabies();
+                this.state.babies = babies;
+
+                if (babies.length > 0) {
+                    this.state.currentBaby = babies[0];
+                    this.updateBabyStatus(babies[0]);
+
+                    // Load activities for current baby
+                    // await this.loadBabyActivities(babies[0].id);
+                }
+
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                // Handle gracefully - show empty state
+            }
+        },
+
+        // Update baby status in header
+        updateBabyStatus(baby) {
+            const statusEl = document.getElementById('babyStatus');
+            if (baby) {
+                const age = this.calculateAge(baby.birthdate);
+                statusEl.textContent = `${baby.fullname} is ${age} old today 🎉`;
+            } else {
+                statusEl.textContent = 'Add your first baby to get started';
+            }
+        },
+
+        // Calculate baby age
+        calculateAge(birthdate) {
+            const birth = new Date(birthdate);
+            const today = new Date();
+            const months = (today.getFullYear() - birth.getFullYear()) * 12 +
+                (today.getMonth() - birth.getMonth());
+
+            if (months < 1) {
+                const days = Math.floor((today - birth) / (1000 * 60 * 60 * 24));
+                return `${days} day${days !== 1 ? 's' : ''}`;
+            }
+
+            return `${months} month${months !== 1 ? 's' : ''}`;
+        },
+
+        // Setup event listeners
+        setupEventListeners() {
+            // Settings dropdown
+            const settingsButton = document.getElementById('settingsButton');
+            const settingsDropdown = document.getElementById('settingsDropdown');
+
+            settingsButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                settingsDropdown.classList.toggle('hidden');
             });
 
-            photoCarousel.addEventListener('mouseleave', () => {
-                isDown = false;
+            // Close dropdown when clicking outside
+            document.addEventListener('click', () => {
+                settingsDropdown.classList.add('hidden');
             });
 
-            photoCarousel.addEventListener('mouseup', () => {
-                isDown = false;
+            // Logout button
+            document.getElementById('logoutButton').addEventListener('click', () => {
+                if (confirm('Are you sure you want to logout?')) {
+                    BabyHelperAuth.auth.logout();
+                }
             });
 
-            photoCarousel.addEventListener('mousemove', (e) => {
-                if (!isDown) return;
-                e.preventDefault();
-                const x = e.pageX - photoCarousel.offsetLeft;
-                const walk = (x - startX) * 2;
-                photoCarousel.scrollLeft = scrollLeft - walk;
+            // Quick action buttons
+            this.setupQuickActions();
+        },
+
+        // Setup quick action buttons
+        setupQuickActions() {
+            const quickActionBtns = document.querySelectorAll('.quick-action-btn');
+            quickActionBtns.forEach(btn => {
+                btn.addEventListener('click', function () {
+                    // Visual feedback
+                    this.classList.add('animate-pulse');
+                    setTimeout(() => {
+                        this.classList.remove('animate-pulse');
+                    }, 500);
+
+                    // Handle action
+                    const action = this.querySelector('span').textContent.toLowerCase();
+                    Dashboard.handleQuickAction(action);
+                });
             });
+        },
+
+        // Handle quick actions
+        handleQuickAction(action) {
+            console.log('Quick action:', action);
+            // Implement action handling
+            // For now, just show a message
+            this.showToast(`${action} feature coming soon!`);
+        },
+
+        // Show error message
+        showError(message) {
+            // For now, use alert. Replace with proper toast/notification
+            alert(message);
+        },
+
+        // Show toast message
+        showToast(message) {
+            // Implement toast notification
+            console.log('Toast:', message);
         }
+    };
 
-        // Floating action button
-        const floatingBtn = document.querySelector('.fixed.bottom-6');
-        floatingBtn.addEventListener('click', function () {
-            // Add rotation animation
-            this.style.transform = 'rotate(45deg)';
-            setTimeout(() => {
-                this.style.transform = 'rotate(0deg)';
-            }, 300);
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize authentication
+        BabyHelperAuth.init({
+            requireAuth: true,
+            redirectTo: '/',
+            updateUI: false,
+            onAuthSuccess: function (user) {
+                // User is authenticated, initialize dashboard
+                Dashboard.init();
+            },
+            onAuthFail: function () {
+                // Show authentication error
+                document.getElementById('loadingOverlay').innerHTML = `
+                    <div class="text-center">
+                        <p class="text-red-600 mb-4">Authentication required</p>
+                        <a href="/" class="text-pastel-primary hover:underline">Go to Login</a>
+                    </div>
+                `;
+            }
         });
     });
 </script>
