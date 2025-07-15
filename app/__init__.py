@@ -243,6 +243,61 @@ def create_app():
         """Redirect to static HTML file to maintain relative paths"""
         return FileResponse("pages/html/dashboard.html", media_type="text/html")
 
+    @app.get("/diaper-tracker")
+    async def diaper_tracker():
+        """Redirect to static HTML file to maintain relative paths"""
+        return FileResponse("pages/html/diaper_tracker.html", media_type="text/html")
+
+    @app.get("/doctor-tracker")
+    async def doctor_tracker():
+        """Redirect to static HTML file to maintain relative paths"""
+        return FileResponse("pages/html/doctor_tracker.html", media_type="text/html")
+
+    @app.get("/feeding-tracker")
+    async def feeding_tracker():
+        """Redirect to static HTML file to maintain relative paths"""
+        return FileResponse("pages/html/feeding_tracker.html", media_type="text/html")
+
+    @app.get("/growth-tracker")
+    async def growth_tracker():
+        """Redirect to static HTML file to maintain relative paths"""
+        return FileResponse("pages/html/growth_tracker.html", media_type="text/html")
+
+    @app.get("/medicine-tracker")
+    async def medicine_tracker():
+        """Redirect to static HTML file to maintain relative paths"""
+        return FileResponse("pages/html/medicine_tracker.html", media_type="text/html")
+
+    @app.get("/milestone-tracker")
+    async def milestone_tracker():
+        """Redirect to static HTML file to maintain relative paths"""
+        return FileResponse("pages/html/milestone_tracker.html", media_type="text/html")
+
+    @app.get("/sleep-tracker")
+    async def sleep_tracker():
+        """Redirect to static HTML file to maintain relative paths"""
+        return FileResponse("pages/html/sleep_tracker.html", media_type="text/html")
+
+    @app.get("/settings")
+    async def settings():
+        """Redirect to static HTML file to maintain relative paths"""
+        return FileResponse("pages/html/settings.html", media_type="text/html")
+
+    @app.get("/insights-analysis")
+    async def insights_analysis():
+        """Redirect to static HTML file to maintain relative paths"""
+        return FileResponse("pages/html/insights_analysis.html", media_type="text/html")
+
+    @app.get("/ai-assistant")
+    async def ai_assistant():
+        """Redirect to static HTML file to maintain relative paths"""
+        return FileResponse("pages/html/ai_assistant.html", media_type="text/html")
+
+    @app.get("/baby-profile")
+    async def baby_profile():
+        """Redirect to static HTML file to maintain relative paths"""
+        return FileResponse("pages/html/baby.html", media_type="text/html")
+
     @app.get("/system-architecture.png")
     async def serve_architecture_image():
         """Serve the architecture image directly"""
