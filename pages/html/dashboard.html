@@ -114,20 +114,6 @@
             z-index: 9999;
         }
 
-        .spinner {
-            border: 3px solid rgba(255, 140, 105, 0.2);
-            border-top-color: #ff8c69;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
 
         /* Baby selector dropdown */
         .baby-selector {
@@ -137,16 +123,8 @@
 </head>
 <body class="bg-pastel-lightest font-sans text-pastel-text">
 
-<!-- Loading Overlay (shown until auth check completes) -->
-<div id="loadingOverlay" class="loading-overlay">
-    <div class="text-center">
-        <div class="spinner mx-auto mb-4"></div>
-        <p class="text-pastel-textLight">Loading your dashboard...</p>
-    </div>
-</div>
-
 <!-- Navigation Header -->
-<nav id="mainNav" class="bg-white shadow-pastel sticky top-0 z-50 hidden">
+<nav id="mainNav" class="bg-white shadow-pastel sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 py-3">
         <div class="flex items-center justify-between">
             <div class="flex items-center space-x-3">
@@ -186,11 +164,11 @@
                     <div id="settingsDropdown"
                          class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-pastel-light">
                         <div class="py-1">
-                            <a href="/profile"
+                            <a href="/settings"
                                class="block px-4 py-2 text-sm text-pastel-text hover:bg-pastel-lightest">
                                 Profile Settings
                             </a>
-                            <a href="/babies" class="block px-4 py-2 text-sm text-pastel-text hover:bg-pastel-lightest">
+                            <a href="/baby-profile" class="block px-4 py-2 text-sm text-pastel-text hover:bg-pastel-lightest">
                                 Manage Babies
                             </a>
                             <a href="#" id="dashboardPrefsLink"
@@ -211,7 +189,7 @@
 </nav>
 
 <!-- Main Dashboard Content -->
-<div id="mainContent" class="max-w-7xl mx-auto px-4 py-6 hidden">
+<div id="mainContent" class="max-w-7xl mx-auto px-4 py-6">
     <!-- Today's Summary Cards -->
     <section class="mb-8 animate-fade-in">
         <h2 class="font-serif text-xl text-pastel-heading mb-4">Today's Summary</h2>
@@ -426,7 +404,7 @@
 </button>
 
 <script src="../js/auth.js"
-        data-auto-init="false"></script>
+        data-auto-init="true"></script>
 
 <script>
     // Dashboard initialization and functionality
@@ -445,11 +423,6 @@
         // Initialize dashboard after authentication
         async init() {
             try {
-                // Show main content and hide loading overlay
-                document.getElementById('loadingOverlay').style.display = 'none';
-                document.getElementById('mainNav').classList.remove('hidden');
-                document.getElementById('mainContent').classList.remove('hidden');
-
                 // Update UI with user info
                 this.updateUserInterface();
 
@@ -464,7 +437,6 @@
 
             } catch (error) {
                 console.error('Dashboard initialization error:', error);
-                this.showError('Failed to load dashboard. Please refresh the page.');
             }
         },
 
@@ -530,7 +502,6 @@
 
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
-                this.showError('Failed to load dashboard data');
             }
         },
 
@@ -1244,25 +1215,8 @@
 
     // Initialize dashboard
     document.addEventListener('DOMContentLoaded', function () {
-        // Initialize authentication
-        BabyHelperAuth.init({
-            requireAuth: true,
-            redirectTo: '/',
-            updateUI: false,
-            onAuthSuccess: function (user) {
-                // User is authenticated, initialize dashboard
-                Dashboard.init();
-            },
-            onAuthFail: function () {
-                // Show authentication error
-                document.getElementById('loadingOverlay').innerHTML = `
-                    <div class="text-center">
-                        <p class="text-red-600 mb-4">Authentication required</p>
-                        <a href="/" class="text-pastel-primary hover:underline">Go to Login</a>
-                    </div>
-                `;
-            }
-        });
+        // Initialize dashboard
+        Dashboard.init();
     });
 </script>
 </body>
