@@ -128,6 +128,11 @@
                 transform: rotate(360deg);
             }
         }
+
+        /* Baby selector dropdown */
+        .baby-selector {
+            min-width: 150px;
+        }
     </style>
 </head>
 <body class="bg-pastel-lightest font-sans text-pastel-text">
@@ -154,6 +159,12 @@
                 </div>
             </div>
             <div class="flex items-center space-x-3">
+                <!-- Baby Selector -->
+                <select id="babySelector"
+                        class="baby-selector px-3 py-1 text-sm border border-pastel-light rounded-lg focus:outline-none focus:border-pastel-primary hidden">
+                    <option value="">All Babies</option>
+                </select>
+
                 <!-- User Avatar -->
                 <img src="https://randomuser.me/api/portraits/women/68.jpg" id="userPicture"
                      class="w-8 h-8 rounded-full hidden" alt="User profile">
@@ -182,6 +193,10 @@
                             <a href="/babies" class="block px-4 py-2 text-sm text-pastel-text hover:bg-pastel-lightest">
                                 Manage Babies
                             </a>
+                            <a href="#" id="dashboardPrefsLink"
+                               class="block px-4 py-2 text-sm text-pastel-text hover:bg-pastel-lightest">
+                                Dashboard Preferences
+                            </a>
                             <hr class="my-1 border-pastel-light">
                             <button id="logoutButton"
                                     class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
@@ -200,70 +215,8 @@
     <!-- Today's Summary Cards -->
     <section class="mb-8 animate-fade-in">
         <h2 class="font-serif text-xl text-pastel-heading mb-4">Today's Summary</h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <!-- Feeding Card -->
-            <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light">
-                <div class="flex items-center justify-between mb-2">
-                    <div class="w-10 h-10 rounded-full bg-pastel-accent1 bg-opacity-20 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-primary" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                        </svg>
-                    </div>
-                    <span class="text-xs text-pastel-textLight">2h ago</span>
-                </div>
-                <p class="text-2xl font-semibold text-pastel-heading">5</p>
-                <p class="text-sm text-pastel-textLight">Feedings</p>
-            </div>
-
-            <!-- Sleep Card -->
-            <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light">
-                <div class="flex items-center justify-between mb-2">
-                    <div class="w-10 h-10 rounded-full bg-pastel-accent2 bg-opacity-20 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-accent1" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
-                        </svg>
-                    </div>
-                    <span class="text-xs text-pastel-textLight">Active</span>
-                </div>
-                <p class="text-2xl font-semibold text-pastel-heading">12h 30m</p>
-                <p class="text-sm text-pastel-textLight">Total Sleep</p>
-            </div>
-
-            <!-- Diaper Card -->
-            <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light">
-                <div class="flex items-center justify-between mb-2">
-                    <div class="w-10 h-10 rounded-full bg-pastel-secondary bg-opacity-50 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-primary" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                        </svg>
-                    </div>
-                    <span class="text-xs text-pastel-textLight">45m ago</span>
-                </div>
-                <p class="text-2xl font-semibold text-pastel-heading">7</p>
-                <p class="text-sm text-pastel-textLight">Diaper Changes</p>
-            </div>
-
-            <!-- Growth Card -->
-            <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light">
-                <div class="flex items-center justify-between mb-2">
-                    <div class="w-10 h-10 rounded-full bg-pastel-light bg-opacity-50 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-accent2" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                        </svg>
-                    </div>
-                    <span class="text-xs text-green-600">+0.2kg</span>
-                </div>
-                <p class="text-2xl font-semibold text-pastel-heading">7.2kg</p>
-                <p class="text-sm text-pastel-textLight">Current Weight</p>
-            </div>
+        <div id="summaryCards" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- Summary cards will be dynamically populated -->
         </div>
     </section>
 
@@ -272,7 +225,8 @@
         <h2 class="font-serif text-xl text-pastel-heading mb-4">Quick Actions</h2>
         <div class="grid grid-cols-3 md:grid-cols-6 gap-4 quick-action-grid">
             <!-- Feed Button -->
-            <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2">
+            <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2"
+                    data-action="feeding">
                 <div class="w-12 h-12 rounded-full bg-pastel-primary bg-opacity-10 flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-primary" fill="none"
                          viewBox="0 0 24 24" stroke="currentColor">
@@ -284,7 +238,8 @@
             </button>
 
             <!-- Sleep Button -->
-            <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2">
+            <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2"
+                    data-action="sleep">
                 <div class="w-12 h-12 rounded-full bg-pastel-accent1 bg-opacity-10 flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-accent1" fill="none"
                          viewBox="0 0 24 24" stroke="currentColor">
@@ -296,7 +251,8 @@
             </button>
 
             <!-- Diaper Button -->
-            <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2">
+            <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2"
+                    data-action="diaper">
                 <div class="w-12 h-12 rounded-full bg-pastel-accent2 bg-opacity-10 flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-accent2" fill="none"
                          viewBox="0 0 24 24" stroke="currentColor">
@@ -308,7 +264,8 @@
             </button>
 
             <!-- Medicine Button -->
-            <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2">
+            <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2"
+                    data-action="medication">
                 <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none"
                          viewBox="0 0 24 24" stroke="currentColor">
@@ -320,7 +277,8 @@
             </button>
 
             <!-- Play Button -->
-            <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2">
+            <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2"
+                    data-action="activity">
                 <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600" fill="none"
                          viewBox="0 0 24 24" stroke="currentColor">
@@ -332,7 +290,8 @@
             </button>
 
             <!-- Photo Button -->
-            <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2">
+            <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2"
+                    data-action="photo">
                 <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none"
                          viewBox="0 0 24 24" stroke="currentColor">
@@ -352,58 +311,11 @@
         <!-- Upcoming Reminders -->
         <section class="animate-slide-up">
             <h2 class="font-serif text-xl text-pastel-heading mb-4">Upcoming Reminders</h2>
-            <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4 space-y-3">
-                <!-- Doctor Visit Reminder -->
-                <div class="flex items-center space-x-4 p-3 bg-pastel-lightest rounded-lg border-l-4 border-pastel-primary">
-                    <div class="w-12 h-12 rounded-full bg-pastel-primary bg-opacity-10 flex items-center justify-center flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-primary" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                        </svg>
-                    </div>
-                    <div class="flex-1">
-                        <p class="font-semibold text-pastel-heading">6-Month Checkup</p>
-                        <p class="text-sm text-pastel-textLight">Tomorrow at 10:00 AM</p>
-                    </div>
-                    <button class="p-2 rounded-full hover:bg-pastel-light transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-text" viewBox="0 0 20 20"
-                             fill="currentColor">
-                            <path fill-rule="evenodd"
-                                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                  clip-rule="evenodd"/>
-                        </svg>
-                    </button>
-                </div>
-
-                <!-- Medicine Reminder -->
-                <div class="flex items-center space-x-4 p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
-                    <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
-                        </svg>
-                    </div>
-                    <div class="flex-1">
-                        <p class="font-semibold text-pastel-heading">Vitamin D Drops</p>
-                        <p class="text-sm text-pastel-textLight">Today at 6:00 PM</p>
-                    </div>
-                    <span class="animate-pulse-soft text-xs bg-green-600 text-white px-2 py-1 rounded-full">Due Soon</span>
-                </div>
-
-                <!-- Feeding Reminder -->
-                <div class="flex items-center space-x-4 p-3 bg-pastel-lightest rounded-lg">
-                    <div class="w-12 h-12 rounded-full bg-pastel-accent1 bg-opacity-20 flex items-center justify-center flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-primary" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <div class="flex-1">
-                        <p class="font-semibold text-pastel-heading">Next Feeding</p>
-                        <p class="text-sm text-pastel-textLight">Estimated in 1h 30m</p>
+            <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4">
+                <div id="upcomingEvents" class="space-y-3">
+                    <!-- Events will be dynamically populated -->
+                    <div class="text-center py-8 text-pastel-textLight">
+                        <p>Loading upcoming events...</p>
                     </div>
                 </div>
             </div>
@@ -417,50 +329,25 @@
                 </button>
             </div>
             <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4">
-                <div class="photo-carousel flex space-x-3 overflow-x-auto pb-2">
-                    <!-- Photo 1 -->
-                    <div class="flex-shrink-0">
-                        <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=150&h=150&fit=crop"
-                             alt="Baby photo"
-                             class="w-32 h-32 object-cover rounded-lg hover:opacity-90 transition-opacity cursor-pointer">
-                        <p class="text-xs text-pastel-textLight mt-1 text-center">2 hours ago</p>
-                    </div>
-                    <!-- Photo 2 -->
-                    <div class="flex-shrink-0">
-                        <img src="https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=150&h=150&fit=crop"
-                             alt="Baby photo"
-                             class="w-32 h-32 object-cover rounded-lg hover:opacity-90 transition-opacity cursor-pointer">
-                        <p class="text-xs text-pastel-textLight mt-1 text-center">Yesterday</p>
-                    </div>
-                    <!-- Photo 3 -->
-                    <div class="flex-shrink-0">
-                        <img src="https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=150&h=150&fit=crop"
-                             alt="Baby photo"
-                             class="w-32 h-32 object-cover rounded-lg hover:opacity-90 transition-opacity cursor-pointer">
-                        <p class="text-xs text-pastel-textLight mt-1 text-center">2 days ago</p>
-                    </div>
-                    <!-- Photo 4 -->
-                    <div class="flex-shrink-0">
-                        <img src="https://images.unsplash.com/photo-1519689680058-324335c77eba?w=150&h=150&fit=crop"
-                             alt="Baby photo"
-                             class="w-32 h-32 object-cover rounded-lg hover:opacity-90 transition-opacity cursor-pointer">
-                        <p class="text-xs text-pastel-textLight mt-1 text-center">3 days ago</p>
-                    </div>
-                    <!-- Add Photo Button -->
-                    <div class="flex-shrink-0">
-                        <button class="w-32 h-32 border-2 border-dashed border-pastel-light rounded-lg flex flex-col items-center justify-center hover:border-pastel-primary hover:bg-pastel-lightest transition-all">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-pastel-textLight mb-1"
-                                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M12 4v16m8-8H4"/>
-                            </svg>
-                            <span class="text-xs text-pastel-textLight">Add Photo</span>
-                        </button>
+                <div id="photoGallery" class="photo-carousel flex space-x-3 overflow-x-auto pb-2">
+                    <!-- Photos will be dynamically populated -->
+                    <div class="text-center py-8 text-pastel-textLight w-full">
+                        <p>Photo gallery coming soon!</p>
                     </div>
                 </div>
             </div>
         </section>
     </div>
+
+    <!-- Care Metrics Section -->
+    <section id="careMetricsSection" class="mb-8 animate-slide-up hidden">
+        <h2 class="font-serif text-xl text-pastel-heading mb-4">Care Sharing Metrics</h2>
+        <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4">
+            <div id="careMetrics" class="space-y-4">
+                <!-- Care metrics will be dynamically populated -->
+            </div>
+        </div>
+    </section>
 
     <!-- AI Assistant Section -->
     <section class="mb-8 animate-slide-up">
@@ -468,35 +355,16 @@
         <div class="bg-white rounded-xl shadow-pastel border border-pastel-light overflow-hidden">
             <div class="chat-container flex flex-col">
                 <!-- Chat Messages Area -->
-                <div class="chat-messages overflow-y-auto p-4 space-y-3">
-                    <!-- AI Message -->
+                <div id="chatMessages" class="chat-messages overflow-y-auto p-4 space-y-3">
+                    <!-- Initial AI Message -->
                     <div class="flex items-start space-x-3">
                         <div class="w-8 h-8 rounded-full bg-pastel-primary flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
                             AI
                         </div>
                         <div class="bg-pastel-lightest rounded-lg p-3 max-w-[80%]">
-                            <p class="text-sm text-pastel-text">Good morning! Emma slept well last night with 8 hours of
-                                continuous sleep. Based on her patterns, she might be ready for her morning feeding
-                                soon. Would you like me to set a reminder?</p>
-                        </div>
-                    </div>
-
-                    <!-- User Message -->
-                    <div class="flex items-start space-x-3 justify-end">
-                        <div class="bg-pastel-primary text-white rounded-lg p-3 max-w-[80%]">
-                            <p class="text-sm">Yes, please set a reminder for 30 minutes</p>
-                        </div>
-                    </div>
-
-                    <!-- AI Response -->
-                    <div class="flex items-start space-x-3">
-                        <div class="w-8 h-8 rounded-full bg-pastel-primary flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-                            AI
-                        </div>
-                        <div class="bg-pastel-lightest rounded-lg p-3 max-w-[80%]">
-                            <p class="text-sm text-pastel-text">Perfect! I've set a feeding reminder for 8:30 AM. I also
-                                noticed Emma hasn't had tummy time yet today. Would you like some activity suggestions
-                                for her age?</p>
+                            <p class="text-sm text-pastel-text">Hello! I'm your AI baby care assistant. I can help you
+                                track activities, answer questions about baby care, and provide insights based on your
+                                baby's patterns. How can I help you today?</p>
                         </div>
                     </div>
                 </div>
@@ -504,9 +372,10 @@
                 <!-- Chat Input Area -->
                 <div class="border-t border-pastel-light p-4">
                     <div class="flex items-center space-x-2">
-                        <input type="text" placeholder="Ask about feeding, sleep, development..."
+                        <input type="text" id="chatInput" placeholder="Ask about feeding, sleep, development..."
                                class="flex-1 px-4 py-2 border border-pastel-light rounded-full focus:outline-none focus:border-pastel-primary transition-colors">
-                        <button class="p-2 bg-pastel-primary text-white rounded-full hover:bg-pastel-primaryHover transition-colors">
+                        <button id="chatSendButton"
+                                class="p-2 bg-pastel-primary text-white rounded-full hover:bg-pastel-primaryHover transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
                                  fill="currentColor">
                                 <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
@@ -515,13 +384,16 @@
                     </div>
                     <!-- Quick Suggestions -->
                     <div class="flex flex-wrap gap-2 mt-2">
-                        <button class="text-xs px-3 py-1 bg-pastel-lightest text-pastel-text rounded-full hover:bg-pastel-light transition-colors">
+                        <button class="chat-suggestion text-xs px-3 py-1 bg-pastel-lightest text-pastel-text rounded-full hover:bg-pastel-light transition-colors"
+                                data-suggestion="What are normal sleep patterns for my baby's age?">
                             Sleep tips
                         </button>
-                        <button class="text-xs px-3 py-1 bg-pastel-lightest text-pastel-text rounded-full hover:bg-pastel-light transition-colors">
+                        <button class="chat-suggestion text-xs px-3 py-1 bg-pastel-lightest text-pastel-text rounded-full hover:bg-pastel-light transition-colors"
+                                data-suggestion="How often should my baby be feeding?">
                             Feeding schedule
                         </button>
-                        <button class="text-xs px-3 py-1 bg-pastel-lightest text-pastel-text rounded-full hover:bg-pastel-light transition-colors">
+                        <button class="chat-suggestion text-xs px-3 py-1 bg-pastel-lightest text-pastel-text rounded-full hover:bg-pastel-light transition-colors"
+                                data-suggestion="What milestones should I expect next?">
                             Growth milestones
                         </button>
                     </div>
@@ -534,39 +406,10 @@
     <section class="mb-8 animate-slide-up">
         <h2 class="font-serif text-xl text-pastel-heading mb-4">Recent Activities</h2>
         <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4">
-            <div class="space-y-4">
-                <!-- Activity Item -->
-                <div class="flex items-start space-x-3">
-                    <div class="w-2 h-2 bg-pastel-primary rounded-full mt-2 flex-shrink-0"></div>
-                    <div class="flex-1">
-                        <div class="flex items-center justify-between">
-                            <p class="font-medium text-pastel-heading">Morning Feeding</p>
-                            <span class="text-xs text-pastel-textLight">6:30 AM</span>
-                        </div>
-                        <p class="text-sm text-pastel-textLight">Breast milk, 20 minutes, both sides</p>
-                    </div>
-                </div>
-
-                <div class="flex items-start space-x-3">
-                    <div class="w-2 h-2 bg-pastel-accent1 rounded-full mt-2 flex-shrink-0"></div>
-                    <div class="flex-1">
-                        <div class="flex items-center justify-between">
-                            <p class="font-medium text-pastel-heading">Diaper Change</p>
-                            <span class="text-xs text-pastel-textLight">5:45 AM</span>
-                        </div>
-                        <p class="text-sm text-pastel-textLight">Wet diaper</p>
-                    </div>
-                </div>
-
-                <div class="flex items-start space-x-3">
-                    <div class="w-2 h-2 bg-pastel-accent2 rounded-full mt-2 flex-shrink-0"></div>
-                    <div class="flex-1">
-                        <div class="flex items-center justify-between">
-                            <p class="font-medium text-pastel-heading">Wake Up</p>
-                            <span class="text-xs text-pastel-textLight">5:30 AM</span>
-                        </div>
-                        <p class="text-sm text-pastel-textLight">After 8 hours of sleep</p>
-                    </div>
+            <div id="recentActivities" class="space-y-4">
+                <!-- Activities will be dynamically populated -->
+                <div class="text-center py-8 text-pastel-textLight">
+                    <p>Loading recent activities...</p>
                 </div>
             </div>
         </div>
@@ -574,7 +417,8 @@
 </div>
 
 <!-- Floating Action Button for Quick Add -->
-<button class="fixed bottom-6 right-6 w-14 h-14 bg-pastel-primary text-white rounded-full shadow-lg hover:bg-pastel-primaryHover transition-all duration-200 flex items-center justify-center group">
+<button id="quickAddButton"
+        class="fixed bottom-6 right-6 w-14 h-14 bg-pastel-primary text-white rounded-full shadow-lg hover:bg-pastel-primaryHover transition-all duration-200 flex items-center justify-center group">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
     </svg>
@@ -590,8 +434,12 @@
         // State
         state: {
             currentBaby: null,
+            selectedBabyId: null,
             babies: [],
-            activities: []
+            activities: [],
+            dashboardData: null,
+            preferences: null,
+            timeframe: 'today'
         },
 
         // Initialize dashboard after authentication
@@ -610,6 +458,9 @@
 
                 // Setup event listeners
                 this.setupEventListeners();
+
+                // Start periodic refresh (every 5 minutes)
+                setInterval(() => this.refreshDashboard(), 300000);
 
             } catch (error) {
                 console.error('Dashboard initialization error:', error);
@@ -642,35 +493,352 @@
             return 'Good Evening';
         },
 
-        // Load dashboard data
+        // Load dashboard data using the main dashboard endpoint
         async loadDashboardData() {
             try {
-                // Load babies
-                const babies = await BabyHelperAuth.api.endpoints.getBabies();
-                this.state.babies = babies;
+                // Build query parameters
+                const params = new URLSearchParams();
+                if (this.state.selectedBabyId) {
+                    params.append('baby_id', this.state.selectedBabyId);
+                }
+                params.append('timeframe', this.state.timeframe);
 
-                if (babies.length > 0) {
-                    this.state.currentBaby = babies[0];
-                    this.updateBabyStatus(babies[0]);
+                // Fetch complete dashboard data
+                const response = await BabyHelperAuth.api.request(`/dashboard/dash?${params}`);
+                if (response.ok) {
+                    this.state.dashboardData = await response.json();
 
-                    // Load activities for current baby
-                    // await this.loadBabyActivities(babies[0].id);
+                    // Extract data from response
+                    this.state.babies = this.state.dashboardData.babies || [];
+                    this.state.preferences = this.state.dashboardData.preferences;
+
+                    // Update UI components
+                    this.updateBabySelector();
+                    this.updateBabyStatus();
+
+                    // Process widgets based on preferences
+                    if (this.state.dashboardData.widgets) {
+                        this.processWidgets(this.state.dashboardData.widgets);
+                    }
+
+                    // Load additional data that might not be in widgets
+                    await this.loadTodaysSummary();
+
+                } else {
+                    console.error('Failed to load dashboard data');
                 }
 
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
-                // Handle gracefully - show empty state
+                this.showError('Failed to load dashboard data');
+            }
+        },
+
+        // Process and display widgets based on preferences
+        processWidgets(widgets) {
+            widgets.forEach(widget => {
+                if (!widget.data) return;
+
+                switch (widget.type) {
+                    case 'recent_activities':
+                        this.displayRecentActivities(widget.data);
+                        break;
+                    case 'upcoming_events':
+                        this.displayUpcomingEvents(widget.data);
+                        break;
+                    case 'care_metrics':
+                        this.displayCareMetrics(widget.data);
+                        break;
+                    // Add other widget types as needed
+                }
+            });
+        },
+
+        // Load today's summary data
+        async loadTodaysSummary() {
+            try {
+                // Get today's activities
+                const params = new URLSearchParams({
+                    timeframe: 'today',
+                    limit: 100
+                });
+                if (this.state.selectedBabyId) {
+                    params.append('baby_id', this.state.selectedBabyId);
+                }
+
+                const response = await BabyHelperAuth.api.request(`/dashboard/activities?${params}`);
+                if (response.ok) {
+                    const activities = await response.json();
+                    this.calculateAndDisplaySummary(activities);
+                }
+            } catch (error) {
+                console.error('Error loading today\'s summary:', error);
+            }
+        },
+
+        // Calculate and display summary cards
+        calculateAndDisplaySummary(activities) {
+            const summary = {
+                feedings: 0,
+                lastFeeding: null,
+                sleepDuration: 0,
+                lastSleep: null,
+                diaperChanges: 0,
+                lastDiaper: null,
+                medications: 0
+            };
+
+            // Process activities
+            activities.forEach(activity => {
+                switch (activity.type) {
+                    case 'feeding':
+                        summary.feedings++;
+                        if (!summary.lastFeeding || new Date(activity.time) > new Date(summary.lastFeeding)) {
+                            summary.lastFeeding = activity.time;
+                        }
+                        break;
+                    case 'sleep':
+                        if (activity.details && activity.details.duration) {
+                            summary.sleepDuration += activity.details.duration;
+                        }
+                        if (!summary.lastSleep || new Date(activity.time) > new Date(summary.lastSleep)) {
+                            summary.lastSleep = activity.time;
+                        }
+                        break;
+                    case 'diaper':
+                        summary.diaperChanges++;
+                        if (!summary.lastDiaper || new Date(activity.time) > new Date(summary.lastDiaper)) {
+                            summary.lastDiaper = activity.time;
+                        }
+                        break;
+                    case 'medication':
+                        summary.medications++;
+                        break;
+                }
+            });
+
+            // Display summary cards
+            const summaryCardsHtml = `
+                <!-- Feeding Card -->
+                <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="w-10 h-10 rounded-full bg-pastel-accent1 bg-opacity-20 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-primary" fill="none"
+                                 viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                            </svg>
+                        </div>
+                        <span class="text-xs text-pastel-textLight">${summary.lastFeeding ? this.getTimeAgo(summary.lastFeeding) : 'No data'}</span>
+                    </div>
+                    <p class="text-2xl font-semibold text-pastel-heading">${summary.feedings}</p>
+                    <p class="text-sm text-pastel-textLight">Feedings</p>
+                </div>
+
+                <!-- Sleep Card -->
+                <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="w-10 h-10 rounded-full bg-pastel-accent2 bg-opacity-20 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-accent1" fill="none"
+                                 viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                            </svg>
+                        </div>
+                        <span class="text-xs text-pastel-textLight">${summary.lastSleep ? this.getTimeAgo(summary.lastSleep) : 'No data'}</span>
+                    </div>
+                    <p class="text-2xl font-semibold text-pastel-heading">${this.formatDuration(summary.sleepDuration)}</p>
+                    <p class="text-sm text-pastel-textLight">Total Sleep</p>
+                </div>
+
+                <!-- Diaper Card -->
+                <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="w-10 h-10 rounded-full bg-pastel-secondary bg-opacity-50 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-primary" fill="none"
+                                 viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                            </svg>
+                        </div>
+                        <span class="text-xs text-pastel-textLight">${summary.lastDiaper ? this.getTimeAgo(summary.lastDiaper) : 'No data'}</span>
+                    </div>
+                    <p class="text-2xl font-semibold text-pastel-heading">${summary.diaperChanges}</p>
+                    <p class="text-sm text-pastel-textLight">Diaper Changes</p>
+                </div>
+
+                <!-- Medication Card -->
+                <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none"
+                                 viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                            </svg>
+                        </div>
+                        <span class="text-xs text-pastel-textLight">Today</span>
+                    </div>
+                    <p class="text-2xl font-semibold text-pastel-heading">${summary.medications}</p>
+                    <p class="text-sm text-pastel-textLight">Medications</p>
+                </div>
+            `;
+
+            document.getElementById('summaryCards').innerHTML = summaryCardsHtml;
+        },
+
+        // Display recent activities
+        displayRecentActivities(activities) {
+            const container = document.getElementById('recentActivities');
+
+            if (!activities || activities.length === 0) {
+                container.innerHTML = '<p class="text-center py-8 text-pastel-textLight">No recent activities</p>';
+                return;
+            }
+
+            const activitiesHtml = activities.map(activity => {
+                const icon = this.getActivityIcon(activity.type);
+                const color = this.getActivityColor(activity.type);
+                const details = this.getActivityDetails(activity);
+
+                return `
+                    <div class="flex items-start space-x-3">
+                        <div class="w-2 h-2 ${color} rounded-full mt-2 flex-shrink-0"></div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <p class="font-medium text-pastel-heading">${this.formatActivityType(activity.type)}</p>
+                                <span class="text-xs text-pastel-textLight">${this.formatTime(activity.time)}</span>
+                            </div>
+                            <p class="text-sm text-pastel-textLight">${details}</p>
+                            <p class="text-xs text-pastel-textLight mt-1">Baby: ${activity.baby_name} | By: ${activity.caregiver_name}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = activitiesHtml;
+        },
+
+        // Display upcoming events
+        displayUpcomingEvents(events) {
+            const container = document.getElementById('upcomingEvents');
+
+            if (!events || events.length === 0) {
+                container.innerHTML = '<p class="text-center py-8 text-pastel-textLight">No upcoming events</p>';
+                return;
+            }
+
+            const eventsHtml = events.map(event => {
+                const icon = this.getEventIcon(event.type);
+                const urgency = this.getEventUrgency(event.time);
+
+                return `
+                    <div class="flex items-center space-x-4 p-3 ${urgency.bgClass} rounded-lg ${urgency.borderClass}">
+                        <div class="w-12 h-12 rounded-full ${urgency.iconBgClass} flex items-center justify-center flex-shrink-0">
+                            ${icon}
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-semibold text-pastel-heading">${this.getEventTitle(event)}</p>
+                            <p class="text-sm text-pastel-textLight">${this.formatEventTime(event.time)}</p>
+                            <p class="text-xs text-pastel-textLight">Baby: ${event.baby_name}</p>
+                        </div>
+                        ${urgency.badge ? `<span class="${urgency.badgeClass}">${urgency.badge}</span>` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = eventsHtml;
+        },
+
+        // Display care metrics
+        displayCareMetrics(metrics) {
+            const section = document.getElementById('careMetricsSection');
+            const container = document.getElementById('careMetrics');
+
+            if (!metrics || !metrics.by_caregiver || Object.keys(metrics.by_caregiver).length === 0) {
+                section.classList.add('hidden');
+                return;
+            }
+
+            section.classList.remove('hidden');
+
+            // Create caregiver summary
+            const caregiversHtml = Object.values(metrics.by_caregiver).map(caregiver => {
+                const data = caregiver.caregiver;
+                return `
+                    <div class="flex items-center justify-between p-3 bg-pastel-lightest rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            ${data.picture ?
+                    `<img src="${data.picture}" alt="${data.name}" class="w-10 h-10 rounded-full">` :
+                    `<div class="w-10 h-10 rounded-full bg-pastel-primary flex items-center justify-center text-white font-medium">
+                                    ${data.name ? data.name.charAt(0).toUpperCase() : 'U'}
+                                </div>`
+                }
+                            <div>
+                                <p class="font-medium text-pastel-heading">${data.name}</p>
+                                <p class="text-xs text-pastel-textLight">${data.is_primary ? 'Primary Parent' : 'Co-parent'}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-semibold text-pastel-primary">${caregiver.percentage}%</p>
+                            <p class="text-xs text-pastel-textLight">${caregiver.total} activities</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="mb-4">
+                    <p class="text-sm text-pastel-textLight mb-2">Total activities: ${metrics.total_activities}</p>
+                    ${caregiversHtml}
+                </div>
+            `;
+        },
+
+        // Update baby selector
+        updateBabySelector() {
+            const selector = document.getElementById('babySelector');
+
+            if (this.state.babies.length > 1) {
+                selector.classList.remove('hidden');
+
+                // Clear existing options
+                selector.innerHTML = '<option value="">All Babies</option>';
+
+                // Add baby options
+                this.state.babies.forEach(baby => {
+                    const option = document.createElement('option');
+                    option.value = baby.id;
+                    option.textContent = baby.fullname;
+                    if (baby.id === this.state.selectedBabyId) {
+                        option.selected = true;
+                    }
+                    selector.appendChild(option);
+                });
+            } else {
+                selector.classList.add('hidden');
             }
         },
 
         // Update baby status in header
-        updateBabyStatus(baby) {
+        updateBabyStatus() {
             const statusEl = document.getElementById('babyStatus');
-            if (baby) {
-                const age = this.calculateAge(baby.birthdate);
-                statusEl.textContent = `${baby.fullname} is ${age} old today 🎉`;
-            } else {
+
+            if (this.state.babies.length === 0) {
                 statusEl.textContent = 'Add your first baby to get started';
+                return;
+            }
+
+            if (this.state.selectedBabyId) {
+                const baby = this.state.babies.find(b => b.id === this.state.selectedBabyId);
+                if (baby) {
+                    const age = this.calculateAge(baby.birthdate);
+                    statusEl.textContent = `${baby.fullname} is ${age} old today 🎉`;
+                }
+            } else {
+                // Show all babies summary
+                const names = this.state.babies.map(b => b.fullname).join(', ');
+                statusEl.textContent = `Tracking: ${names}`;
             }
         },
 
@@ -705,6 +873,18 @@
                 settingsDropdown.classList.add('hidden');
             });
 
+            // Baby selector
+            document.getElementById('babySelector').addEventListener('change', (e) => {
+                this.state.selectedBabyId = e.target.value ? parseInt(e.target.value) : null;
+                this.refreshDashboard();
+            });
+
+            // Dashboard preferences link
+            document.getElementById('dashboardPrefsLink').addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showToast('Dashboard preferences coming soon!');
+            });
+
             // Logout button
             document.getElementById('logoutButton').addEventListener('click', () => {
                 if (confirm('Are you sure you want to logout?')) {
@@ -714,6 +894,14 @@
 
             // Quick action buttons
             this.setupQuickActions();
+
+            // Chat functionality
+            this.setupChat();
+
+            // Quick add button
+            document.getElementById('quickAddButton').addEventListener('click', () => {
+                this.showToast('Quick add feature coming soon!');
+            });
         },
 
         // Setup quick action buttons
@@ -728,18 +916,308 @@
                     }, 500);
 
                     // Handle action
-                    const action = this.querySelector('span').textContent.toLowerCase();
+                    const action = this.dataset.action;
                     Dashboard.handleQuickAction(action);
                 });
             });
         },
 
+        // Setup chat functionality
+        setupChat() {
+            const chatInput = document.getElementById('chatInput');
+            const chatSendButton = document.getElementById('chatSendButton');
+            const chatSuggestions = document.querySelectorAll('.chat-suggestion');
+
+            // Send message on button click
+            chatSendButton.addEventListener('click', () => {
+                const message = chatInput.value.trim();
+                if (message) {
+                    this.sendChatMessage(message);
+                }
+            });
+
+            // Send message on Enter key
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const message = chatInput.value.trim();
+                    if (message) {
+                        this.sendChatMessage(message);
+                    }
+                }
+            });
+
+            // Handle suggestions
+            chatSuggestions.forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const suggestion = this.dataset.suggestion;
+                    Dashboard.sendChatMessage(suggestion);
+                });
+            });
+        },
+
+        // Send chat message
+        sendChatMessage(message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const chatInput = document.getElementById('chatInput');
+
+            // Add user message
+            const userMessageHtml = `
+                <div class="flex items-start space-x-3 justify-end">
+                    <div class="bg-pastel-primary text-white rounded-lg p-3 max-w-[80%]">
+                        <p class="text-sm">${message}</p>
+                    </div>
+                </div>
+            `;
+            chatMessages.insertAdjacentHTML('beforeend', userMessageHtml);
+
+            // Clear input
+            chatInput.value = '';
+
+            // Simulate AI response (replace with actual AI integration)
+            setTimeout(() => {
+                const aiResponse = this.generateAIResponse(message);
+                const aiMessageHtml = `
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-pastel-primary flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                            AI
+                        </div>
+                        <div class="bg-pastel-lightest rounded-lg p-3 max-w-[80%]">
+                            <p class="text-sm text-pastel-text">${aiResponse}</p>
+                        </div>
+                    </div>
+                `;
+                chatMessages.insertAdjacentHTML('beforeend', aiMessageHtml);
+
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 1000);
+
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        },
+
+        // Generate AI response (placeholder - replace with actual AI integration)
+        generateAIResponse(message) {
+            const responses = {
+                'sleep': 'Based on your baby\'s age, they should be getting about 14-17 hours of sleep per day, including naps. It looks like your baby is on track with their sleep patterns.',
+                'feeding': 'At this age, babies typically feed every 2-3 hours. Your baby seems to be feeding regularly. Remember to watch for hunger cues!',
+                'milestone': 'Your baby is approaching some exciting milestones! Soon you might see rolling over, sitting with support, and increased social smiling.',
+                'default': 'I\'m here to help with any questions about your baby\'s care. Feel free to ask about feeding, sleep, development, or any concerns you might have!'
+            };
+
+            // Simple keyword matching
+            const lowerMessage = message.toLowerCase();
+            for (const [key, response] of Object.entries(responses)) {
+                if (lowerMessage.includes(key)) {
+                    return response;
+                }
+            }
+
+            return responses.default;
+        },
+
         // Handle quick actions
         handleQuickAction(action) {
             console.log('Quick action:', action);
-            // Implement action handling
-            // For now, just show a message
-            this.showToast(`${action} feature coming soon!`);
+
+            // Route to appropriate tracking page based on action
+            const routes = {
+                'feeding': '/feeding',
+                'sleep': '/sleep',
+                'diaper': '/diaper',
+                'medication': '/health',
+                'activity': '/activities',
+                'photo': '/photos'
+            };
+
+            if (routes[action]) {
+                // For now, show a toast. In production, navigate to the page
+                this.showToast(`Navigating to ${action} tracking...`);
+                // window.location.href = routes[action];
+            } else {
+                this.showToast(`${action} feature coming soon!`);
+            }
+        },
+
+        // Refresh dashboard data
+        async refreshDashboard() {
+            await this.loadDashboardData();
+        },
+
+        // Helper functions
+        getActivityIcon(type) {
+            const icons = {
+                'feeding': '<svg>...</svg>',
+                'sleep': '<svg>...</svg>',
+                'diaper': '<svg>...</svg>',
+                'health': '<svg>...</svg>',
+                'medication': '<svg>...</svg>'
+            };
+            return icons[type] || '';
+        },
+
+        getActivityColor(type) {
+            const colors = {
+                'feeding': 'bg-pastel-primary',
+                'sleep': 'bg-pastel-accent1',
+                'diaper': 'bg-pastel-accent2',
+                'health': 'bg-green-500',
+                'medication': 'bg-blue-500'
+            };
+            return colors[type] || 'bg-gray-400';
+        },
+
+        getActivityDetails(activity) {
+            if (!activity.details) return '';
+
+            switch (activity.type) {
+                case 'feeding':
+                    return `${activity.details.feeding_type}, ${activity.details.amount || ''} ${activity.details.duration ? `for ${activity.details.duration} min` : ''}`;
+                case 'sleep':
+                    return `${activity.details.duration ? `${activity.details.duration} minutes` : ''} ${activity.details.quality ? `- ${activity.details.quality} quality` : ''}`;
+                case 'diaper':
+                    return `${activity.details.content || 'Changed'}`;
+                case 'health':
+                    return `${activity.details.temperature ? `Temp: ${activity.details.temperature}°` : ''} ${activity.details.symptoms || ''}`;
+                default:
+                    return '';
+            }
+        },
+
+        formatActivityType(type) {
+            const types = {
+                'feeding': 'Feeding',
+                'sleep': 'Sleep',
+                'diaper': 'Diaper Change',
+                'health': 'Health Check',
+                'medication': 'Medication'
+            };
+            return types[type] || type;
+        },
+
+        formatTime(timeStr) {
+            const date = new Date(timeStr);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+
+            if (diffMins < 60) {
+                return `${diffMins}m ago`;
+            } else if (diffMins < 1440) {
+                const hours = Math.floor(diffMins / 60);
+                return `${hours}h ago`;
+            } else {
+                return date.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', hour12: true});
+            }
+        },
+
+        formatEventTime(timeStr) {
+            const date = new Date(timeStr);
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            if (date.toDateString() === now.toDateString()) {
+                return `Today at ${date.toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                })}`;
+            } else if (date.toDateString() === tomorrow.toDateString()) {
+                return `Tomorrow at ${date.toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                })}`;
+            } else {
+                return date.toLocaleDateString('en-US', {weekday: 'short', month: 'short', day: 'numeric'}) +
+                    ` at ${date.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', hour12: true})}`;
+            }
+        },
+
+        getEventIcon(type) {
+            if (type === 'doctor_visit') {
+                return `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-primary" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>`;
+            } else if (type === 'medication') {
+                return `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                </svg>`;
+            }
+            return '';
+        },
+
+        getEventUrgency(timeStr) {
+            const eventTime = new Date(timeStr);
+            const now = new Date();
+            const hoursUntil = (eventTime - now) / (1000 * 60 * 60);
+
+            if (hoursUntil < 2) {
+                return {
+                    bgClass: 'bg-red-50',
+                    borderClass: 'border-l-4 border-red-500',
+                    iconBgClass: 'bg-red-100',
+                    badge: 'Due Soon',
+                    badgeClass: 'animate-pulse-soft text-xs bg-red-600 text-white px-2 py-1 rounded-full'
+                };
+            } else if (hoursUntil < 24) {
+                return {
+                    bgClass: 'bg-pastel-lightest',
+                    borderClass: 'border-l-4 border-pastel-primary',
+                    iconBgClass: 'bg-pastel-primary bg-opacity-10'
+                };
+            } else {
+                return {
+                    bgClass: 'bg-pastel-lightest',
+                    borderClass: '',
+                    iconBgClass: 'bg-pastel-light bg-opacity-50'
+                };
+            }
+        },
+
+        getEventTitle(event) {
+            if (event.type === 'doctor_visit') {
+                return event.details.visit_type || 'Doctor Visit';
+            } else if (event.type === 'medication') {
+                return `${event.details.name} - ${event.details.dosage}${event.details.dosage_unit}`;
+            }
+            return 'Event';
+        },
+
+        getTimeAgo(timeStr) {
+            if (!timeStr) return 'No data';
+
+            const date = new Date(timeStr);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffMins < 1440) {
+                const hours = Math.floor(diffMins / 60);
+                return `${hours}h ago`;
+            }
+
+            const days = Math.floor(diffMins / 1440);
+            return `${days}d ago`;
+        },
+
+        formatDuration(minutes) {
+            if (!minutes) return '0m';
+
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+
+            if (hours > 0) {
+                return `${hours}h ${mins}m`;
+            }
+            return `${mins}m`;
         },
 
         // Show error message
@@ -750,8 +1228,17 @@
 
         // Show toast message
         showToast(message) {
-            // Implement toast notification
-            console.log('Toast:', message);
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-up';
+            toast.textContent = message;
+
+            document.body.appendChild(toast);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
         }
     };
 
