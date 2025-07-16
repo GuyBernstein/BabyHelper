@@ -273,7 +273,7 @@
      class="hidden fixed inset-0 bg-black bg-opacity-50 modal-backdrop z-50 flex items-center justify-center">
     <div class="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 shadow-xl max-h-[80vh] overflow-y-auto custom-scrollbar">
         <div class="flex items-center justify-between mb-6">
-            <h3 class="font-serif text-xl text-pastel-heading">Customize Dashboard</h3>
+            <h3 class="font-serif text-xl text-pastel-heading">Select Dashboard Widgets</h3>
             <button id="closeCustomization" class="p-2 hover:bg-pastel-lightest rounded-full transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                      stroke="currentColor">
@@ -283,36 +283,11 @@
         </div>
 
         <div class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium text-pastel-text mb-2">Layout Type</label>
-                <select id="layoutType"
-                        class="w-full px-3 py-2 border border-pastel-light rounded-lg focus:outline-none focus:border-pastel-primary">
-                    <option value="grid">Grid Layout</option>
-                    <option value="list">List Layout</option>
-                </select>
-            </div>
+            <p class="text-sm text-pastel-textLight">Choose which widgets to display on your dashboard. You can toggle
+                widgets on or off.</p>
 
             <div>
-                <label class="block text-sm font-medium text-pastel-text mb-2">Default Baby</label>
-                <select id="defaultBaby"
-                        class="w-full px-3 py-2 border border-pastel-light rounded-lg focus:outline-none focus:border-pastel-primary">
-                    <option value="">All Babies</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-pastel-text mb-2">Default Timeframe</label>
-                <select id="defaultTimeframe"
-                        class="w-full px-3 py-2 border border-pastel-light rounded-lg focus:outline-none focus:border-pastel-primary">
-                    <option value="today">Today</option>
-                    <option value="week">Week</option>
-                    <option value="month">Month</option>
-                    <option value="custom">Custom</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-pastel-text mb-2">Widgets</label>
+                <label class="block text-sm font-medium text-pastel-text mb-2">Available Widgets</label>
                 <div id="widgetList" class="space-y-2">
                     <!-- Widget toggles will be populated here -->
                 </div>
@@ -1078,27 +1053,8 @@
             const modal = document.getElementById('customizationModal');
             modal.classList.remove('hidden');
 
-            // Populate current preferences
-            if (this.state.preferences) {
-                document.getElementById('layoutType').value = this.state.preferences.layout_type || 'grid';
-                document.getElementById('defaultTimeframe').value = this.state.preferences.default_timeframe || 'week';
-
-                // Populate default baby selector
-                const defaultBabySelect = document.getElementById('defaultBaby');
-                defaultBabySelect.innerHTML = '<option value="">All Babies</option>';
-                this.state.babies.forEach(baby => {
-                    const option = document.createElement('option');
-                    option.value = baby.id;
-                    option.textContent = baby.fullname;
-                    if (baby.id === this.state.preferences.default_baby_id) {
-                        option.selected = true;
-                    }
-                    defaultBabySelect.appendChild(option);
-                });
-
-                // Populate widget list
-                this.populateWidgetList();
-            }
+            // Populate widget list
+            this.populateWidgetList();
         },
 
         // Populate widget list in customization modal
@@ -1119,8 +1075,7 @@
                 const widgetConfig = this.state.preferences?.widgets_config?.find(w => w.type === widget.type) || {
                     type: widget.type,
                     position: index,
-                    enabled: true,
-                    timeframe: 'week'
+                    enabled: true
                 };
 
                 const widgetHtml = `
@@ -1132,12 +1087,6 @@
                                    class="widget-toggle w-4 h-4 text-pastel-primary focus:ring-pastel-primary border-pastel-light rounded">
                             <span class="text-sm font-medium text-pastel-heading">${widget.name}</span>
                         </label>
-                        <select data-widget-timeframe="${widget.type}"
-                                class="widget-timeframe text-sm px-2 py-1 border border-pastel-light rounded focus:outline-none focus:border-pastel-primary">
-                            <option value="today" ${widgetConfig.timeframe === 'today' ? 'selected' : ''}>Today</option>
-                            <option value="week" ${widgetConfig.timeframe === 'week' ? 'selected' : ''}>Week</option>
-                            <option value="month" ${widgetConfig.timeframe === 'month' ? 'selected' : ''}>Month</option>
-                        </select>
                     </div>
                 `;
 
@@ -1152,21 +1101,20 @@
                 const widgetConfigs = [];
                 document.querySelectorAll('.widget-toggle').forEach((toggle, index) => {
                     const type = toggle.dataset.widgetType;
-                    const timeframeSelect = document.querySelector(`[data-widget-timeframe="${type}"]`);
 
                     widgetConfigs.push({
                         type: type,
                         position: index,
                         enabled: toggle.checked,
-                        timeframe: timeframeSelect.value
+                        timeframe: this.state.timeframe // Use global timeframe
                     });
                 });
 
                 // Prepare preferences data
                 const preferencesData = {
-                    layout_type: document.getElementById('layoutType').value,
-                    default_baby_id: parseInt(document.getElementById('defaultBaby').value) || null,
-                    default_timeframe: document.getElementById('defaultTimeframe').value,
+                    layout_type: this.state.preferences?.layout_type || 'grid',
+                    default_baby_id: this.state.selectedBabyId,
+                    default_timeframe: this.state.timeframe,
                     widgets_config: widgetConfigs
                 };
 
