@@ -307,6 +307,7 @@
                     <option value="today">Today</option>
                     <option value="week">Week</option>
                     <option value="month">Month</option>
+                    <option value="custom">Custom</option>
                 </select>
             </div>
 
@@ -651,7 +652,7 @@
         // Update timeframe selector
         updateTimeframeSelector() {
             // Set active timeframe button
-            const timeframe = this.state.preferences?.default_timeframe || this.state.timeframe;
+            const timeframe = this.state.timeframe || this.state.preferences?.default_timeframe;
             this.state.timeframe = timeframe;
 
             // Desktop selector
@@ -1262,6 +1263,7 @@
                         end: new Date(endDate)
                     };
                     document.getElementById('customDateModal').classList.add('hidden');
+                    this.updateTimeframeSelector();
                     this.refreshDashboard();
                 }
             });
