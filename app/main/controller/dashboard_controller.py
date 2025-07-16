@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional, Dict, Any
 
 from fastapi import Depends, HTTPException, status, Query
@@ -20,18 +21,27 @@ from app.main.service.dashboard_service import (
     get_care_metrics
 )
 from app.main.service.oauth_service import get_current_user
+from app.main.service.baby_service import get_all_babies_for_user, get_baby_if_authorized
 
 
 @router.get("/dash", response_model=Dict[str, Any])
 async def get_dashboard(
         baby_id: Optional[int] = Query(None, description="Filter data for a specific baby"),
-        timeframe: Optional[TimeFrame] = Query(None, description="Timeframe for data (today, week, month)"),
+        timeframe: Optional[TimeFrame] = Query(None, description="Timeframe for data"),
+        custom_start: Optional[datetime] = Query(None, description="Custom start date"),
+        custom_end: Optional[datetime] = Query(None, description="Custom end date"),
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
     """Get dashboard data with all enabled widgets"""
-    dashboard = get_dashboard_data(db, current_user.id, baby_id, timeframe)
-    return dashboard
+    return get_dashboard_data(
+        db,
+        current_user.id,
+        baby_id,
+        timeframe,
+        custom_start,
+        custom_end
+    )
 
 
 @router.get("/preferences", response_model=DashboardPreferenceResponse)
@@ -88,8 +98,6 @@ async def get_recent_activity_data(
         current_user: User = Depends(get_current_user)
 ):
     """Get recent activities for all babies or a specific baby"""
-    from app.main.service.baby_service import get_all_babies_for_user, get_baby_if_authorized
-
     # Get babies the user has access to
     all_babies = get_all_babies_for_user(db, current_user.id)
     baby_ids = [baby.id for baby in all_babies]

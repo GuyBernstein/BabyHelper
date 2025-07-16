@@ -36,6 +36,7 @@
                         'slide-up': 'slideUp 0.3s ease-out',
                         'fade-in': 'fadeIn 0.5s ease-out',
                         'pulse-soft': 'pulseSoft 2s ease-in-out infinite',
+                        'spin-slow': 'spin 3s linear infinite',
                     },
                     keyframes: {
                         float: {
@@ -64,67 +65,77 @@
         }
     </script>
     <style>
-        /* Quick action button tap feedback */
-        .quick-action-btn:active {
-            transform: scale(0.95);
+        /* Widget drag and drop styles */
+        .widget-dragging {
+            opacity: 0.5;
         }
 
-        /* Photo carousel scrollbar */
-        .photo-carousel::-webkit-scrollbar {
+        .widget-drag-over {
+            border: 2px dashed #ff8c69;
+            background-color: rgba(255, 140, 105, 0.05);
+        }
+
+        /* Loading skeleton animation */
+        @keyframes shimmer {
+            0% {
+                background-position: -468px 0;
+            }
+            100% {
+                background-position: 468px 0;
+            }
+        }
+
+        .skeleton {
+            background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+            background-size: 800px 104px;
+            animation: shimmer 1.5s infinite linear;
+        }
+
+        /* Smooth transitions */
+        .widget-container {
+            transition: all 0.3s ease;
+        }
+
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
             height: 6px;
         }
 
-        .photo-carousel::-webkit-scrollbar-track {
+        .custom-scrollbar::-webkit-scrollbar-track {
             background: #ffe8d9;
             border-radius: 3px;
         }
 
-        .photo-carousel::-webkit-scrollbar-thumb {
+        .custom-scrollbar::-webkit-scrollbar-thumb {
             background: #ff8c69;
             border-radius: 3px;
         }
 
-        /* Chat interface styles */
-        .chat-container {
-            height: 400px;
+        /* Timeframe selector active state */
+        .timeframe-active {
+            background-color: #ff8c69;
+            color: white;
         }
 
-        .chat-messages {
-            height: calc(100% - 80px);
-        }
-
-        /* Responsive grid adjustments */
-        @media (max-width: 640px) {
-            .quick-action-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        /* Loading overlay */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.95);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-
-
-        /* Baby selector dropdown */
-        .baby-selector {
-            min-width: 150px;
+        /* Widget customization modal */
+        .modal-backdrop {
+            backdrop-filter: blur(5px);
         }
     </style>
 </head>
 <body class="bg-pastel-lightest font-sans text-pastel-text">
 
+<!-- Loading State -->
+<div id="loadingOverlay" class="fixed inset-0 bg-white bg-opacity-95 z-50 flex items-center justify-center">
+    <div class="text-center">
+        <div class="w-16 h-16 border-4 border-pastel-primary border-t-transparent rounded-full animate-spin-slow mx-auto mb-4"></div>
+        <p class="text-pastel-text">Loading your dashboard...</p>
+    </div>
+</div>
+
 <!-- Navigation Header -->
-<nav id="mainNav" class="bg-white shadow-pastel sticky top-0 z-50">
+<nav id="mainNav" class="bg-white shadow-pastel sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 py-3">
         <div class="flex items-center justify-between">
             <div class="flex items-center space-x-3">
@@ -136,12 +147,55 @@
                     <p class="text-xs text-pastel-textLight" id="babyStatus">Loading...</p>
                 </div>
             </div>
+
+            <!-- Center Controls -->
+            <div class="flex items-center space-x-4">
+                <!-- Timeframe Selector -->
+                <div id="timeframeSelector" class="hidden md:flex items-center bg-pastel-lightest rounded-full p-1">
+                    <button data-timeframe="today"
+                            class="timeframe-btn px-4 py-1.5 rounded-full text-sm font-medium transition-all">
+                        Today
+                    </button>
+                    <button data-timeframe="week"
+                            class="timeframe-btn px-4 py-1.5 rounded-full text-sm font-medium transition-all">
+                        Week
+                    </button>
+                    <button data-timeframe="month"
+                            class="timeframe-btn px-4 py-1.5 rounded-full text-sm font-medium transition-all">
+                        Month
+                    </button>
+                    <button data-timeframe="custom"
+                            class="timeframe-btn px-4 py-1.5 rounded-full text-sm font-medium transition-all">
+                        Custom
+                    </button>
+                </div>
+
+                <!-- Mobile Timeframe Dropdown -->
+                <select id="timeframeSelectorMobile"
+                        class="md:hidden px-3 py-1 text-sm border border-pastel-light rounded-lg focus:outline-none focus:border-pastel-primary">
+                    <option value="today">Today</option>
+                    <option value="week">Week</option>
+                    <option value="month">Month</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+
             <div class="flex items-center space-x-3">
                 <!-- Baby Selector -->
                 <select id="babySelector"
                         class="baby-selector px-3 py-1 text-sm border border-pastel-light rounded-lg focus:outline-none focus:border-pastel-primary hidden">
                     <option value="">All Babies</option>
                 </select>
+
+                <!-- Dashboard Customization Button -->
+                <button id="customizeButton" class="p-2 rounded-full hover:bg-pastel-light transition-colors"
+                        title="Customize Dashboard">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-text" fill="none"
+                         viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                    </svg>
+                </button>
 
                 <!-- User Avatar -->
                 <img src="https://randomuser.me/api/portraits/women/68.jpg" id="userPicture"
@@ -151,8 +205,7 @@
                 <div class="relative">
                     <button id="settingsButton" class="p-2 rounded-full hover:bg-pastel-light transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-text" fill="none"
-                             viewBox="0 0 24 24"
-                             stroke="currentColor">
+                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -168,12 +221,9 @@
                                class="block px-4 py-2 text-sm text-pastel-text hover:bg-pastel-lightest">
                                 Profile Settings
                             </a>
-                            <a href="/baby-profile" class="block px-4 py-2 text-sm text-pastel-text hover:bg-pastel-lightest">
-                                Manage Babies
-                            </a>
-                            <a href="#" id="dashboardPrefsLink"
+                            <a href="/baby-profile"
                                class="block px-4 py-2 text-sm text-pastel-text hover:bg-pastel-lightest">
-                                Dashboard Preferences
+                                Manage Babies
                             </a>
                             <hr class="my-1 border-pastel-light">
                             <button id="logoutButton"
@@ -188,8 +238,131 @@
     </div>
 </nav>
 
+<!-- Custom Date Range Modal -->
+<div id="customDateModal"
+     class="hidden fixed inset-0 bg-black bg-opacity-50 modal-backdrop z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+        <h3 class="font-serif text-xl text-pastel-heading mb-4">Select Date Range</h3>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-pastel-text mb-1">Start Date</label>
+                <input type="date" id="customStartDate"
+                       class="w-full px-3 py-2 border border-pastel-light rounded-lg focus:outline-none focus:border-pastel-primary">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-pastel-text mb-1">End Date</label>
+                <input type="date" id="customEndDate"
+                       class="w-full px-3 py-2 border border-pastel-light rounded-lg focus:outline-none focus:border-pastel-primary">
+            </div>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+            <button id="customDateCancel"
+                    class="px-4 py-2 text-pastel-text hover:bg-pastel-lightest rounded-lg transition-colors">
+                Cancel
+            </button>
+            <button id="customDateApply"
+                    class="px-4 py-2 bg-pastel-primary text-white rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                Apply
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard Customization Modal -->
+<div id="customizationModal"
+     class="hidden fixed inset-0 bg-black bg-opacity-50 modal-backdrop z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 shadow-xl max-h-[80vh] overflow-y-auto custom-scrollbar">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="font-serif text-xl text-pastel-heading">Customize Dashboard</h3>
+            <button id="closeCustomization" class="p-2 hover:bg-pastel-lightest rounded-full transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                     stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-pastel-text mb-2">Layout Type</label>
+                <select id="layoutType"
+                        class="w-full px-3 py-2 border border-pastel-light rounded-lg focus:outline-none focus:border-pastel-primary">
+                    <option value="grid">Grid Layout</option>
+                    <option value="list">List Layout</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-pastel-text mb-2">Default Baby</label>
+                <select id="defaultBaby"
+                        class="w-full px-3 py-2 border border-pastel-light rounded-lg focus:outline-none focus:border-pastel-primary">
+                    <option value="">All Babies</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-pastel-text mb-2">Default Timeframe</label>
+                <select id="defaultTimeframe"
+                        class="w-full px-3 py-2 border border-pastel-light rounded-lg focus:outline-none focus:border-pastel-primary">
+                    <option value="today">Today</option>
+                    <option value="week">Week</option>
+                    <option value="month">Month</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-pastel-text mb-2">Widgets</label>
+                <div id="widgetList" class="space-y-2">
+                    <!-- Widget toggles will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end space-x-3 mt-6">
+            <button id="cancelCustomization"
+                    class="px-4 py-2 text-pastel-text hover:bg-pastel-lightest rounded-lg transition-colors">
+                Cancel
+            </button>
+            <button id="saveCustomization"
+                    class="px-4 py-2 bg-pastel-primary text-white rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Main Dashboard Content -->
 <div id="mainContent" class="max-w-7xl mx-auto px-4 py-6">
+    <!-- Quick Stats Bar -->
+    <section id="quickStats" class="mb-6 bg-white rounded-xl shadow-pastel border border-pastel-light p-4">
+        <div class="flex items-center justify-between flex-wrap gap-4">
+            <div class="flex items-center space-x-6">
+                <div class="text-center">
+                    <p class="text-2xl font-semibold text-pastel-heading" id="totalActivitiesToday">0</p>
+                    <p class="text-xs text-pastel-textLight">Activities Today</p>
+                </div>
+                <div class="w-px h-10 bg-pastel-light"></div>
+                <div class="text-center">
+                    <p class="text-2xl font-semibold text-pastel-primary" id="lastActivityTime">--</p>
+                    <p class="text-xs text-pastel-textLight">Last Activity</p>
+                </div>
+                <div class="w-px h-10 bg-pastel-light"></div>
+                <div class="text-center">
+                    <p class="text-2xl font-semibold text-pastel-accent1" id="nextEventTime">--</p>
+                    <p class="text-xs text-pastel-textLight">Next Event</p>
+                </div>
+            </div>
+            <button id="refreshButton" class="p-2 hover:bg-pastel-lightest rounded-full transition-colors"
+                    title="Refresh Dashboard">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-text" fill="none" viewBox="0 0 24 24"
+                     stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+            </button>
+        </div>
+    </section>
+
     <!-- Today's Summary Cards -->
     <section class="mb-8 animate-fade-in">
         <h2 class="font-serif text-xl text-pastel-heading mb-4">Today's Summary</h2>
@@ -202,7 +375,7 @@
     <section class="mb-8 animate-slide-up">
         <h2 class="font-serif text-xl text-pastel-heading mb-4">Quick Actions</h2>
         <div class="grid grid-cols-3 md:grid-cols-6 gap-4 quick-action-grid">
-            <!-- Feed Button -->
+            <!-- Quick action buttons -->
             <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2"
                     data-action="feeding">
                 <div class="w-12 h-12 rounded-full bg-pastel-primary bg-opacity-10 flex items-center justify-center">
@@ -215,7 +388,6 @@
                 <span class="text-sm font-medium text-pastel-heading">Feed</span>
             </button>
 
-            <!-- Sleep Button -->
             <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2"
                     data-action="sleep">
                 <div class="w-12 h-12 rounded-full bg-pastel-accent1 bg-opacity-10 flex items-center justify-center">
@@ -228,7 +400,6 @@
                 <span class="text-sm font-medium text-pastel-heading">Sleep</span>
             </button>
 
-            <!-- Diaper Button -->
             <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2"
                     data-action="diaper">
                 <div class="w-12 h-12 rounded-full bg-pastel-accent2 bg-opacity-10 flex items-center justify-center">
@@ -241,7 +412,6 @@
                 <span class="text-sm font-medium text-pastel-heading">Diaper</span>
             </button>
 
-            <!-- Medicine Button -->
             <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2"
                     data-action="medication">
                 <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
@@ -254,7 +424,6 @@
                 <span class="text-sm font-medium text-pastel-heading">Medicine</span>
             </button>
 
-            <!-- Play Button -->
             <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2"
                     data-action="activity">
                 <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
@@ -267,7 +436,6 @@
                 <span class="text-sm font-medium text-pastel-heading">Play</span>
             </button>
 
-            <!-- Photo Button -->
             <button class="quick-action-btn bg-white rounded-xl p-6 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all duration-200 flex flex-col items-center space-y-2"
                     data-action="photo">
                 <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
@@ -284,56 +452,19 @@
         </div>
     </section>
 
-    <!-- Two Column Layout for Reminders and Photos -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <!-- Upcoming Reminders -->
-        <section class="animate-slide-up">
-            <h2 class="font-serif text-xl text-pastel-heading mb-4">Upcoming Reminders</h2>
-            <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4">
-                <div id="upcomingEvents" class="space-y-3">
-                    <!-- Events will be dynamically populated -->
-                    <div class="text-center py-8 text-pastel-textLight">
-                        <p>Loading upcoming events...</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Recent Photos -->
-        <section class="animate-slide-up">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="font-serif text-xl text-pastel-heading">Recent Photos</h2>
-                <button class="text-sm text-pastel-primary hover:text-pastel-primaryHover transition-colors">View All
-                </button>
-            </div>
-            <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4">
-                <div id="photoGallery" class="photo-carousel flex space-x-3 overflow-x-auto pb-2">
-                    <!-- Photos will be dynamically populated -->
-                    <div class="text-center py-8 text-pastel-textLight w-full">
-                        <p>Photo gallery coming soon!</p>
-                    </div>
-                </div>
-            </div>
-        </section>
+    <!-- Dynamic Widgets Container -->
+    <div id="widgetsContainer" class="space-y-6">
+        <!-- Widgets will be dynamically loaded here based on preferences -->
     </div>
 
-    <!-- Care Metrics Section -->
-    <section id="careMetricsSection" class="mb-8 animate-slide-up hidden">
-        <h2 class="font-serif text-xl text-pastel-heading mb-4">Care Sharing Metrics</h2>
-        <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4">
-            <div id="careMetrics" class="space-y-4">
-                <!-- Care metrics will be dynamically populated -->
-            </div>
-        </div>
-    </section>
-
-    <!-- AI Assistant Section -->
+    <!-- AI Assistant Section (Always visible) -->
     <section class="mb-8 animate-slide-up">
         <h2 class="font-serif text-xl text-pastel-heading mb-4">AI Baby Care Assistant</h2>
         <div class="bg-white rounded-xl shadow-pastel border border-pastel-light overflow-hidden">
-            <div class="chat-container flex flex-col">
+            <div class="chat-container flex flex-col" style="height: 400px;">
                 <!-- Chat Messages Area -->
-                <div id="chatMessages" class="chat-messages overflow-y-auto p-4 space-y-3">
+                <div id="chatMessages" class="chat-messages overflow-y-auto p-4 space-y-3 custom-scrollbar"
+                     style="height: calc(100% - 80px);">
                     <!-- Initial AI Message -->
                     <div class="flex items-start space-x-3">
                         <div class="w-8 h-8 rounded-full bg-pastel-primary flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
@@ -379,19 +510,6 @@
             </div>
         </div>
     </section>
-
-    <!-- Recent Activities Timeline -->
-    <section class="mb-8 animate-slide-up">
-        <h2 class="font-serif text-xl text-pastel-heading mb-4">Recent Activities</h2>
-        <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4">
-            <div id="recentActivities" class="space-y-4">
-                <!-- Activities will be dynamically populated -->
-                <div class="text-center py-8 text-pastel-textLight">
-                    <p>Loading recent activities...</p>
-                </div>
-            </div>
-        </div>
-    </section>
 </div>
 
 <!-- Floating Action Button for Quick Add -->
@@ -403,13 +521,10 @@
     <span class="absolute right-full mr-3 bg-gray-800 text-white text-sm px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Quick Add Activity</span>
 </button>
 
-<script src="../js/auth.js"
-        data-auto-init="true"></script>
+<script src="../js/auth.js" data-auto-init="true"></script>
 
 <script>
-    // Dashboard initialization and functionality
     const Dashboard = {
-        // State
         state: {
             currentBaby: null,
             selectedBabyId: null,
@@ -417,30 +532,65 @@
             activities: [],
             dashboardData: null,
             preferences: null,
-            timeframe: 'today'
+            timeframe: 'week',
+            customDateRange: {
+                start: null,
+                end: null
+            },
+            widgets: []
         },
 
-        // Initialize dashboard after authentication
-        async init() {
-            try {
-                // Update UI with user info
-                this.updateUserInterface();
-
-                // Load dashboard data
-                await this.loadDashboardData();
-
-                // Setup event listeners
-                this.setupEventListeners();
-
-                // Start periodic refresh (every 5 minutes)
-                setInterval(() => this.refreshDashboard(), 300000);
-
-            } catch (error) {
-                console.error('Dashboard initialization error:', error);
+        widgetDefinitions: {
+            'recent_activities': {
+                title: 'Recent Activities',
+                render: (data) => Dashboard.renderRecentActivities(data)
+            },
+            'upcoming_events': {
+                title: 'Upcoming Events',
+                render: (data) => Dashboard.renderUpcomingEvents(data)
+            },
+            'care_metrics': {
+                title: 'Care Sharing',
+                render: (data) => Dashboard.renderCareMetrics(data)
+            },
+            'feeding_stats': {
+                title: 'Feeding Statistics',
+                render: (data) => Dashboard.renderFeedingStats(data)
+            },
+            'sleep_patterns': {
+                title: 'Sleep Patterns',
+                render: (data) => Dashboard.renderSleepPatterns(data)
+            },
+            'growth_chart': {
+                title: 'Growth Chart',
+                render: (data) => Dashboard.renderGrowthChart(data)
             }
         },
 
-        // Update UI with user information
+        async init() {
+            try {
+                this.showLoading(true);
+                this.updateUserInterface();
+                await this.loadDashboardData();
+                this.setupEventListeners();
+                this.showLoading(false);
+                setInterval(() => this.refreshDashboard(), 300000);
+            } catch (error) {
+                console.error('Dashboard initialization error:', error);
+                this.showError('Failed to load dashboard. Please refresh the page.');
+                this.showLoading(false);
+            }
+        },
+
+        showLoading(show) {
+            const overlay = document.getElementById('loadingOverlay');
+            if (show) {
+                overlay.classList.remove('hidden');
+            } else {
+                overlay.classList.add('hidden');
+            }
+        },
+
         updateUserInterface() {
             const user = BabyHelperAuth.auth.getCurrentUser();
 
@@ -457,15 +607,6 @@
             }
         },
 
-        // Get time-based greeting
-        getGreeting() {
-            const hour = new Date().getHours();
-            if (hour < 12) return 'Good Morning';
-            if (hour < 17) return 'Good Afternoon';
-            return 'Good Evening';
-        },
-
-        // Load dashboard data using the main dashboard endpoint
         async loadDashboardData() {
             try {
                 // Build query parameters
@@ -483,52 +624,274 @@
                     // Extract data from response
                     this.state.babies = this.state.dashboardData.babies || [];
                     this.state.preferences = this.state.dashboardData.preferences;
+                    this.state.widgets = this.state.dashboardData.widgets || [];
 
                     // Update UI components
                     this.updateBabySelector();
                     this.updateBabyStatus();
+                    this.updateTimeframeSelector();
+                    await this.updateQuickStats();
 
-                    // Process widgets based on preferences
-                    if (this.state.dashboardData.widgets) {
-                        this.processWidgets(this.state.dashboardData.widgets);
-                    }
+                    // Render widgets
+                    this.renderWidgets();
 
-                    // Load additional data that might not be in widgets
+                    // Load additional data
                     await this.loadTodaysSummary();
 
                 } else {
-                    console.error('Failed to load dashboard data');
+                    throw new Error('Failed to load dashboard data');
                 }
 
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
+                throw error;
             }
         },
 
-        // Process and display widgets based on preferences
-        processWidgets(widgets) {
-            widgets.forEach(widget => {
-                if (!widget.data) return;
+        // Update timeframe selector
+        updateTimeframeSelector() {
+            // Set active timeframe button
+            const timeframe = this.state.preferences?.default_timeframe || this.state.timeframe;
+            this.state.timeframe = timeframe;
 
-                switch (widget.type) {
-                    case 'recent_activities':
-                        this.displayRecentActivities(widget.data);
-                        break;
-                    case 'upcoming_events':
-                        this.displayUpcomingEvents(widget.data);
-                        break;
-                    case 'care_metrics':
-                        this.displayCareMetrics(widget.data);
-                        break;
-                    // Add other widget types as needed
+            // Desktop selector
+            document.querySelectorAll('.timeframe-btn').forEach(btn => {
+                if (btn.dataset.timeframe === timeframe) {
+                    btn.classList.add('timeframe-active');
+                } else {
+                    btn.classList.remove('timeframe-active');
                 }
             });
+
+            // Mobile selector
+            document.getElementById('timeframeSelectorMobile').value = timeframe;
         },
 
-        // Load today's summary data
+        // Update quick stats
+        async updateQuickStats() {
+            try {
+                // Get today's activities count
+                const todayParams = new URLSearchParams({
+                    timeframe: 'today',
+                    limit: 100
+                });
+                if (this.state.selectedBabyId) {
+                    todayParams.append('baby_id', this.state.selectedBabyId);
+                }
+
+                const response = await BabyHelperAuth.api.request(`/dashboard/activities?${todayParams}`);
+                if (response.ok) {
+                    const activities = await response.json();
+                    document.getElementById('totalActivitiesToday').textContent = activities.length;
+
+                    // Last activity time
+                    if (activities.length > 0) {
+                        const lastActivity = activities[0];
+                        document.getElementById('lastActivityTime').textContent = this.getTimeAgo(lastActivity.time);
+                    }
+                }
+
+                // Next event
+                const upcomingWidget = this.state.widgets.find(w => w.type === 'upcoming_events');
+                if (upcomingWidget && upcomingWidget.data && upcomingWidget.data.length > 0) {
+                    const nextEvent = upcomingWidget.data[0];
+                    const eventTime = new Date(nextEvent.time);
+                    const now = new Date();
+                    const hoursUntil = Math.floor((eventTime - now) / (1000 * 60 * 60));
+
+                    if (hoursUntil < 24) {
+                        document.getElementById('nextEventTime').textContent = `In ${hoursUntil}h`;
+                    } else {
+                        const daysUntil = Math.floor(hoursUntil / 24);
+                        document.getElementById('nextEventTime').textContent = `In ${daysUntil}d`;
+                    }
+                }
+
+            } catch (error) {
+                console.error('Error updating quick stats:', error);
+            }
+        },
+
+        // Render widgets based on preferences
+        renderWidgets() {
+            const container = document.getElementById('widgetsContainer');
+            container.innerHTML = '';
+
+            // Sort widgets by position
+            const sortedWidgets = [...this.state.widgets].sort((a, b) => a.position - b.position);
+
+            sortedWidgets.forEach(widget => {
+                if (widget.data && this.widgetDefinitions[widget.type]) {
+                    const widgetHtml = this.widgetDefinitions[widget.type].render(widget.data);
+                    container.insertAdjacentHTML('beforeend', widgetHtml);
+                }
+            });
+
+            // Add empty state if no widgets
+            if (sortedWidgets.length === 0 || !sortedWidgets.some(w => w.data)) {
+                container.innerHTML = `
+                    <div class="text-center py-12 bg-white rounded-xl shadow-pastel border border-pastel-light">
+                        <p class="text-pastel-textLight mb-4">No widgets configured</p>
+                        <button onclick="Dashboard.openCustomizationModal()" class="px-4 py-2 bg-pastel-primary text-white rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                            Customize Dashboard
+                        </button>
+                    </div>
+                `;
+            }
+        },
+
+        // Render recent activities widget
+        renderRecentActivities(activities) {
+            const activitiesHtml = activities.map(activity => {
+                const color = this.getActivityColor(activity.type);
+                const details = this.getActivityDetails(activity);
+
+                return `
+                    <div class="flex items-start space-x-3">
+                        <div class="w-2 h-2 ${color} rounded-full mt-2 flex-shrink-0"></div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <p class="font-medium text-pastel-heading">${this.formatActivityType(activity.type)}</p>
+                                <span class="text-xs text-pastel-textLight">${this.formatTime(activity.time)}</span>
+                            </div>
+                            <p class="text-sm text-pastel-textLight">${details}</p>
+                            <p class="text-xs text-pastel-textLight mt-1">Baby: ${activity.baby_name} | By: ${activity.caregiver_name}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <section class="widget-container animate-slide-up">
+                    <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-serif text-lg text-pastel-heading">Recent Activities</h3>
+                            <button class="text-sm text-pastel-primary hover:text-pastel-primaryHover transition-colors">
+                                View All
+                            </button>
+                        </div>
+                        <div class="space-y-4">
+                            ${activitiesHtml || '<p class="text-center py-4 text-pastel-textLight">No recent activities</p>'}
+                        </div>
+                    </div>
+                </section>
+            `;
+        },
+
+        // Render upcoming events widget
+        renderUpcomingEvents(events) {
+            const eventsHtml = events.map(event => {
+                const urgency = this.getEventUrgency(event.time);
+                const icon = this.getEventIcon(event.type);
+
+                return `
+                    <div class="flex items-center space-x-4 p-3 ${urgency.bgClass} rounded-lg ${urgency.borderClass}">
+                        <div class="w-12 h-12 rounded-full ${urgency.iconBgClass} flex items-center justify-center flex-shrink-0">
+                            ${icon}
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-semibold text-pastel-heading">${this.getEventTitle(event)}</p>
+                            <p class="text-sm text-pastel-textLight">${this.formatEventTime(event.time)}</p>
+                            <p class="text-xs text-pastel-textLight">Baby: ${event.baby_name}</p>
+                        </div>
+                        ${urgency.badge ? `<span class="${urgency.badgeClass}">${urgency.badge}</span>` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <section class="widget-container animate-slide-up">
+                    <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-serif text-lg text-pastel-heading">Upcoming Events</h3>
+                            <button class="text-sm text-pastel-primary hover:text-pastel-primaryHover transition-colors">
+                                Add Event
+                            </button>
+                        </div>
+                        <div class="space-y-3">
+                            ${eventsHtml || '<p class="text-center py-4 text-pastel-textLight">No upcoming events</p>'}
+                        </div>
+                    </div>
+                </section>
+            `;
+        },
+
+        // Render care metrics widget
+        renderCareMetrics(metrics) {
+            const caregiversHtml = Object.values(metrics.by_caregiver).map(caregiver => {
+                const data = caregiver.caregiver;
+                return `
+                    <div class="flex items-center justify-between p-3 bg-pastel-lightest rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            ${data.picture ?
+                    `<img src="${data.picture}" alt="${data.name}" class="w-10 h-10 rounded-full">` :
+                    `<div class="w-10 h-10 rounded-full bg-pastel-primary flex items-center justify-center text-white font-medium">
+                                    ${data.name ? data.name.charAt(0).toUpperCase() : 'U'}
+                                </div>`
+                }
+                            <div>
+                                <p class="font-medium text-pastel-heading">${data.name}</p>
+                                <p class="text-xs text-pastel-textLight">${data.is_primary ? 'Primary Parent' : 'Co-parent'}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-semibold text-pastel-primary">${caregiver.percentage}%</p>
+                            <p class="text-xs text-pastel-textLight">${caregiver.total} activities</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <section class="widget-container animate-slide-up">
+                    <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-6">
+                        <h3 class="font-serif text-lg text-pastel-heading mb-4">Care Sharing Metrics</h3>
+                        <p class="text-sm text-pastel-textLight mb-4">Total activities: ${metrics.total_activities}</p>
+                        <div class="space-y-3">
+                            ${caregiversHtml}
+                        </div>
+                    </div>
+                </section>
+            `;
+        },
+
+        // Placeholder renders for other widgets
+        renderFeedingStats(data) {
+            return `
+                <section class="widget-container animate-slide-up">
+                    <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-6">
+                        <h3 class="font-serif text-lg text-pastel-heading mb-4">Feeding Statistics</h3>
+                        <p class="text-center py-8 text-pastel-textLight">Feeding statistics coming soon!</p>
+                    </div>
+                </section>
+            `;
+        },
+
+        renderSleepPatterns(data) {
+            return `
+                <section class="widget-container animate-slide-up">
+                    <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-6">
+                        <h3 class="font-serif text-lg text-pastel-heading mb-4">Sleep Patterns</h3>
+                        <p class="text-center py-8 text-pastel-textLight">Sleep pattern visualization coming soon!</p>
+                    </div>
+                </section>
+            `;
+        },
+
+        renderGrowthChart(data) {
+            return `
+                <section class="widget-container animate-slide-up">
+                    <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-6">
+                        <h3 class="font-serif text-lg text-pastel-heading mb-4">Growth Chart</h3>
+                        <p class="text-center py-8 text-pastel-textLight">Growth chart coming soon!</p>
+                    </div>
+                </section>
+            `;
+        },
+
+        // Load today's summary
         async loadTodaysSummary() {
             try {
-                // Get today's activities
                 const params = new URLSearchParams({
                     timeframe: 'today',
                     limit: 100
@@ -591,7 +954,7 @@
             // Display summary cards
             const summaryCardsHtml = `
                 <!-- Feeding Card -->
-                <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light">
+                <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all">
                     <div class="flex items-center justify-between mb-2">
                         <div class="w-10 h-10 rounded-full bg-pastel-accent1 bg-opacity-20 flex items-center justify-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-primary" fill="none"
@@ -607,7 +970,7 @@
                 </div>
 
                 <!-- Sleep Card -->
-                <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light">
+                <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all">
                     <div class="flex items-center justify-between mb-2">
                         <div class="w-10 h-10 rounded-full bg-pastel-accent2 bg-opacity-20 flex items-center justify-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-accent1" fill="none"
@@ -623,7 +986,7 @@
                 </div>
 
                 <!-- Diaper Card -->
-                <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light">
+                <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all">
                     <div class="flex items-center justify-between mb-2">
                         <div class="w-10 h-10 rounded-full bg-pastel-secondary bg-opacity-50 flex items-center justify-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-primary" fill="none"
@@ -639,7 +1002,7 @@
                 </div>
 
                 <!-- Medication Card -->
-                <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light">
+                <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all">
                     <div class="flex items-center justify-between mb-2">
                         <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none"
@@ -658,114 +1021,6 @@
             document.getElementById('summaryCards').innerHTML = summaryCardsHtml;
         },
 
-        // Display recent activities
-        displayRecentActivities(activities) {
-            const container = document.getElementById('recentActivities');
-
-            if (!activities || activities.length === 0) {
-                container.innerHTML = '<p class="text-center py-8 text-pastel-textLight">No recent activities</p>';
-                return;
-            }
-
-            const activitiesHtml = activities.map(activity => {
-                const icon = this.getActivityIcon(activity.type);
-                const color = this.getActivityColor(activity.type);
-                const details = this.getActivityDetails(activity);
-
-                return `
-                    <div class="flex items-start space-x-3">
-                        <div class="w-2 h-2 ${color} rounded-full mt-2 flex-shrink-0"></div>
-                        <div class="flex-1">
-                            <div class="flex items-center justify-between">
-                                <p class="font-medium text-pastel-heading">${this.formatActivityType(activity.type)}</p>
-                                <span class="text-xs text-pastel-textLight">${this.formatTime(activity.time)}</span>
-                            </div>
-                            <p class="text-sm text-pastel-textLight">${details}</p>
-                            <p class="text-xs text-pastel-textLight mt-1">Baby: ${activity.baby_name} | By: ${activity.caregiver_name}</p>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            container.innerHTML = activitiesHtml;
-        },
-
-        // Display upcoming events
-        displayUpcomingEvents(events) {
-            const container = document.getElementById('upcomingEvents');
-
-            if (!events || events.length === 0) {
-                container.innerHTML = '<p class="text-center py-8 text-pastel-textLight">No upcoming events</p>';
-                return;
-            }
-
-            const eventsHtml = events.map(event => {
-                const icon = this.getEventIcon(event.type);
-                const urgency = this.getEventUrgency(event.time);
-
-                return `
-                    <div class="flex items-center space-x-4 p-3 ${urgency.bgClass} rounded-lg ${urgency.borderClass}">
-                        <div class="w-12 h-12 rounded-full ${urgency.iconBgClass} flex items-center justify-center flex-shrink-0">
-                            ${icon}
-                        </div>
-                        <div class="flex-1">
-                            <p class="font-semibold text-pastel-heading">${this.getEventTitle(event)}</p>
-                            <p class="text-sm text-pastel-textLight">${this.formatEventTime(event.time)}</p>
-                            <p class="text-xs text-pastel-textLight">Baby: ${event.baby_name}</p>
-                        </div>
-                        ${urgency.badge ? `<span class="${urgency.badgeClass}">${urgency.badge}</span>` : ''}
-                    </div>
-                `;
-            }).join('');
-
-            container.innerHTML = eventsHtml;
-        },
-
-        // Display care metrics
-        displayCareMetrics(metrics) {
-            const section = document.getElementById('careMetricsSection');
-            const container = document.getElementById('careMetrics');
-
-            if (!metrics || !metrics.by_caregiver || Object.keys(metrics.by_caregiver).length === 0) {
-                section.classList.add('hidden');
-                return;
-            }
-
-            section.classList.remove('hidden');
-
-            // Create caregiver summary
-            const caregiversHtml = Object.values(metrics.by_caregiver).map(caregiver => {
-                const data = caregiver.caregiver;
-                return `
-                    <div class="flex items-center justify-between p-3 bg-pastel-lightest rounded-lg">
-                        <div class="flex items-center space-x-3">
-                            ${data.picture ?
-                    `<img src="${data.picture}" alt="${data.name}" class="w-10 h-10 rounded-full">` :
-                    `<div class="w-10 h-10 rounded-full bg-pastel-primary flex items-center justify-center text-white font-medium">
-                                    ${data.name ? data.name.charAt(0).toUpperCase() : 'U'}
-                                </div>`
-                }
-                            <div>
-                                <p class="font-medium text-pastel-heading">${data.name}</p>
-                                <p class="text-xs text-pastel-textLight">${data.is_primary ? 'Primary Parent' : 'Co-parent'}</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-2xl font-semibold text-pastel-primary">${caregiver.percentage}%</p>
-                            <p class="text-xs text-pastel-textLight">${caregiver.total} activities</p>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            container.innerHTML = `
-                <div class="mb-4">
-                    <p class="text-sm text-pastel-textLight mb-2">Total activities: ${metrics.total_activities}</p>
-                    ${caregiversHtml}
-                </div>
-            `;
-        },
-
         // Update baby selector
         updateBabySelector() {
             const selector = document.getElementById('babySelector');
@@ -781,17 +1036,21 @@
                     const option = document.createElement('option');
                     option.value = baby.id;
                     option.textContent = baby.fullname;
-                    if (baby.id === this.state.selectedBabyId) {
+                    if (baby.id === this.state.selectedBabyId || baby.id === this.state.preferences?.default_baby_id) {
                         option.selected = true;
+                        this.state.selectedBabyId = baby.id;
                     }
                     selector.appendChild(option);
                 });
             } else {
                 selector.classList.add('hidden');
+                if (this.state.babies.length === 1) {
+                    this.state.selectedBabyId = this.state.babies[0].id;
+                }
             }
         },
 
-        // Update baby status in header
+        // Update baby status
         updateBabyStatus() {
             const statusEl = document.getElementById('babyStatus');
 
@@ -809,23 +1068,135 @@
             } else {
                 // Show all babies summary
                 const names = this.state.babies.map(b => b.fullname).join(', ');
-                statusEl.textContent = `Tracking: ${names}`;
+                statusEl.textContent = `Tracking: all babies`;
             }
         },
 
-        // Calculate baby age
-        calculateAge(birthdate) {
-            const birth = new Date(birthdate);
-            const today = new Date();
-            const months = (today.getFullYear() - birth.getFullYear()) * 12 +
-                (today.getMonth() - birth.getMonth());
+        // Open customization modal
+        openCustomizationModal() {
+            const modal = document.getElementById('customizationModal');
+            modal.classList.remove('hidden');
 
-            if (months < 1) {
-                const days = Math.floor((today - birth) / (1000 * 60 * 60 * 24));
-                return `${days} day${days !== 1 ? 's' : ''}`;
+            // Populate current preferences
+            if (this.state.preferences) {
+                document.getElementById('layoutType').value = this.state.preferences.layout_type || 'grid';
+                document.getElementById('defaultTimeframe').value = this.state.preferences.default_timeframe || 'week';
+
+                // Populate default baby selector
+                const defaultBabySelect = document.getElementById('defaultBaby');
+                defaultBabySelect.innerHTML = '<option value="">All Babies</option>';
+                this.state.babies.forEach(baby => {
+                    const option = document.createElement('option');
+                    option.value = baby.id;
+                    option.textContent = baby.fullname;
+                    if (baby.id === this.state.preferences.default_baby_id) {
+                        option.selected = true;
+                    }
+                    defaultBabySelect.appendChild(option);
+                });
+
+                // Populate widget list
+                this.populateWidgetList();
             }
+        },
 
-            return `${months} month${months !== 1 ? 's' : ''}`;
+        // Populate widget list in customization modal
+        populateWidgetList() {
+            const widgetList = document.getElementById('widgetList');
+            widgetList.innerHTML = '';
+
+            const availableWidgets = [
+                {type: 'recent_activities', name: 'Recent Activities'},
+                {type: 'upcoming_events', name: 'Upcoming Events'},
+                {type: 'care_metrics', name: 'Care Sharing Metrics'},
+                {type: 'feeding_stats', name: 'Feeding Statistics'},
+                {type: 'sleep_patterns', name: 'Sleep Patterns'},
+                {type: 'growth_chart', name: 'Growth Chart'}
+            ];
+
+            availableWidgets.forEach((widget, index) => {
+                const widgetConfig = this.state.preferences?.widgets_config?.find(w => w.type === widget.type) || {
+                    type: widget.type,
+                    position: index,
+                    enabled: true,
+                    timeframe: 'week'
+                };
+
+                const widgetHtml = `
+                    <div class="flex items-center justify-between p-3 bg-pastel-lightest rounded-lg">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox"
+                                   data-widget-type="${widget.type}"
+                                   ${widgetConfig.enabled ? 'checked' : ''}
+                                   class="widget-toggle w-4 h-4 text-pastel-primary focus:ring-pastel-primary border-pastel-light rounded">
+                            <span class="text-sm font-medium text-pastel-heading">${widget.name}</span>
+                        </label>
+                        <select data-widget-timeframe="${widget.type}"
+                                class="widget-timeframe text-sm px-2 py-1 border border-pastel-light rounded focus:outline-none focus:border-pastel-primary">
+                            <option value="today" ${widgetConfig.timeframe === 'today' ? 'selected' : ''}>Today</option>
+                            <option value="week" ${widgetConfig.timeframe === 'week' ? 'selected' : ''}>Week</option>
+                            <option value="month" ${widgetConfig.timeframe === 'month' ? 'selected' : ''}>Month</option>
+                        </select>
+                    </div>
+                `;
+
+                widgetList.insertAdjacentHTML('beforeend', widgetHtml);
+            });
+        },
+
+        // Save customization preferences
+        async saveCustomizationPreferences() {
+            try {
+                // Gather widget configurations
+                const widgetConfigs = [];
+                document.querySelectorAll('.widget-toggle').forEach((toggle, index) => {
+                    const type = toggle.dataset.widgetType;
+                    const timeframeSelect = document.querySelector(`[data-widget-timeframe="${type}"]`);
+
+                    widgetConfigs.push({
+                        type: type,
+                        position: index,
+                        enabled: toggle.checked,
+                        timeframe: timeframeSelect.value
+                    });
+                });
+
+                // Prepare preferences data
+                const preferencesData = {
+                    layout_type: document.getElementById('layoutType').value,
+                    default_baby_id: parseInt(document.getElementById('defaultBaby').value) || null,
+                    default_timeframe: document.getElementById('defaultTimeframe').value,
+                    widgets_config: widgetConfigs
+                };
+
+                // Save to backend
+                const response = await BabyHelperAuth.api.request('/dashboard/preferences', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(preferencesData)
+                });
+
+                if (response.ok) {
+                    // Update local state
+                    this.state.preferences = await response.json();
+
+                    // Close modal
+                    document.getElementById('customizationModal').classList.add('hidden');
+
+                    // Reload dashboard with new preferences
+                    await this.loadDashboardData();
+
+                    this.showToast('Dashboard preferences saved successfully!');
+                } else {
+                    throw new Error('Failed to save preferences');
+                }
+
+            } catch (error) {
+                console.error('Error saving preferences:', error);
+                this.showError('Failed to save dashboard preferences');
+            }
         },
 
         // Setup event listeners
@@ -850,10 +1221,72 @@
                 this.refreshDashboard();
             });
 
-            // Dashboard preferences link
-            document.getElementById('dashboardPrefsLink').addEventListener('click', (e) => {
-                e.preventDefault();
-                this.showToast('Dashboard preferences coming soon!');
+            // Timeframe selectors
+            document.querySelectorAll('.timeframe-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const timeframe = e.target.dataset.timeframe;
+                    if (timeframe === 'custom') {
+                        this.openCustomDateModal();
+                    } else {
+                        this.state.timeframe = timeframe;
+                        this.updateTimeframeSelector();
+                        this.refreshDashboard();
+                    }
+                });
+            });
+
+            // Mobile timeframe selector
+            document.getElementById('timeframeSelectorMobile').addEventListener('change', (e) => {
+                const timeframe = e.target.value;
+                if (timeframe === 'custom') {
+                    this.openCustomDateModal();
+                } else {
+                    this.state.timeframe = timeframe;
+                    this.refreshDashboard();
+                }
+            });
+
+            // Custom date modal
+            document.getElementById('customDateCancel').addEventListener('click', () => {
+                document.getElementById('customDateModal').classList.add('hidden');
+            });
+
+            document.getElementById('customDateApply').addEventListener('click', () => {
+                const startDate = document.getElementById('customStartDate').value;
+                const endDate = document.getElementById('customEndDate').value;
+
+                if (startDate && endDate) {
+                    this.state.timeframe = 'custom';
+                    this.state.customDateRange = {
+                        start: new Date(startDate),
+                        end: new Date(endDate)
+                    };
+                    document.getElementById('customDateModal').classList.add('hidden');
+                    this.refreshDashboard();
+                }
+            });
+
+            // Customization button
+            document.getElementById('customizeButton').addEventListener('click', () => {
+                this.openCustomizationModal();
+            });
+
+            // Customization modal controls
+            document.getElementById('closeCustomization').addEventListener('click', () => {
+                document.getElementById('customizationModal').classList.add('hidden');
+            });
+
+            document.getElementById('cancelCustomization').addEventListener('click', () => {
+                document.getElementById('customizationModal').classList.add('hidden');
+            });
+
+            document.getElementById('saveCustomization').addEventListener('click', () => {
+                this.saveCustomizationPreferences();
+            });
+
+            // Refresh button
+            document.getElementById('refreshButton').addEventListener('click', () => {
+                this.refreshDashboard();
             });
 
             // Logout button
@@ -875,7 +1308,28 @@
             });
         },
 
-        // Setup quick action buttons
+        // Open custom date modal
+        openCustomDateModal() {
+            const modal = document.getElementById('customDateModal');
+            modal.classList.remove('hidden');
+
+            // Set default dates
+            const today = new Date();
+            const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+            document.getElementById('customStartDate').value = lastWeek.toISOString().split('T')[0];
+            document.getElementById('customEndDate').value = today.toISOString().split('T')[0];
+        },
+
+        // Refresh dashboard
+        async refreshDashboard() {
+            this.showLoading(true);
+            await this.loadDashboardData();
+            this.showLoading(false);
+            this.showToast('Dashboard refreshed');
+        },
+
+        // Setup quick actions
         setupQuickActions() {
             const quickActionBtns = document.querySelectorAll('.quick-action-btn');
             quickActionBtns.forEach(btn => {
@@ -967,7 +1421,7 @@
             chatMessages.scrollTop = chatMessages.scrollHeight;
         },
 
-        // Generate AI response (placeholder - replace with actual AI integration)
+        // Generate AI response (placeholder)
         generateAIResponse(message) {
             const responses = {
                 'sleep': 'Based on your baby\'s age, they should be getting about 14-17 hours of sleep per day, including naps. It looks like your baby is on track with their sleep patterns.',
@@ -1010,21 +1464,26 @@
             }
         },
 
-        // Refresh dashboard data
-        async refreshDashboard() {
-            await this.loadDashboardData();
+        // Helper functions
+        getGreeting() {
+            const hour = new Date().getHours();
+            if (hour < 12) return 'Good Morning';
+            if (hour < 17) return 'Good Afternoon';
+            return 'Good Evening';
         },
 
-        // Helper functions
-        getActivityIcon(type) {
-            const icons = {
-                'feeding': '<svg>...</svg>',
-                'sleep': '<svg>...</svg>',
-                'diaper': '<svg>...</svg>',
-                'health': '<svg>...</svg>',
-                'medication': '<svg>...</svg>'
-            };
-            return icons[type] || '';
+        calculateAge(birthdate) {
+            const birth = new Date(birthdate);
+            const today = new Date();
+            const months = (today.getFullYear() - birth.getFullYear()) * 12 +
+                (today.getMonth() - birth.getMonth());
+
+            if (months < 1) {
+                const days = Math.floor((today - birth) / (1000 * 60 * 60 * 24));
+                return `${days} day${days !== 1 ? 's' : ''}`;
+            }
+
+            return `${months} month${months !== 1 ? 's' : ''}`;
         },
 
         getActivityColor(type) {
@@ -1193,15 +1652,15 @@
 
         // Show error message
         showError(message) {
-            // For now, use alert. Replace with proper toast/notification
-            alert(message);
+            this.showToast(message, 'error');
         },
 
         // Show toast message
-        showToast(message) {
+        showToast(message, type = 'info') {
             // Create toast element
             const toast = document.createElement('div');
-            toast.className = 'fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-up';
+            const bgColor = type === 'error' ? 'bg-red-600' : 'bg-gray-800';
+            toast.className = `fixed bottom-20 left-1/2 transform -translate-x-1/2 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-up`;
             toast.textContent = message;
 
             document.body.appendChild(toast);
@@ -1215,7 +1674,6 @@
 
     // Initialize dashboard
     document.addEventListener('DOMContentLoaded', function () {
-        // Initialize dashboard
         Dashboard.init();
     });
 </script>
