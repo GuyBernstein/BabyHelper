@@ -233,6 +233,35 @@
         .temp-hot {
             color: #ef4444;
         }
+
+        /* Baby selector dropdown */
+        .baby-selector {
+            position: relative;
+        }
+
+        .baby-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 4px;
+            background: white;
+            border: 1px solid #ffe8d9;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(180, 160, 150, 0.15);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        /* Recent feedings list */
+        .feeding-history-item {
+            transition: all 0.2s ease;
+        }
+
+        .feeding-history-item:hover {
+            background-color: #fdf6f0;
+            transform: translateX(4px);
+        }
     </style>
 </head>
 <body class="h-full bg-pastel-lightest font-sans text-pastel-text">
@@ -309,6 +338,16 @@
             </a>
         </nav>
 
+        <!-- Recent Feedings Card -->
+        <div id="recentFeedings"
+             class="bg-white rounded-2xl border border-pastel-light p-4 opacity-0 animate-fade-in-up hidden"
+             style="animation-delay: 0.45s; animation-fill-mode: forwards;">
+            <h4 class="text-sm font-semibold text-pastel-heading mb-3">Recent Feedings</h4>
+            <div id="recentFeedingsList" class="space-y-2 text-sm">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+
         <!-- Premium Upgrade Card -->
         <div class="mt-auto bg-gradient-to-br from-pastel-primary/10 to-pastel-accent1/10 p-4 rounded-2xl border border-pastel-light opacity-0 animate-fade-in-up"
              style="animation-delay: 0.5s; animation-fill-mode: forwards;">
@@ -335,20 +374,28 @@
                 style="animation-delay: 0.2s; animation-fill-mode: forwards;">
             <div class="flex items-center gap-4">
                 <div class="lg:hidden w-8"></div>
-                <!-- Baby photo and name -->
-                <div class="flex items-center gap-3">
-                    <div class="h-12 w-12 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-white font-semibold overflow-hidden">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%23fff'/%3E%3Ccircle cx='35' cy='40' r='5' fill='%23333'/%3E%3Ccircle cx='65' cy='40' r='5' fill='%23333'/%3E%3Cpath d='M 30 60 Q 50 70 70 60' stroke='%23333' stroke-width='3' fill='none'/%3E%3C/svg%3E"
-                             alt="Emma" class="w-full h-full object-cover">
-                    </div>
-                    <div>
-                        <h1 class="text-base lg:text-lg font-serif font-medium text-pastel-heading">Emma's Feeding</h1>
-                        <p class="text-xs lg:text-sm text-pastel-textLight">
+                <!-- Baby selector and name -->
+                <div class="baby-selector">
+                    <div class="flex items-center gap-3 cursor-pointer" id="babySelector">
+                        <div class="h-12 w-12 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-white font-semibold overflow-hidden">
+                            <span id="babyInitials">?</span>
+                        </div>
+                        <div>
+                            <h1 class="text-base lg:text-lg font-serif font-medium text-pastel-heading">
+                                <span id="babyName">Select Baby</span>'s Feeding
+                                <i data-lucide="chevron-down" class="h-4 w-4 inline ml-1"></i>
+                            </h1>
+                            <p class="text-xs lg:text-sm text-pastel-textLight">
                                 <span id="sessionStatus" class="inline-flex items-center gap-1">
-                                    <span class="w-2 h-2 bg-pastel-primary rounded-full animate-pulse"></span>
-                                    Session Active
+                                    <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
+                                    Ready to start
                                 </span>
-                        </p>
+                            </p>
+                        </div>
+                    </div>
+                    <!-- Baby dropdown -->
+                    <div id="babyDropdown" class="baby-dropdown hidden">
+                        <!-- Dynamically populated -->
                     </div>
                 </div>
             </div>
@@ -364,16 +411,29 @@
                 <button class="hidden sm:block p-2 hover:bg-pastel-light rounded-full transition-colors">
                     <i data-lucide="help-circle" class="h-5 w-5 text-pastel-text"></i>
                 </button>
-                <div class="h-9 w-9 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-sm font-medium text-white shadow-pastel">
-                    JD
+                <div id="userAvatar"
+                     class="h-9 w-9 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-sm font-medium text-white shadow-pastel">
+                    ?
                 </div>
             </div>
         </header>
 
         <!-- Main Content Area -->
         <section class="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6">
+            <!-- Baby Selection Prompt -->
+            <div id="babySelectionPrompt"
+                 class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-start gap-3">
+                <i data-lucide="alert-circle" class="h-5 w-5 text-yellow-600 mt-0.5"></i>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-yellow-800">Please select a baby first</p>
+                    <p class="text-xs text-yellow-700 mt-1">Click on the baby selector above to choose which baby you're
+                        tracking.</p>
+                </div>
+            </div>
+
             <!-- Feature B: Input Method Selector -->
-            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+            <div id="feedingMethodSelector"
+                 class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up hidden"
                  style="animation-delay: 0.3s; animation-fill-mode: forwards;">
                 <h2 class="text-xl font-serif font-medium text-pastel-heading mb-4">Select Feeding Method</h2>
                 <div class="segmented-control relative h-12 flex items-center">
@@ -410,7 +470,7 @@
 
             <!-- Feature C: Breastfeeding Interface -->
             <div id="breastfeedingInterface"
-                 class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up hidden"
                  style="animation-delay: 0.4s; animation-fill-mode: forwards;">
                 <h3 class="text-lg font-serif font-medium text-pastel-heading mb-6">Breastfeeding Session</h3>
 
@@ -447,9 +507,9 @@
                 <!-- Session notes -->
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-pastel-text mb-2">Session Notes</label>
-                    <textarea
-                            class="auto-expand w-full px-4 py-3 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors"
-                            placeholder="Add notes about the feeding session..."></textarea>
+                    <textarea id="breastfeedingNotes"
+                              class="auto-expand w-full px-4 py-3 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors"
+                              placeholder="Add notes about the feeding session..."></textarea>
                 </div>
 
                 <!-- Control buttons -->
@@ -476,13 +536,13 @@
 
                 <!-- Amount input -->
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-pastel-text mb-2">Amount (oz)</label>
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Amount (ml)</label>
                     <div class="flex items-center gap-4">
                         <button id="decreaseAmount"
                                 class="w-12 h-12 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors flex items-center justify-center">
                             <i data-lucide="minus" class="h-5 w-5 text-pastel-primary"></i>
                         </button>
-                        <input type="number" id="bottleAmount" value="4.0" step="0.5" min="0" max="12"
+                        <input type="number" id="bottleAmount" value="120" step="10" min="0" max="350"
                                class="w-24 text-center text-2xl font-semibold text-pastel-heading border-b-2 border-pastel-light focus:border-pastel-primary outline-none">
                         <button id="increaseAmount"
                                 class="w-12 h-12 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors flex items-center justify-center">
@@ -494,12 +554,11 @@
                 <!-- Fluid type -->
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-pastel-text mb-2">Fluid Type</label>
-                    <select class="w-full px-4 py-3 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors">
-                        <option>Breast Milk</option>
-                        <option>Formula</option>
-                        <option>Mixed (Breast Milk + Formula)</option>
-                        <option>Water</option>
-                        <option>Juice</option>
+                    <select id="bottleFluidType"
+                            class="w-full px-4 py-3 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors">
+                        <option value="breast_milk">Breast Milk</option>
+                        <option value="formula">Formula</option>
+                        <option value="mixed">Mixed (Breast Milk + Formula)</option>
                     </select>
                 </div>
 
@@ -507,23 +566,35 @@
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-pastel-text mb-2">Temperature</label>
                     <div class="flex gap-2">
-                        <button class="temp-indicator temp-cold flex-1 p-3 rounded-xl border border-pastel-light hover:border-current transition-colors flex flex-col items-center gap-1">
+                        <button data-temp="cold"
+                                class="temp-indicator temp-cold flex-1 p-3 rounded-xl border border-pastel-light hover:border-current transition-colors flex flex-col items-center gap-1">
                             <i data-lucide="snowflake" class="h-5 w-5"></i>
                             <span class="text-xs">Cold</span>
                         </button>
-                        <button class="temp-indicator temp-perfect flex-1 p-3 rounded-xl border-2 border-current transition-colors flex flex-col items-center gap-1">
+                        <button data-temp="perfect"
+                                class="temp-indicator temp-perfect flex-1 p-3 rounded-xl border-2 border-current transition-colors flex flex-col items-center gap-1">
                             <i data-lucide="thermometer" class="h-5 w-5"></i>
                             <span class="text-xs">Perfect</span>
                         </button>
-                        <button class="temp-indicator temp-warm flex-1 p-3 rounded-xl border border-pastel-light hover:border-current transition-colors flex flex-col items-center gap-1">
+                        <button data-temp="warm"
+                                class="temp-indicator temp-warm flex-1 p-3 rounded-xl border border-pastel-light hover:border-current transition-colors flex flex-col items-center gap-1">
                             <i data-lucide="sun" class="h-5 w-5"></i>
                             <span class="text-xs">Warm</span>
                         </button>
-                        <button class="temp-indicator temp-hot flex-1 p-3 rounded-xl border border-pastel-light hover:border-current transition-colors flex flex-col items-center gap-1">
+                        <button data-temp="hot"
+                                class="temp-indicator temp-hot flex-1 p-3 rounded-xl border border-pastel-light hover:border-current transition-colors flex flex-col items-center gap-1">
                             <i data-lucide="flame" class="h-5 w-5"></i>
                             <span class="text-xs">Hot</span>
                         </button>
                     </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Notes</label>
+                    <textarea id="bottleNotes"
+                              class="w-full px-4 py-3 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors"
+                              rows="2" placeholder="Any notes about the feeding..."></textarea>
                 </div>
 
                 <!-- Optional timer -->
@@ -546,22 +617,26 @@
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-pastel-text mb-2">Food Item</label>
                     <div class="relative">
-                        <input type="text" placeholder="Search or select food..."
+                        <input id="solidsFoodItem" type="text" placeholder="Search or select food..."
                                class="w-full px-4 py-3 pr-10 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors">
                         <i data-lucide="search" class="absolute right-3 top-3.5 h-5 w-5 text-pastel-textLight"></i>
                     </div>
                     <!-- Recent items -->
                     <div class="mt-2 flex flex-wrap gap-2">
-                        <button class="px-3 py-1.5 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors text-sm">
+                        <button data-food="Banana"
+                                class="food-preset px-3 py-1.5 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors text-sm">
                             Banana
                         </button>
-                        <button class="px-3 py-1.5 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors text-sm">
+                        <button data-food="Avocado"
+                                class="food-preset px-3 py-1.5 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors text-sm">
                             Avocado
                         </button>
-                        <button class="px-3 py-1.5 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors text-sm">
+                        <button data-food="Sweet Potato"
+                                class="food-preset px-3 py-1.5 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors text-sm">
                             Sweet Potato
                         </button>
-                        <button class="px-3 py-1.5 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors text-sm">
+                        <button data-food="Oatmeal"
+                                class="food-preset px-3 py-1.5 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors text-sm">
                             Oatmeal
                         </button>
                     </div>
@@ -569,23 +644,17 @@
 
                 <!-- Amount estimation -->
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-pastel-text mb-2">Portion Size</label>
-                    <div class="grid grid-cols-4 gap-2">
-                        <button class="p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-colors flex flex-col items-center gap-1">
-                            <span class="text-xs">¼ cup</span>
-                            <div class="w-8 h-8 rounded-full bg-pastel-light"></div>
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Portion Size (grams)</label>
+                    <div class="flex items-center gap-4">
+                        <button id="decreaseSolidsAmount"
+                                class="w-12 h-12 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors flex items-center justify-center">
+                            <i data-lucide="minus" class="h-5 w-5 text-pastel-primary"></i>
                         </button>
-                        <button class="p-3 rounded-xl border-2 border-pastel-primary transition-colors flex flex-col items-center gap-1">
-                            <span class="text-xs">½ cup</span>
-                            <div class="w-10 h-10 rounded-full bg-pastel-secondary"></div>
-                        </button>
-                        <button class="p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-colors flex flex-col items-center gap-1">
-                            <span class="text-xs">¾ cup</span>
-                            <div class="w-12 h-12 rounded-full bg-pastel-light"></div>
-                        </button>
-                        <button class="p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-colors flex flex-col items-center gap-1">
-                            <span class="text-xs">1 cup</span>
-                            <div class="w-14 h-14 rounded-full bg-pastel-light"></div>
+                        <input type="number" id="solidsAmount" value="50" step="10" min="0" max="500"
+                               class="w-24 text-center text-2xl font-semibold text-pastel-heading border-b-2 border-pastel-light focus:border-pastel-primary outline-none">
+                        <button id="increaseSolidsAmount"
+                                class="w-12 h-12 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors flex items-center justify-center">
+                            <i data-lucide="plus" class="h-5 w-5 text-pastel-primary"></i>
                         </button>
                     </div>
                 </div>
@@ -593,7 +662,8 @@
                 <!-- Texture selector -->
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-pastel-text mb-2">Texture</label>
-                    <select class="w-full px-4 py-3 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors">
+                    <select id="solidsTexture"
+                            class="w-full px-4 py-3 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors">
                         <option>Puree</option>
                         <option>Mashed</option>
                         <option>Chunky</option>
@@ -606,42 +676,49 @@
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-pastel-text mb-2">Baby's Reaction</label>
                     <div class="flex gap-2 mb-2">
-                        <button class="emoji-btn text-2xl">😍</button>
-                        <button class="emoji-btn text-2xl">😊</button>
-                        <button class="emoji-btn text-2xl">😐</button>
-                        <button class="emoji-btn text-2xl">🤔</button>
-                        <button class="emoji-btn text-2xl">😣</button>
-                        <button class="emoji-btn text-2xl">🤮</button>
+                        <button data-reaction="loved" class="emoji-btn text-2xl">😍</button>
+                        <button data-reaction="liked" class="emoji-btn text-2xl">😊</button>
+                        <button data-reaction="neutral" class="emoji-btn text-2xl">😐</button>
+                        <button data-reaction="unsure" class="emoji-btn text-2xl">🤔</button>
+                        <button data-reaction="disliked" class="emoji-btn text-2xl">😣</button>
+                        <button data-reaction="rejected" class="emoji-btn text-2xl">🤮</button>
                     </div>
-                    <textarea
-                            class="w-full px-4 py-3 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors"
-                            rows="2" placeholder="How did it go?"></textarea>
+                    <textarea id="solidsNotes"
+                              class="w-full px-4 py-3 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors"
+                              rows="2" placeholder="How did it go?"></textarea>
                 </div>
             </div>
 
             <!-- Feature F: Quick Notes Section -->
-            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+            <div id="quickNotesSection"
+                 class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up hidden"
                  style="animation-delay: 0.5s; animation-fill-mode: forwards;">
                 <h3 class="text-lg font-serif font-medium text-pastel-heading mb-4">Quick Notes</h3>
 
                 <!-- Pre-defined tags -->
                 <div class="flex flex-wrap gap-2 mb-4">
-                    <button class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                    <button data-tag="Fussy"
+                            class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
                         😤 Fussy
                     </button>
-                    <button class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                    <button data-tag="Content"
+                            class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
                         😌 Content
                     </button>
-                    <button class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                    <button data-tag="Sleepy"
+                            class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
                         😴 Sleepy
                     </button>
-                    <button class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                    <button data-tag="Congested"
+                            class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
                         🤧 Congested
                     </button>
-                    <button class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                    <button data-tag="Happy"
+                            class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
                         😊 Happy
                     </button>
-                    <button class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                    <button data-tag="Good Latch"
+                            class="tag-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
                         🎯 Good Latch
                     </button>
                 </div>
@@ -660,7 +737,7 @@
 
             <!-- Feature G: Session Summary -->
             <div id="sessionSummary"
-                 class="bg-gradient-to-br from-pastel-primary/10 to-pastel-accent1/10 rounded-2xl border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+                 class="bg-gradient-to-br from-pastel-primary/10 to-pastel-accent1/10 rounded-2xl border border-pastel-light p-6 opacity-0 animate-fade-in-up hidden"
                  style="animation-delay: 0.6s; animation-fill-mode: forwards;">
                 <h3 class="text-lg font-serif font-medium text-pastel-heading mb-4">Session Summary</h3>
 
@@ -703,6 +780,26 @@
                 </div>
             </div>
 
+            <!-- Success Message -->
+            <div id="successMessage"
+                 class="hidden bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3">
+                <i data-lucide="check-circle" class="h-5 w-5 text-green-600 mt-0.5"></i>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-green-800">Feeding session saved successfully!</p>
+                    <p class="text-xs text-green-700 mt-1">The feeding has been recorded.</p>
+                </div>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMessage"
+                 class="hidden bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+                <i data-lucide="x-circle" class="h-5 w-5 text-red-600 mt-0.5"></i>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-red-800">Error saving feeding session</p>
+                    <p id="errorMessageText" class="text-xs text-red-700 mt-1">Please try again.</p>
+                </div>
+            </div>
+
             <!-- Decorative floating elements -->
             <div class="fixed bottom-20 right-10 w-32 h-32 rounded-full bg-pastel-accent1 opacity-10 animate-float pointer-events-none"></div>
             <div class="fixed top-40 right-1/4 w-24 h-24 rounded-full bg-pastel-accent2 opacity-10 animate-float-delayed pointer-events-none"></div>
@@ -734,9 +831,44 @@
 
 <script src="../js/auth.js" data-auto-init="true"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    // Global state management
+    const FeedingTracker = {
+        selectedBaby: null,
+        sessionStartTime: null,
+        currentFeedingMethod: 'breast',
+        selectedTags: new Set(),
+        selectedReaction: null,
+        selectedTemperature: 'perfect',
+        sessionData: {
+            breast: {
+                leftDuration: 0,
+                rightDuration: 0,
+                notes: ''
+            },
+            bottle: {
+                amount: 120,
+                fluidType: 'breast_milk',
+                temperature: 'perfect',
+                duration: 0,
+                notes: ''
+            },
+            solids: {
+                foodItem: '',
+                amount: 50,
+                texture: 'Puree',
+                reaction: null,
+                notes: ''
+            }
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
         // Initialize Lucide icons
         lucide.createIcons();
+
+        // Initialize user data and babies
+        await initializeUserData();
+        await loadBabies();
 
         // Mobile menu toggle functionality
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
@@ -751,6 +883,21 @@
         mobileMenuBtn.addEventListener('click', toggleMobileMenu);
         overlay.addEventListener('click', toggleMobileMenu);
 
+        // Baby selector functionality
+        const babySelector = document.getElementById('babySelector');
+        const babyDropdown = document.getElementById('babyDropdown');
+
+        babySelector.addEventListener('click', () => {
+            babyDropdown.classList.toggle('hidden');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!babySelector.contains(e.target) && !babyDropdown.contains(e.target)) {
+                babyDropdown.classList.add('hidden');
+            }
+        });
+
         // Feeding method selector
         const feedingMethods = document.querySelectorAll('input[name="feedingMethod"]');
         const segmentIndicator = document.getElementById('segmentIndicator');
@@ -764,6 +911,9 @@
             method.addEventListener('change', (e) => {
                 // Update indicator position
                 segmentIndicator.style.transform = `translateX(${index * 100}%)`;
+
+                // Update current feeding method
+                FeedingTracker.currentFeedingMethod = e.target.value;
 
                 // Show/hide interfaces
                 Object.keys(interfaces).forEach(key => {
@@ -797,6 +947,15 @@
             timers[timerName].seconds++;
             if (displayElement) {
                 displayElement.textContent = formatTime(timers[timerName].seconds);
+            }
+
+            // Update session data
+            if (timerName === 'leftBreast') {
+                FeedingTracker.sessionData.breast.leftDuration = timers[timerName].seconds;
+            } else if (timerName === 'rightBreast') {
+                FeedingTracker.sessionData.breast.rightDuration = timers[timerName].seconds;
+            } else if (timerName === 'bottle') {
+                FeedingTracker.sessionData.bottle.duration = timers[timerName].seconds;
             }
 
             // Warning for long sessions
@@ -854,6 +1013,7 @@
                 // Start session
                 sessionActive = true;
                 activeBreastSide = side;
+                FeedingTracker.sessionStartTime = new Date();
                 startTimer('main', document.getElementById('timerDisplay'));
                 startTimer(timerName, timerSpan, btn);
                 document.getElementById('mainTimer').classList.remove('hidden');
@@ -912,11 +1072,14 @@
             const leftTime = formatTime(timers.leftBreast.seconds);
             const rightTime = formatTime(timers.rightBreast.seconds);
             document.getElementById('summaryDetails').innerHTML = `
-            <div class="flex justify-between">
-                <span>Left: ${leftTime}</span>
-                <span>Right: ${rightTime}</span>
-            </div>
-        `;
+                <div class="flex justify-between">
+                    <span>Left: ${leftTime}</span>
+                    <span>Right: ${rightTime}</span>
+                </div>
+            `;
+
+            // Update notes
+            FeedingTracker.sessionData.breast.notes = document.getElementById('breastfeedingNotes').value;
 
             // Reset for next session
             sessionActive = false;
@@ -933,17 +1096,33 @@
         const increaseBtn = document.getElementById('increaseAmount');
 
         decreaseBtn.addEventListener('click', () => {
-            const current = parseFloat(bottleAmount.value);
+            const current = parseInt(bottleAmount.value);
             if (current > 0) {
-                bottleAmount.value = (current - 0.5).toFixed(1);
+                bottleAmount.value = current - 10;
+                FeedingTracker.sessionData.bottle.amount = current - 10;
             }
         });
 
         increaseBtn.addEventListener('click', () => {
-            const current = parseFloat(bottleAmount.value);
-            if (current < 12) {
-                bottleAmount.value = (current + 0.5).toFixed(1);
+            const current = parseInt(bottleAmount.value);
+            if (current < 350) {
+                bottleAmount.value = current + 10;
+                FeedingTracker.sessionData.bottle.amount = current + 10;
             }
+        });
+
+        bottleAmount.addEventListener('change', (e) => {
+            FeedingTracker.sessionData.bottle.amount = parseInt(e.target.value);
+        });
+
+        // Bottle fluid type
+        document.getElementById('bottleFluidType').addEventListener('change', (e) => {
+            FeedingTracker.sessionData.bottle.fluidType = e.target.value;
+        });
+
+        // Bottle notes
+        document.getElementById('bottleNotes').addEventListener('input', (e) => {
+            FeedingTracker.sessionData.bottle.notes = e.target.value;
         });
 
         // Temperature selector
@@ -955,7 +1134,53 @@
                 });
                 btn.classList.remove('border');
                 btn.classList.add('border-2');
+                FeedingTracker.sessionData.bottle.temperature = btn.dataset.temp;
             });
+        });
+
+        // Solids controls
+        const solidsAmount = document.getElementById('solidsAmount');
+        const decreaseSolidsBtn = document.getElementById('decreaseSolidsAmount');
+        const increaseSolidsBtn = document.getElementById('increaseSolidsAmount');
+
+        decreaseSolidsBtn.addEventListener('click', () => {
+            const current = parseInt(solidsAmount.value);
+            if (current > 0) {
+                solidsAmount.value = current - 10;
+                FeedingTracker.sessionData.solids.amount = current - 10;
+            }
+        });
+
+        increaseSolidsBtn.addEventListener('click', () => {
+            const current = parseInt(solidsAmount.value);
+            if (current < 500) {
+                solidsAmount.value = current + 10;
+                FeedingTracker.sessionData.solids.amount = current + 10;
+            }
+        });
+
+        solidsAmount.addEventListener('change', (e) => {
+            FeedingTracker.sessionData.solids.amount = parseInt(e.target.value);
+        });
+
+        // Food presets
+        document.querySelectorAll('.food-preset').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('solidsFoodItem').value = btn.dataset.food;
+                FeedingTracker.sessionData.solids.foodItem = btn.dataset.food;
+            });
+        });
+
+        document.getElementById('solidsFoodItem').addEventListener('input', (e) => {
+            FeedingTracker.sessionData.solids.foodItem = e.target.value;
+        });
+
+        document.getElementById('solidsTexture').addEventListener('change', (e) => {
+            FeedingTracker.sessionData.solids.texture = e.target.value;
+        });
+
+        document.getElementById('solidsNotes').addEventListener('input', (e) => {
+            FeedingTracker.sessionData.solids.notes = e.target.value;
         });
 
         // Auto-expanding textareas
@@ -967,18 +1192,17 @@
         });
 
         // Quick note tags
-        const selectedTags = new Set();
         document.querySelectorAll('.tag-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 btn.classList.toggle('bg-pastel-primary');
                 btn.classList.toggle('text-white');
                 btn.classList.toggle('border-pastel-primary');
 
-                const tag = btn.textContent.trim();
-                if (selectedTags.has(tag)) {
-                    selectedTags.delete(tag);
+                const tag = btn.dataset.tag;
+                if (FeedingTracker.selectedTags.has(tag)) {
+                    FeedingTracker.selectedTags.delete(tag);
                 } else {
-                    selectedTags.add(tag);
+                    FeedingTracker.selectedTags.add(tag);
                 }
             });
         });
@@ -988,29 +1212,19 @@
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('ring-2', 'ring-pastel-primary'));
                 btn.classList.add('ring-2', 'ring-pastel-primary');
+                FeedingTracker.sessionData.solids.reaction = btn.dataset.reaction;
             });
         });
 
-        // Auto-save draft functionality
-        let autoSaveInterval = setInterval(() => {
-            if (sessionActive) {
-                console.log('Auto-saving draft...');
-                // In a real app, this would save to localStorage or backend
-            }
-        }, 30000); // Every 30 seconds
-
         // Save session
-        document.getElementById('saveSession').addEventListener('click', () => {
-            console.log('Saving session...');
-            // In a real app, this would save to backend
-            alert('Feeding session saved successfully!');
+        document.getElementById('saveSession').addEventListener('click', async () => {
+            await saveFeeding();
         });
 
-        document.getElementById('saveAndNext').addEventListener('click', () => {
-            console.log('Saving and starting next...');
-            // Save current session and reset form
-            alert('Session saved! Ready for next feeding.');
-            location.reload(); // Simple reset for demo
+        document.getElementById('saveAndNext').addEventListener('click', async () => {
+            await saveFeeding();
+            // Reset form for next feeding
+            resetForm();
         });
 
         // Keyboard shortcuts
@@ -1022,6 +1236,355 @@
             }
         });
     });
+
+    // Initialize user data
+    async function initializeUserData() {
+        try {
+            const userProfile = await BabyHelperAuth.api.endpoints.getUserProfile();
+            if (userProfile) {
+                // Update user avatar
+                const userAvatar = document.getElementById('userAvatar');
+                if (userProfile.name) {
+                    const initials = userProfile.name.split(' ')
+                        .map(n => n[0])
+                        .join('')
+                        .toUpperCase()
+                        .slice(0, 2);
+                    userAvatar.textContent = initials;
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load user profile:', error);
+        }
+    }
+
+    // Load babies for the current user
+    async function loadBabies() {
+        try {
+            const babies = await BabyHelperAuth.api.endpoints.getBabies();
+            const babyDropdown = document.getElementById('babyDropdown');
+            babyDropdown.innerHTML = '';
+
+            if (babies && babies.length > 0) {
+                babies.forEach((baby, index) => {
+                    const babyOption = document.createElement('div');
+                    babyOption.className = 'px-4 py-3 hover:bg-pastel-light cursor-pointer flex items-center gap-3';
+                    babyOption.innerHTML = `
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-white font-semibold text-sm">
+                            ${baby.name ? baby.name.charAt(0).toUpperCase() : '?'}
+                        </div>
+                        <div>
+                            <div class="font-medium text-pastel-heading">${baby.fullname}</div>
+                            <div class="text-xs text-pastel-textLight">${calculateAge(baby.birthdate)}</div>
+                        </div>
+                    `;
+                    babyOption.addEventListener('click', () => selectBaby(baby));
+                    babyDropdown.appendChild(babyOption);
+
+                    // Auto-select first baby
+                    if (index === 0) {
+                        selectBaby(baby);
+                    }
+                });
+
+                // Show feeding interface elements
+                document.getElementById('babySelectionPrompt').classList.add('hidden');
+                document.getElementById('feedingMethodSelector').classList.remove('hidden');
+                document.getElementById('breastfeedingInterface').classList.remove('hidden');
+                document.getElementById('quickNotesSection').classList.remove('hidden');
+                document.getElementById('sessionSummary').classList.remove('hidden');
+
+                // Load recent feedings for selected baby
+                if (FeedingTracker.selectedBaby) {
+                    await loadRecentFeedings(FeedingTracker.selectedBaby.id);
+                }
+            } else {
+                // No babies found
+                document.getElementById('babyName').textContent = 'No babies found';
+                document.getElementById('babySelectionPrompt').innerHTML = `
+                    <i data-lucide="alert-circle" class="h-5 w-5 text-yellow-600 mt-0.5"></i>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-yellow-800">No babies found</p>
+                        <p class="text-xs text-yellow-700 mt-1">Please add a baby first before tracking feedings.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+        } catch (error) {
+            console.error('Failed to load babies:', error);
+            showError('Failed to load babies. Please refresh the page.');
+        }
+    }
+
+    // Select a baby
+    function selectBaby(baby) {
+        FeedingTracker.selectedBaby = baby;
+        document.getElementById('babyName').textContent = baby.name;
+        document.getElementById('babyInitials').textContent = baby.name ? baby.name.charAt(0).toUpperCase() : '?';
+        document.getElementById('babyDropdown').classList.add('hidden');
+
+        // Load recent feedings for this baby
+        loadRecentFeedings(baby.id);
+    }
+
+    // Calculate age from date of birth
+    function calculateAge(dateOfBirth) {
+        const birthDate = new Date(dateOfBirth);
+        const today = new Date();
+        const diffTime = Math.abs(today - birthDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 30) {
+            return `${diffDays} days old`;
+        } else if (diffDays < 365) {
+            const months = Math.floor(diffDays / 30);
+            return `${months} month${months > 1 ? 's' : ''} old`;
+        } else {
+            const years = Math.floor(diffDays / 365);
+            return `${years} year${years > 1 ? 's' : ''} old`;
+        }
+    }
+
+    // Load recent feedings for a baby
+    async function loadRecentFeedings(babyId) {
+        try {
+            const response = await BabyHelperAuth.api.request(`/feeding/baby/${babyId}?limit=5`);
+            if (response.ok) {
+                const feedings = await response.json();
+                displayRecentFeedings(feedings);
+            }
+        } catch (error) {
+            console.error('Failed to load recent feedings:', error);
+        }
+    }
+
+    // Display recent feedings
+    function displayRecentFeedings(feedings) {
+        const recentFeedingsCard = document.getElementById('recentFeedings');
+        const recentFeedingsList = document.getElementById('recentFeedingsList');
+
+        if (feedings && feedings.length > 0) {
+            recentFeedingsCard.classList.remove('hidden');
+            recentFeedingsList.innerHTML = '';
+
+            feedings.forEach(feeding => {
+                const feedingItem = document.createElement('div');
+                feedingItem.className = 'feeding-history-item p-2 rounded-lg cursor-pointer';
+
+                const startTime = new Date(feeding.start_time);
+                const timeAgo = getTimeAgo(startTime);
+                const feedingType = getFeedingTypeDisplay(feeding.feeding_type);
+
+                feedingItem.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="font-medium text-pastel-heading">${feedingType}</div>
+                            <div class="text-xs text-pastel-textLight">${timeAgo}</div>
+                        </div>
+                        <div class="text-right">
+                            ${feeding.amount ? `<div class="text-sm font-semibold">${feeding.amount}${feeding.feeding_type === 'solids' ? 'g' : 'ml'}</div>` : ''}
+                            ${feeding.duration ? `<div class="text-xs text-pastel-textLight">${Math.floor(feeding.duration / 60)}m</div>` : ''}
+                        </div>
+                    </div>
+                `;
+
+                recentFeedingsList.appendChild(feedingItem);
+            });
+        } else {
+            recentFeedingsCard.classList.add('hidden');
+        }
+    }
+
+    // Get feeding type display name
+    function getFeedingTypeDisplay(type) {
+        const typeMap = {
+            'breast_left': 'Breastfeeding (Left)',
+            'breast_right': 'Breastfeeding (Right)',
+            'breast_both': 'Breastfeeding',
+            'bottle': 'Bottle',
+            'formula': 'Formula',
+            'solids': 'Solids',
+            'pumping': 'Pumping'
+        };
+        return typeMap[type] || type;
+    }
+
+    // Get time ago string
+    function getTimeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+
+        let interval = seconds / 31536000;
+        if (interval > 1) return Math.floor(interval) + " years ago";
+
+        interval = seconds / 2592000;
+        if (interval > 1) return Math.floor(interval) + " months ago";
+
+        interval = seconds / 86400;
+        if (interval > 1) return Math.floor(interval) + " days ago";
+
+        interval = seconds / 3600;
+        if (interval > 1) return Math.floor(interval) + " hours ago";
+
+        interval = seconds / 60;
+        if (interval > 1) return Math.floor(interval) + " minutes ago";
+
+        return "Just now";
+    }
+
+    // Save feeding session
+    async function saveFeeding() {
+        if (!FeedingTracker.selectedBaby) {
+            showError('Please select a baby first');
+            return;
+        }
+
+        // Hide any existing messages
+        document.getElementById('successMessage').classList.add('hidden');
+        document.getElementById('errorMessage').classList.add('hidden');
+
+        // Prepare feeding data based on method
+        let feedingData = {
+            baby_id: FeedingTracker.selectedBaby.id,
+            start_time: FeedingTracker.sessionStartTime || new Date().toISOString()
+        };
+
+        // Collect all notes
+        const allNotes = [];
+        if (FeedingTracker.selectedTags.size > 0) {
+            allNotes.push(`Tags: ${Array.from(FeedingTracker.selectedTags).join(', ')}`);
+        }
+        const customNotes = document.getElementById('customNotes').value;
+        if (customNotes) {
+            allNotes.push(customNotes);
+        }
+
+        if (FeedingTracker.currentFeedingMethod === 'breast') {
+            const leftDuration = FeedingTracker.sessionData.breast.leftDuration;
+            const rightDuration = FeedingTracker.sessionData.breast.rightDuration;
+
+            if (leftDuration > 0 && rightDuration > 0) {
+                feedingData.feeding_type = 'breast_both';
+                feedingData.duration = leftDuration + rightDuration;
+                feedingData.notes = `Left: ${Math.floor(leftDuration / 60)}m, Right: ${Math.floor(rightDuration / 60)}m`;
+            } else if (leftDuration > 0) {
+                feedingData.feeding_type = 'breast_left';
+                feedingData.duration = leftDuration;
+            } else if (rightDuration > 0) {
+                feedingData.feeding_type = 'breast_right';
+                feedingData.duration = rightDuration;
+            } else {
+                showError('Please start a feeding timer first');
+                return;
+            }
+
+            if (FeedingTracker.sessionData.breast.notes) {
+                allNotes.push(FeedingTracker.sessionData.breast.notes);
+            }
+
+            // Calculate end time
+            const totalDuration = feedingData.duration;
+            feedingData.end_time = new Date(new Date(feedingData.start_time).getTime() + totalDuration * 1000).toISOString();
+
+        } else if (FeedingTracker.currentFeedingMethod === 'bottle') {
+            feedingData.feeding_type = 'bottle';
+            feedingData.amount = FeedingTracker.sessionData.bottle.amount;
+            feedingData.bottle_content_type = FeedingTracker.sessionData.bottle.fluidType;
+
+            if (FeedingTracker.sessionData.bottle.duration > 0) {
+                feedingData.duration = FeedingTracker.sessionData.bottle.duration;
+                feedingData.end_time = new Date(new Date(feedingData.start_time).getTime() + feedingData.duration * 1000).toISOString();
+            }
+
+            const tempNotes = [`Temperature: ${FeedingTracker.sessionData.bottle.temperature}`];
+            if (FeedingTracker.sessionData.bottle.notes) {
+                tempNotes.push(FeedingTracker.sessionData.bottle.notes);
+            }
+            allNotes.push(...tempNotes);
+
+        } else if (FeedingTracker.currentFeedingMethod === 'solids') {
+            if (!FeedingTracker.sessionData.solids.foodItem) {
+                showError('Please enter a food item');
+                return;
+            }
+
+            feedingData.feeding_type = 'solids';
+            feedingData.amount = FeedingTracker.sessionData.solids.amount;
+
+            const solidsNotes = [
+                `Food: ${FeedingTracker.sessionData.solids.foodItem}`,
+                `Texture: ${FeedingTracker.sessionData.solids.texture}`
+            ];
+
+            if (FeedingTracker.sessionData.solids.reaction) {
+                solidsNotes.push(`Reaction: ${FeedingTracker.sessionData.solids.reaction}`);
+            }
+
+            if (FeedingTracker.sessionData.solids.notes) {
+                solidsNotes.push(FeedingTracker.sessionData.solids.notes);
+            }
+
+            allNotes.push(...solidsNotes);
+        }
+
+        // Combine all notes
+        if (allNotes.length > 0) {
+            feedingData.notes = allNotes.join('\n');
+        }
+
+        try {
+            const response = await BabyHelperAuth.api.request('/feeding/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(feedingData)
+            });
+
+            if (response.ok) {
+                const savedFeeding = await response.json();
+                showSuccess();
+
+                // Reload recent feedings
+                await loadRecentFeedings(FeedingTracker.selectedBaby.id);
+
+                // Auto-hide success message after 3 seconds
+                setTimeout(() => {
+                    document.getElementById('successMessage').classList.add('hidden');
+                }, 3000);
+            } else {
+                const error = await BabyHelperAuth.api.parseErrorResponse(response);
+                showError(error.message || 'Failed to save feeding session');
+            }
+        } catch (error) {
+            console.error('Failed to save feeding:', error);
+            showError('Failed to save feeding session. Please try again.');
+        }
+    }
+
+    // Show success message
+    function showSuccess() {
+        document.getElementById('successMessage').classList.remove('hidden');
+        document.getElementById('errorMessage').classList.add('hidden');
+    }
+
+    // Show error message
+    function showError(message) {
+        document.getElementById('errorMessage').classList.remove('hidden');
+        document.getElementById('errorMessageText').textContent = message;
+        document.getElementById('successMessage').classList.add('hidden');
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            document.getElementById('errorMessage').classList.add('hidden');
+        }, 5000);
+    }
+
+    // Reset form
+    function resetForm() {
+        // Reset timers
+        location.reload(); // Simple reset for now
+        // In a production app, you would reset all form fields and timers programmatically
+    }
 </script>
 </body>
 </html>

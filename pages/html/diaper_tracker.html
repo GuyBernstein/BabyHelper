@@ -165,9 +165,15 @@
 
         /* Supply counter animation */
         @keyframes decrementPulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+            }
         }
 
         .decrement-animation {
@@ -216,9 +222,15 @@
         }
 
         @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.6; }
-            100% { opacity: 1; }
+            0% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.6;
+            }
+            100% {
+                opacity: 1;
+            }
         }
     </style>
 </head>
@@ -310,7 +322,8 @@
                 <span id="diaperCount" class="text-lg font-bold text-pastel-primary">48</span>
             </div>
             <div class="w-full bg-pastel-light rounded-full h-2 mb-2">
-                <div id="supplyBar" class="bg-pastel-primary h-2 rounded-full transition-all duration-300" style="width: 60%"></div>
+                <div id="supplyBar" class="bg-pastel-primary h-2 rounded-full transition-all duration-300"
+                     style="width: 60%"></div>
             </div>
             <p id="supplyWarning" class="text-xs text-pastel-textLight hidden">
                 <i data-lucide="alert-circle" class="h-3 w-3 inline mr-1"></i>
@@ -331,14 +344,17 @@
                 <div class="lg:hidden w-8"></div>
                 <!-- Baby photo and name -->
                 <div class="flex items-center gap-3">
-                    <div class="h-12 w-12 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-white font-semibold overflow-hidden">
+                    <div id="babyPhotoContainer"
+                         class="h-12 w-12 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-white font-semibold overflow-hidden">
                         <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='%23fff'/%3E%3Ccircle cx='35' cy='40' r='5' fill='%23333'/%3E%3Ccircle cx='65' cy='40' r='5' fill='%23333'/%3E%3Cpath d='M 30 60 Q 50 70 70 60' stroke='%23333' stroke-width='3' fill='none'/%3E%3C/svg%3E"
-                             alt="Emma" class="w-full h-full object-cover">
+                             alt="Baby" class="w-full h-full object-cover">
                     </div>
                     <div>
-                        <h1 class="text-base lg:text-lg font-serif font-medium text-pastel-heading">Emma's Diaper Log</h1>
+                        <h1 class="text-base lg:text-lg font-serif font-medium text-pastel-heading">
+                            <span id="babyName">Loading...</span>'s Diaper Log
+                        </h1>
                         <p class="text-xs lg:text-sm text-pastel-textLight">
-                            Last change: <span id="lastChangeTime" class="font-medium">45 mins ago</span>
+                            Last change: <span id="lastChangeTime" class="font-medium">Loading...</span>
                         </p>
                     </div>
                 </div>
@@ -348,11 +364,11 @@
                 <div class="hidden sm:flex items-center gap-2 text-sm">
                     <div class="flex items-center gap-1">
                         <div class="w-2 h-2 rounded-full bg-pastel-wet"></div>
-                        <span id="wetCount" class="font-medium">4</span>
+                        <span id="wetCount" class="font-medium">0</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <div class="w-2 h-2 rounded-full bg-pastel-dirty"></div>
-                        <span id="dirtyCount" class="font-medium">2</span>
+                        <span id="dirtyCount" class="font-medium">0</span>
                     </div>
                     <span class="text-pastel-textLight">today</span>
                 </div>
@@ -360,8 +376,9 @@
                     <i data-lucide="bell" class="h-5 w-5 text-pastel-text"></i>
                     <span class="absolute top-1 right-1 h-2 w-2 rounded-full bg-pastel-primary"></span>
                 </button>
-                <div class="h-9 w-9 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-sm font-medium text-white shadow-pastel">
-                    JD
+                <div id="userInitials"
+                     class="h-9 w-9 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-sm font-medium text-white shadow-pastel">
+                    --
                 </div>
             </div>
         </header>
@@ -375,15 +392,18 @@
 
                 <!-- Diaper Type Selection -->
                 <div class="grid grid-cols-3 gap-4 mb-6">
-                    <button id="wetBtn" class="diaper-type-btn p-4 rounded-xl border-pastel-wet bg-pastel-wet/10 hover:bg-pastel-wet/20 transition-all">
+                    <button id="wetBtn" data-type="wet"
+                            class="diaper-type-btn p-4 rounded-xl border-pastel-wet bg-pastel-wet/10 hover:bg-pastel-wet/20 transition-all">
                         <i data-lucide="droplet" class="h-12 w-12 mx-auto mb-2 text-pastel-wetDark"></i>
                         <span class="block text-sm font-medium text-pastel-wetDark">Wet</span>
                     </button>
-                    <button id="dirtyBtn" class="diaper-type-btn p-4 rounded-xl border-pastel-dirty bg-pastel-dirty/10 hover:bg-pastel-dirty/20 transition-all">
+                    <button id="dirtyBtn" data-type="dirty"
+                            class="diaper-type-btn p-4 rounded-xl border-pastel-dirty bg-pastel-dirty/10 hover:bg-pastel-dirty/20 transition-all">
                         <i data-lucide="cloud" class="h-12 w-12 mx-auto mb-2 text-pastel-dirtyDark"></i>
                         <span class="block text-sm font-medium text-pastel-dirtyDark">Dirty</span>
                     </button>
-                    <button id="bothBtn" class="diaper-type-btn p-4 rounded-xl border-pastel-mixed bg-pastel-mixed/10 hover:bg-pastel-mixed/20 transition-all">
+                    <button id="bothBtn" data-type="both"
+                            class="diaper-type-btn p-4 rounded-xl border-pastel-mixed bg-pastel-mixed/10 hover:bg-pastel-mixed/20 transition-all">
                         <div class="relative h-12 w-12 mx-auto mb-2">
                             <i data-lucide="droplet" class="h-8 w-8 absolute left-0 top-0 text-pastel-wetDark"></i>
                             <i data-lucide="cloud" class="h-8 w-8 absolute right-0 bottom-0 text-pastel-dirtyDark"></i>
@@ -396,32 +416,40 @@
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-pastel-text mb-2">When?</label>
                     <div class="flex flex-wrap gap-2">
-                        <button id="nowBtn" class="px-6 py-3 rounded-full bg-pastel-primary text-white font-medium hover:bg-pastel-primaryHover transition-colors">
+                        <button id="nowBtn"
+                                class="px-6 py-3 rounded-full bg-pastel-primary text-white font-medium hover:bg-pastel-primaryHover transition-colors">
                             <i data-lucide="clock" class="h-4 w-4 inline mr-2"></i>Now
                         </button>
-                        <button class="time-quick-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                        <button class="time-quick-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm"
+                                data-minutes="-30">
                             30 min ago
                         </button>
-                        <button class="time-quick-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                        <button class="time-quick-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm"
+                                data-minutes="-60">
                             1 hr ago
                         </button>
-                        <button class="time-quick-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                        <button class="time-quick-btn px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm"
+                                data-minutes="-120">
                             2 hrs ago
                         </button>
-                        <button id="customTimeBtn" class="px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
+                        <button id="customTimeBtn"
+                                class="px-4 py-2 rounded-full border border-pastel-light hover:border-pastel-primary hover:bg-pastel-light transition-colors text-sm">
                             <i data-lucide="edit" class="h-4 w-4 inline mr-1"></i>Custom
                         </button>
                     </div>
-                    <input type="datetime-local" id="customTime" class="mt-2 px-4 py-2 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors hidden">
+                    <input type="datetime-local" id="customTime"
+                           class="mt-2 px-4 py-2 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none transition-colors hidden">
                 </div>
             </div>
 
             <!-- Detailed Assessment (Optional Expansion) -->
-            <div id="detailedAssessment" class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+            <div id="detailedAssessment"
+                 class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
                  style="animation-delay: 0.4s; animation-fill-mode: forwards;">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-serif font-medium text-pastel-heading">Detailed Assessment</h3>
-                    <button id="toggleDetails" class="text-sm text-pastel-primary hover:text-pastel-primaryHover transition-colors">
+                    <button id="toggleDetails"
+                            class="text-sm text-pastel-primary hover:text-pastel-primaryHover transition-colors">
                         <i data-lucide="chevron-down" class="h-4 w-4 inline mr-1"></i>Show Details
                     </button>
                 </div>
@@ -431,29 +459,35 @@
                     <div>
                         <label class="block text-sm font-medium text-pastel-text mb-2">Consistency</label>
                         <div class="grid grid-cols-3 lg:grid-cols-6 gap-2">
-                            <button class="consistency-btn p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-all text-center">
+                            <button class="consistency-btn p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-all text-center"
+                                    data-consistency="watery">
                                 <div class="text-2xl mb-1">💧</div>
-                                <span class="text-xs">Liquid</span>
+                                <span class="text-xs">Watery</span>
                             </button>
-                            <button class="consistency-btn p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-all text-center">
+                            <button class="consistency-btn p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-all text-center"
+                                    data-consistency="loose">
                                 <div class="text-2xl mb-1">🥣</div>
-                                <span class="text-xs">Mushy</span>
+                                <span class="text-xs">Loose</span>
                             </button>
-                            <button class="consistency-btn p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-all text-center">
+                            <button class="consistency-btn p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-all text-center"
+                                    data-consistency="soft">
                                 <div class="text-2xl mb-1">🍯</div>
                                 <span class="text-xs">Soft</span>
                             </button>
-                            <button class="consistency-btn p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-all text-center">
+                            <button class="consistency-btn p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-all text-center"
+                                    data-consistency="solid">
                                 <div class="text-2xl mb-1">🥜</div>
-                                <span class="text-xs">Formed</span>
+                                <span class="text-xs">Solid</span>
                             </button>
-                            <button class="consistency-btn p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-all text-center">
+                            <button class="consistency-btn p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-all text-center"
+                                    data-consistency="mucousy">
                                 <div class="text-2xl mb-1">🪨</div>
-                                <span class="text-xs">Hard</span>
+                                <span class="text-xs">Mucousy</span>
                             </button>
-                            <button class="consistency-btn p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-all text-center">
+                            <button class="consistency-btn p-3 rounded-xl border border-pastel-light hover:border-pastel-primary transition-all text-center"
+                                    data-consistency="seedy">
                                 <div class="text-2xl mb-1">🌊</div>
-                                <span class="text-xs">Watery</span>
+                                <span class="text-xs">Seedy</span>
                             </button>
                         </div>
                     </div>
@@ -462,14 +496,13 @@
                     <div>
                         <label class="block text-sm font-medium text-pastel-text mb-2">Color</label>
                         <div class="flex flex-wrap gap-3">
-                            <div class="color-option" style="background-color: #F4E04D;"></div>
-                            <div class="color-option" style="background-color: #8B7355;"></div>
-                            <div class="color-option" style="background-color: #6B4423;"></div>
-                            <div class="color-option" style="background-color: #228B22;"></div>
-                            <div class="color-option" style="background-color: #FFA500;"></div>
-                            <div class="color-option" style="background-color: #DC143C;"></div>
-                            <div class="color-option" style="background-color: #2F4F4F;"></div>
-                            <div class="color-option" style="background-color: #F5F5DC;"></div>
+                            <div class="color-option" style="background-color: #F4E04D;" data-color="yellow"></div>
+                            <div class="color-option" style="background-color: #8B7355;" data-color="brown"></div>
+                            <div class="color-option" style="background-color: #228B22;" data-color="green"></div>
+                            <div class="color-option" style="background-color: #FFA500;" data-color="yellow"></div>
+                            <div class="color-option" style="background-color: #DC143C;" data-color="red"></div>
+                            <div class="color-option" style="background-color: #2F4F4F;" data-color="black"></div>
+                            <div class="color-option" style="background-color: #F5F5DC;" data-color="white"></div>
                         </div>
                     </div>
 
@@ -540,13 +573,15 @@
                         <i data-lucide="activity" class="h-4 w-4 text-pastel-textLight"></i>
                     </div>
                     <div class="text-2xl font-bold text-pastel-heading mb-1">
-                        <span id="totalChanges">6</span> <span class="text-lg font-normal text-pastel-textLight">total</span>
+                        <span id="totalChanges">0</span> <span
+                            class="text-lg font-normal text-pastel-textLight">total</span>
                     </div>
-                    <p class="text-xs text-pastel-textLight">Average: 3-4 hours apart</p>
+                    <p class="text-xs text-pastel-textLight">Average: <span id="averageInterval">--</span></p>
                 </div>
 
                 <!-- Pattern Alert -->
-                <div id="patternAlert" class="health-indicator bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-4 opacity-0 animate-fade-in-up"
+                <div id="patternAlert"
+                     class="health-indicator bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-4 opacity-0 animate-fade-in-up"
                      style="animation-delay: 0.7s; animation-fill-mode: forwards;">
                     <div class="flex items-center justify-between mb-2">
                         <h4 class="text-sm font-medium text-pastel-text">Pattern Status</h4>
@@ -568,28 +603,33 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="flex-1 bg-pastel-light rounded-full h-2">
-                            <div class="bg-pastel-wet h-2 rounded-full" style="width: 75%"></div>
+                            <div id="hydrationBar" class="bg-pastel-wet h-2 rounded-full transition-all duration-300"
+                                 style="width: 0%"></div>
                         </div>
-                        <span class="text-sm font-medium text-pastel-wetDark">Good</span>
+                        <span id="hydrationStatus" class="text-sm font-medium text-pastel-wetDark">--</span>
                     </div>
-                    <p class="text-xs text-pastel-textLight mt-1">4 wet diapers today</p>
+                    <p class="text-xs text-pastel-textLight mt-1"><span id="wetDiaperCount">0</span> wet diapers today
+                    </p>
                 </div>
             </div>
 
             <!-- Save Button -->
             <div class="flex gap-3">
-                <button id="saveChange" class="flex-1 h-14 bg-pastel-primary hover:bg-pastel-primaryHover text-white rounded-full font-medium transition-colors btn-hover-effect">
+                <button id="saveChange"
+                        class="flex-1 h-14 bg-pastel-primary hover:bg-pastel-primaryHover text-white rounded-full font-medium transition-colors btn-hover-effect">
                     <i data-lucide="check" class="h-4 w-4 inline mr-2"></i>
                     Log Diaper Change
                 </button>
-                <button id="saveAndTimer" class="px-6 h-14 border border-pastel-primary text-pastel-primary hover:bg-pastel-light rounded-full font-medium transition-colors">
+                <button id="saveAndTimer"
+                        class="px-6 h-14 border border-pastel-primary text-pastel-primary hover:bg-pastel-light rounded-full font-medium transition-colors">
                     <i data-lucide="timer" class="h-4 w-4 inline mr-2"></i>
                     Start Timer
                 </button>
             </div>
 
             <!-- Warning Messages (hidden by default) -->
-            <div id="supplyLowWarning" class="hidden bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-start gap-3">
+            <div id="supplyLowWarning"
+                 class="hidden bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-start gap-3">
                 <i data-lucide="package" class="h-5 w-5 text-yellow-600 mt-0.5"></i>
                 <div class="flex-1">
                     <p class="text-sm font-medium text-yellow-800">Diaper supply running low</p>
@@ -598,11 +638,13 @@
                 </div>
             </div>
 
-            <div id="frequencyWarning" class="hidden bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-3">
+            <div id="frequencyWarning"
+                 class="hidden bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-start gap-3">
                 <i data-lucide="alert-triangle" class="h-5 w-5 text-orange-600 mt-0.5"></i>
                 <div class="flex-1">
                     <p class="text-sm font-medium text-orange-800">Unusual frequency detected</p>
-                    <p class="text-xs text-orange-700 mt-1">8 changes in the last 4 hours. Consider consulting pediatrician if this continues.</p>
+                    <p class="text-xs text-orange-700 mt-1">8 changes in the last 4 hours. Consider consulting
+                        pediatrician if this continues.</p>
                 </div>
             </div>
 
@@ -642,6 +684,36 @@
         // Initialize Lucide icons
         lucide.createIcons();
 
+        // Global state
+        let currentBaby = null;
+        let currentUser = null;
+        let todaysDiapers = [];
+
+        // Enum mappings between UI and backend
+        const DIAPER_CONTENT_MAP = {
+            'wet': 'wet',
+            'dirty': 'dirty',
+            'both': 'both'
+        };
+
+        const CONSISTENCY_MAP = {
+            'solid': 'solid',
+            'soft': 'soft',
+            'loose': 'loose',
+            'watery': 'watery',
+            'mucousy': 'mucousy',
+            'seedy': 'seedy'
+        };
+
+        const COLOR_MAP = {
+            'yellow': 'yellow',
+            'green': 'green',
+            'brown': 'brown',
+            'black': 'black',
+            'red': 'red',
+            'white': 'white'
+        };
+
         // Mobile menu toggle functionality
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const sidebar = document.getElementById('sidebar');
@@ -667,15 +739,158 @@
             photo: null
         };
 
-        // Supply tracking
-        let diaperCount = 48;
+        // Supply tracking (local state - not in backend)
+        let diaperCount = parseInt(localStorage.getItem('diaperCount') || '48');
         const supplyBar = document.getElementById('supplyBar');
         const supplyWarning = document.getElementById('supplyWarning');
         const supplyLowWarning = document.getElementById('supplyLowWarning');
 
-        // Daily counters
-        let wetCount = 4;
-        let dirtyCount = 2;
+        // Initialize supply display
+        document.getElementById('diaperCount').textContent = diaperCount;
+        updateSupplyDisplay();
+
+        // Load initial data
+        async function loadInitialData() {
+            try {
+                // Get current user profile
+                currentUser = await BabyHelperAuth.api.endpoints.getUserProfile();
+                if (currentUser) {
+                    // Update user initials in header
+                    const initials = currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                    document.getElementById('userInitials').textContent = initials;
+                }
+
+                // Get babies
+                const babies = await BabyHelperAuth.api.endpoints.getBabies();
+                if (babies && babies.length > 0) {
+                    // For now, use the first baby - in a full app, allow selection
+                    currentBaby = babies[0];
+                    updateBabyInfo();
+                    await loadTodaysDiapers();
+                }
+            } catch (error) {
+                console.error('Failed to load initial data:', error);
+            }
+        }
+
+        // Update baby information in UI
+        function updateBabyInfo() {
+            if (!currentBaby) return;
+
+            document.getElementById('babyName').textContent = currentBaby.name;
+
+            // Update photo if available
+            if (currentBaby.photo_url) {
+                const photoContainer = document.getElementById('babyPhotoContainer');
+                photoContainer.innerHTML = `<img src="${currentBaby.photo_url}" alt="${currentBaby.name}" class="w-full h-full object-cover">`;
+            }
+        }
+
+        // Load today's diapers and update statistics
+        async function loadTodaysDiapers() {
+            if (!currentBaby) return;
+
+            try {
+                // Get today's date range
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+
+                const response = await BabyHelperAuth.api.request(`/diaper/baby/${currentBaby.id}?start_date=${today.toISOString()}&end_date=${tomorrow.toISOString()}`);
+
+                if (response.ok) {
+                    todaysDiapers = await response.json();
+                    updateDiaperStatistics();
+                    updateLastChangeTime();
+                } else {
+                    console.error('Failed to load diaper records');
+                }
+            } catch (error) {
+                console.error('Error loading diaper records:', error);
+            }
+        }
+
+        // Update diaper statistics
+        function updateDiaperStatistics() {
+            let wetCount = 0;
+            let dirtyCount = 0;
+
+            todaysDiapers.forEach(diaper => {
+                switch (diaper.content) {
+                    case 'wet':
+                        wetCount++;
+                        break;
+                    case 'dirty':
+                        dirtyCount++;
+                        break;
+                    case 'both':
+                        wetCount++;
+                        dirtyCount++;
+                        break;
+                }
+            });
+
+            // Update counters
+            document.getElementById('wetCount').textContent = wetCount;
+            document.getElementById('dirtyCount').textContent = dirtyCount;
+            document.getElementById('totalChanges').textContent = todaysDiapers.length;
+            document.getElementById('wetDiaperCount').textContent = wetCount;
+
+            // Update average interval
+            if (todaysDiapers.length > 1) {
+                const intervals = [];
+                for (let i = 1; i < todaysDiapers.length; i++) {
+                    const diff = new Date(todaysDiapers[i - 1].time) - new Date(todaysDiapers[i].time);
+                    intervals.push(diff);
+                }
+                const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+                const hours = Math.floor(avgInterval / (1000 * 60 * 60));
+                const minutes = Math.floor((avgInterval % (1000 * 60 * 60)) / (1000 * 60));
+                document.getElementById('averageInterval').textContent = `${hours}h ${minutes}m apart`;
+            } else {
+                document.getElementById('averageInterval').textContent = '--';
+            }
+
+            // Update hydration indicator
+            const hydrationPercent = Math.min((wetCount / 6) * 100, 100); // Assuming 6 wet diapers is good hydration
+            document.getElementById('hydrationBar').style.width = `${hydrationPercent}%`;
+
+            if (wetCount >= 6) {
+                document.getElementById('hydrationStatus').textContent = 'Good';
+            } else if (wetCount >= 4) {
+                document.getElementById('hydrationStatus').textContent = 'Fair';
+            } else {
+                document.getElementById('hydrationStatus').textContent = 'Low';
+            }
+
+            // Check patterns
+            checkPatterns(todaysDiapers.length);
+        }
+
+        // Update last change time
+        function updateLastChangeTime() {
+            if (todaysDiapers.length === 0) {
+                document.getElementById('lastChangeTime').textContent = 'No changes today';
+                return;
+            }
+
+            const lastChange = new Date(todaysDiapers[0].time);
+            const now = new Date();
+            const diffMs = now - lastChange;
+            const diffMins = Math.floor(diffMs / (1000 * 60));
+            const diffHours = Math.floor(diffMins / 60);
+
+            if (diffMins < 1) {
+                document.getElementById('lastChangeTime').textContent = 'Just now';
+            } else if (diffMins < 60) {
+                document.getElementById('lastChangeTime').textContent = `${diffMins} mins ago`;
+            } else if (diffHours < 24) {
+                document.getElementById('lastChangeTime').textContent = `${diffHours} hr${diffHours > 1 ? 's' : ''} ago`;
+            } else {
+                document.getElementById('lastChangeTime').textContent = 'More than 24 hrs ago';
+            }
+        }
 
         // Diaper type selection
         const diaperTypeBtns = {
@@ -731,16 +946,9 @@
 
         quickTimeBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                const text = btn.textContent.trim();
+                const minutes = parseInt(btn.dataset.minutes);
                 const now = new Date();
-
-                if (text === '30 min ago') {
-                    diaperData.time = new Date(now - 30 * 60 * 1000);
-                } else if (text === '1 hr ago') {
-                    diaperData.time = new Date(now - 60 * 60 * 1000);
-                } else if (text === '2 hrs ago') {
-                    diaperData.time = new Date(now - 2 * 60 * 60 * 1000);
-                }
+                diaperData.time = new Date(now.getTime() + minutes * 60 * 1000);
 
                 resetTimeButtons();
                 btn.classList.add('bg-pastel-light', 'border-pastel-primary');
@@ -778,7 +986,7 @@
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.consistency-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
-                diaperData.consistency = btn.querySelector('span').textContent;
+                diaperData.consistency = btn.dataset.consistency;
             });
         });
 
@@ -787,7 +995,7 @@
             option.addEventListener('click', () => {
                 document.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
                 option.classList.add('selected');
-                diaperData.color = option.style.backgroundColor;
+                diaperData.color = option.dataset.color;
             });
         });
 
@@ -820,7 +1028,7 @@
 
         // Auto-expanding textarea
         const additionalNotes = document.getElementById('additionalNotes');
-        additionalNotes.addEventListener('input', function() {
+        additionalNotes.addEventListener('input', function () {
             this.style.height = 'auto';
             this.style.height = this.scrollHeight + 'px';
             diaperData.notes = this.value;
@@ -830,57 +1038,97 @@
         const saveBtn = document.getElementById('saveChange');
         const saveAndTimerBtn = document.getElementById('saveAndTimer');
 
-        saveBtn.addEventListener('click', () => {
+        saveBtn.addEventListener('click', async () => {
             if (!diaperData.type) {
                 alert('Please select diaper type (Wet, Dirty, or Both)');
                 return;
             }
 
-            // Update counters
-            if (diaperData.type === 'wet') wetCount++;
-            else if (diaperData.type === 'dirty') dirtyCount++;
-            else if (diaperData.type === 'both') {
-                wetCount++;
-                dirtyCount++;
+            if (!currentBaby) {
+                alert('No baby selected');
+                return;
             }
 
-            // Update display
-            document.getElementById('wetCount').textContent = wetCount;
-            document.getElementById('dirtyCount').textContent = dirtyCount;
-            document.getElementById('totalChanges').textContent = wetCount + dirtyCount;
+            // Prepare data for API
+            const apiData = {
+                baby_id: currentBaby.id,
+                time: diaperData.time.toISOString(),
+                content: DIAPER_CONTENT_MAP[diaperData.type],
+                consistency: diaperData.consistency ? CONSISTENCY_MAP[diaperData.consistency] : null,
+                color: diaperData.color ? COLOR_MAP[diaperData.color] : null,
+                notes: diaperData.notes || null
+            };
 
-            // Update last change time
-            document.getElementById('lastChangeTime').textContent = 'Just now';
+            // Add tags to notes if any selected
+            if (diaperData.tags.size > 0) {
+                const tagString = Array.from(diaperData.tags).join(', ');
+                apiData.notes = apiData.notes ? `${apiData.notes}\nTags: ${tagString}` : `Tags: ${tagString}`;
+            }
 
-            // Decrement diaper supply
-            updateDiaperSupply();
+            try {
+                const response = await BabyHelperAuth.api.request('/diaper/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(apiData)
+                });
 
-            // Check patterns
-            checkPatterns();
+                if (response.ok) {
+                    // Success!
+                    const newDiaper = await response.json();
 
-            // Show success animation
-            saveBtn.classList.add('bg-green-600');
-            saveBtn.innerHTML = '<i data-lucide="check-circle" class="h-4 w-4 inline mr-2"></i>Saved!';
-            lucide.createIcons();
+                    // Add to today's diapers list
+                    todaysDiapers.unshift(newDiaper);
 
-            setTimeout(() => {
-                saveBtn.classList.remove('bg-green-600');
-                saveBtn.innerHTML = '<i data-lucide="check" class="h-4 w-4 inline mr-2"></i>Log Diaper Change';
-                lucide.createIcons();
-                resetForm();
-            }, 2000);
+                    // Update statistics
+                    updateDiaperStatistics();
+                    updateLastChangeTime();
+
+                    // Update local diaper supply
+                    updateDiaperSupply();
+
+                    // Show success animation
+                    saveBtn.classList.add('bg-green-600');
+                    saveBtn.innerHTML = '<i data-lucide="check-circle" class="h-4 w-4 inline mr-2"></i>Saved!';
+                    lucide.createIcons();
+
+                    setTimeout(() => {
+                        saveBtn.classList.remove('bg-green-600');
+                        saveBtn.innerHTML = '<i data-lucide="check" class="h-4 w-4 inline mr-2"></i>Log Diaper Change';
+                        lucide.createIcons();
+                        resetForm();
+                    }, 2000);
+                } else {
+                    const error = await BabyHelperAuth.api.parseErrorResponse(response);
+                    alert(`Failed to save diaper record: ${error.message}`);
+                }
+            } catch (error) {
+                console.error('Error saving diaper record:', error);
+                alert('Failed to save diaper record. Please try again.');
+            }
         });
 
         saveAndTimerBtn.addEventListener('click', () => {
             saveBtn.click();
-            // Start timer for next diaper change
-            console.log('Starting timer for next change...');
+            // Future feature: Start timer for next diaper change
+            console.log('Timer feature coming soon...');
         });
 
         function updateDiaperSupply() {
             diaperCount--;
+            localStorage.setItem('diaperCount', diaperCount.toString());
             document.getElementById('diaperCount').textContent = diaperCount;
+            updateSupplyDisplay();
 
+            // Add animation
+            document.getElementById('diaperCount').classList.add('decrement-animation');
+            setTimeout(() => {
+                document.getElementById('diaperCount').classList.remove('decrement-animation');
+            }, 300);
+        }
+
+        function updateSupplyDisplay() {
             const percentage = (diaperCount / 80) * 100; // Assuming 80 is full supply
             supplyBar.style.width = `${percentage}%`;
 
@@ -892,16 +1140,9 @@
                 supplyLowWarning.classList.remove('hidden');
                 supplyBar.classList.add('bg-red-500');
             }
-
-            // Add animation
-            document.getElementById('diaperCount').classList.add('decrement-animation');
-            setTimeout(() => {
-                document.getElementById('diaperCount').classList.remove('decrement-animation');
-            }, 300);
         }
 
-        function checkPatterns() {
-            const totalChanges = wetCount + dirtyCount;
+        function checkPatterns(totalChanges) {
             const patternAlert = document.getElementById('patternAlert');
             const frequencyWarning = document.getElementById('frequencyWarning');
 
@@ -910,22 +1151,34 @@
                 patternAlert.querySelector('i').setAttribute('data-lucide', 'alert-triangle');
                 patternAlert.querySelector('i').classList.remove('text-green-600');
                 patternAlert.querySelector('i').classList.add('text-orange-600');
-                patternAlert.querySelector('.bg-green-500').classList.remove('bg-green-500');
-                patternAlert.querySelector('.bg-green-500')?.classList.add('bg-orange-500');
-                patternAlert.querySelector('.text-green-700').textContent = 'High Frequency';
-                patternAlert.querySelector('.text-green-700').classList.remove('text-green-700');
-                patternAlert.querySelector('.text-green-700')?.classList.add('text-orange-700');
+                const greenDot = patternAlert.querySelector('.bg-green-500');
+                if (greenDot) {
+                    greenDot.classList.remove('bg-green-500');
+                    greenDot.classList.add('bg-orange-500');
+                }
+                const statusText = patternAlert.querySelector('.text-green-700');
+                if (statusText) {
+                    statusText.textContent = 'High Frequency';
+                    statusText.classList.remove('text-green-700');
+                    statusText.classList.add('text-orange-700');
+                }
                 patternAlert.classList.add('health-warning');
                 frequencyWarning.classList.remove('hidden');
             } else if (totalChanges < 4) {
                 patternAlert.querySelector('i').setAttribute('data-lucide', 'alert-circle');
                 patternAlert.querySelector('i').classList.remove('text-green-600');
                 patternAlert.querySelector('i').classList.add('text-yellow-600');
-                patternAlert.querySelector('.bg-green-500').classList.remove('bg-green-500');
-                patternAlert.querySelector('.bg-green-500')?.classList.add('bg-yellow-500');
-                patternAlert.querySelector('.text-green-700').textContent = 'Low Frequency';
-                patternAlert.querySelector('.text-green-700').classList.remove('text-green-700');
-                patternAlert.querySelector('.text-green-700')?.classList.add('text-yellow-700');
+                const greenDot = patternAlert.querySelector('.bg-green-500');
+                if (greenDot) {
+                    greenDot.classList.remove('bg-green-500');
+                    greenDot.classList.add('bg-yellow-500');
+                }
+                const statusText = patternAlert.querySelector('.text-green-700');
+                if (statusText) {
+                    statusText.textContent = 'Low Frequency';
+                    statusText.classList.remove('text-green-700');
+                    statusText.classList.add('text-yellow-700');
+                }
             }
 
             lucide.createIcons();
@@ -972,9 +1225,23 @@
             // Cmd/Ctrl + D for quick diaper log
             if ((e.metaKey || e.ctrlKey) && e.key === 'd') {
                 e.preventDefault();
-                console.log('Quick diaper log shortcut triggered');
+                window.scrollTo({top: 0, behavior: 'smooth'});
+                // Focus on first diaper type button
+                diaperTypeBtns.wet.focus();
             }
         });
+
+        // Auto-refresh statistics every minute
+        setInterval(() => {
+            updateLastChangeTime();
+        }, 60000);
+
+        // Load initial data when auth is ready
+        if (window.BabyHelperAuth && window.BabyHelperAuth.initialized) {
+            loadInitialData();
+        } else {
+            window.addEventListener('auth-initialized', loadInitialData);
+        }
     });
 </script>
 </body>
