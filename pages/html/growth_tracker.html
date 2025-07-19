@@ -178,9 +178,113 @@
         .percentile-indicator {
             transition: all 0.3s ease-in-out;
         }
+
+        /* Loading spinner */
+        .spinner {
+            border: 3px solid #ffe8d9;
+            border-top: 3px solid #ff8c69;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
     </style>
 </head>
 <body class="h-full bg-pastel-lightest font-sans text-pastel-text">
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+</div>
+
+<!-- Baby Selector Modal -->
+<div id="babySelectorModal"
+     class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-pastel-lg p-6 max-w-md w-full">
+        <h2 class="text-xl font-serif font-medium text-pastel-heading mb-4">Select Baby</h2>
+        <div id="babyList" class="space-y-2 mb-4">
+            <!-- Baby options will be populated here -->
+        </div>
+        <button onclick="closeBabySelector()"
+                class="w-full bg-pastel-light hover:bg-pastel-secondary text-pastel-text py-2 rounded-full transition-colors">
+            Cancel
+        </button>
+    </div>
+</div>
+
+<!-- New Measurement Modal -->
+<div id="measurementModal"
+     class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-pastel-lg p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <h2 class="text-xl font-serif font-medium text-pastel-heading mb-4">New Measurement</h2>
+        <form id="measurementForm" class="space-y-4">
+            <div>
+                <label class="block text-sm text-pastel-textLight mb-2">Measurement Date</label>
+                <input type="datetime-local" id="measurementDate" required
+                       class="w-full px-4 py-2 bg-pastel-lightest rounded-xl focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+            </div>
+            <div>
+                <label class="block text-sm text-pastel-textLight mb-2">Weight (<span
+                        class="weight-unit">kg</span>)</label>
+                <input type="number" id="measurementWeight" step="0.01" min="0" max="50"
+                       class="w-full px-4 py-2 bg-pastel-lightest rounded-xl focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+            </div>
+            <div>
+                <label class="block text-sm text-pastel-textLight mb-2">Height (<span
+                        class="height-unit">cm</span>)</label>
+                <input type="number" id="measurementHeight" step="0.1" min="0" max="200"
+                       class="w-full px-4 py-2 bg-pastel-lightest rounded-xl focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+            </div>
+            <div>
+                <label class="block text-sm text-pastel-textLight mb-2">Head Circumference (<span
+                        class="height-unit">cm</span>)</label>
+                <input type="number" id="measurementHead" step="0.1" min="0" max="100"
+                       class="w-full px-4 py-2 bg-pastel-lightest rounded-xl focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+            </div>
+            <div>
+                <label class="block text-sm text-pastel-textLight mb-2">Notes</label>
+                <textarea id="measurementNotes" rows="3"
+                          class="w-full px-4 py-2 bg-pastel-lightest rounded-xl focus:outline-none focus:ring-2 focus:ring-pastel-primary"></textarea>
+            </div>
+            <div class="flex gap-2">
+                <button type="submit"
+                        class="flex-1 bg-pastel-primary hover:bg-pastel-primaryHover text-white py-2 rounded-full transition-colors">
+                    Save Measurement
+                </button>
+                <button type="button" onclick="closeMeasurementModal()"
+                        class="flex-1 bg-pastel-light hover:bg-pastel-secondary text-pastel-text py-2 rounded-full transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="flex h-full relative">
     <!-- Background Decorative Elements -->
     <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
@@ -209,7 +313,8 @@
         </div>
 
         <!-- Quick Action Button -->
-        <button class="btn-hover-effect flex items-center justify-between gap-3 text-sm font-medium bg-pastel-primary text-white p-3 rounded-full shadow-pastel transition-all duration-300 hover:bg-pastel-primaryHover hover:transform hover:-translate-y-0.5 opacity-0 animate-fade-in-right"
+        <button onclick="openMeasurementModal()"
+                class="btn-hover-effect flex items-center justify-between gap-3 text-sm font-medium bg-pastel-primary text-white p-3 rounded-full shadow-pastel transition-all duration-300 hover:bg-pastel-primaryHover hover:transform hover:-translate-y-0.5 opacity-0 animate-fade-in-right"
                 style="animation-delay: 0.3s; animation-fill-mode: forwards;">
                 <span class="flex items-center gap-3">
                     <i data-lucide="plus" class="h-4 w-4"></i>
@@ -288,7 +393,12 @@
                 <div>
                     <h1 class="text-base lg:text-lg font-serif font-medium text-pastel-heading">Dashboard &
                         Insights</h1>
-                    <p class="text-xs lg:text-sm text-pastel-textLight">Last updated: 2 hours ago • Emma, 8 months</p>
+                    <p class="text-xs lg:text-sm text-pastel-textLight">
+                        Last updated: <span id="lastUpdated">Loading...</span> •
+                        <span id="babyInfo" class="cursor-pointer hover:text-pastel-primary">
+                            <span id="babyName">Loading...</span>, <span id="babyAge">...</span>
+                        </span>
+                    </p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
@@ -299,8 +409,9 @@
                 <button class="hidden sm:block p-2 hover:bg-pastel-light rounded-full transition-colors">
                     <i data-lucide="help-circle" class="h-5 w-5 text-pastel-text"></i>
                 </button>
-                <div class="h-9 w-9 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-sm font-medium text-white shadow-pastel">
-                    JD
+                <div id="userAvatar"
+                     class="h-9 w-9 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-sm font-medium text-white shadow-pastel">
+                    ?
                 </div>
             </div>
         </header>
@@ -315,10 +426,8 @@
                     Key Insights
                 </h2>
                 <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light">
-                    <p class="text-pastel-text leading-relaxed">
-                        Emma has shown an improved sleep pattern over the last week, with an average of
-                        <span class="font-semibold text-pastel-primary">8 hours of sleep</span> per night.
-                        <span class="text-pastel-accent1 font-medium">That's wonderful progress! 🌙</span>
+                    <p class="text-pastel-text leading-relaxed" id="keyInsights">
+                        Loading growth insights...
                     </p>
                 </div>
             </div>
@@ -329,12 +438,14 @@
                      style="animation-delay: 0.4s; animation-fill-mode: forwards;">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-pastel-textLight">Avg Sleep/Night</p>
-                            <p class="text-2xl font-semibold text-pastel-heading font-serif">8.2 hrs</p>
-                            <p class="text-xs text-pastel-primary mt-1">↑ 12% vs last week</p>
+                            <p class="text-xs text-pastel-textLight">Current Weight</p>
+                            <p class="text-2xl font-semibold text-pastel-heading font-serif">
+                                <span id="currentWeightValue">--</span> <span class="text-sm weight-unit">kg</span>
+                            </p>
+                            <p class="text-xs mt-1" id="weightChange">--</p>
                         </div>
                         <div class="h-10 w-10 bg-pastel-secondary rounded-full flex items-center justify-center">
-                            <i data-lucide="moon" class="h-5 w-5 text-pastel-primary"></i>
+                            <i data-lucide="weight" class="h-5 w-5 text-pastel-primary"></i>
                         </div>
                     </div>
                 </div>
@@ -342,12 +453,14 @@
                      style="animation-delay: 0.5s; animation-fill-mode: forwards;">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-pastel-textLight">Daily Feedings</p>
-                            <p class="text-2xl font-semibold text-pastel-heading font-serif">6</p>
-                            <p class="text-xs text-pastel-textLight mt-1">On schedule</p>
+                            <p class="text-xs text-pastel-textLight">Current Height</p>
+                            <p class="text-2xl font-semibold text-pastel-heading font-serif">
+                                <span id="currentHeightValue">--</span> <span class="text-sm height-unit">cm</span>
+                            </p>
+                            <p class="text-xs mt-1" id="heightChange">--</p>
                         </div>
                         <div class="h-10 w-10 bg-pastel-accent1/20 rounded-full flex items-center justify-center">
-                            <i data-lucide="baby-bottle" class="h-5 w-5 text-pastel-accent1"></i>
+                            <i data-lucide="ruler" class="h-5 w-5 text-pastel-accent1"></i>
                         </div>
                     </div>
                 </div>
@@ -355,12 +468,14 @@
                      style="animation-delay: 0.6s; animation-fill-mode: forwards;">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-pastel-textLight">Activity Level</p>
-                            <p class="text-2xl font-semibold text-pastel-heading font-serif">High</p>
-                            <p class="text-xs text-pastel-accent2 mt-1">Very active today</p>
+                            <p class="text-xs text-pastel-textLight">Head Circumference</p>
+                            <p class="text-2xl font-semibold text-pastel-heading font-serif">
+                                <span id="currentHeadValue">--</span> <span class="text-sm height-unit">cm</span>
+                            </p>
+                            <p class="text-xs mt-1" id="headChange">--</p>
                         </div>
                         <div class="h-10 w-10 bg-pastel-accent2/20 rounded-full flex items-center justify-center">
-                            <i data-lucide="zap" class="h-5 w-5 text-pastel-accent2"></i>
+                            <i data-lucide="circle" class="h-5 w-5 text-pastel-accent2"></i>
                         </div>
                     </div>
                 </div>
@@ -368,12 +483,13 @@
                      style="animation-delay: 0.7s; animation-fill-mode: forwards;">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-pastel-textLight">Mood Score</p>
-                            <p class="text-2xl font-semibold text-pastel-heading font-serif">9/10</p>
-                            <p class="text-xs text-pastel-primary mt-1">Happy baby! 😊</p>
+                            <p class="text-xs text-pastel-textLight">Measurements</p>
+                            <p class="text-2xl font-semibold text-pastel-heading font-serif" id="totalMeasurements">
+                                --</p>
+                            <p class="text-xs text-pastel-primary mt-1">Total recorded</p>
                         </div>
                         <div class="h-10 w-10 bg-pastel-primary/20 rounded-full flex items-center justify-center">
-                            <i data-lucide="smile" class="h-5 w-5 text-pastel-primary"></i>
+                            <i data-lucide="clipboard-list" class="h-5 w-5 text-pastel-primary"></i>
                         </div>
                     </div>
                 </div>
@@ -404,15 +520,18 @@
 
                     <!-- Quick Action Buttons -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                        <button class="btn-hover-effect bg-pastel-primary text-white p-4 rounded-2xl shadow-pastel transition-all duration-300 hover:bg-pastel-primaryHover hover:transform hover:-translate-y-0.5">
+                        <button onclick="openMeasurementModal('weight')"
+                                class="btn-hover-effect bg-pastel-primary text-white p-4 rounded-2xl shadow-pastel transition-all duration-300 hover:bg-pastel-primaryHover hover:transform hover:-translate-y-0.5">
                             <i data-lucide="weight" class="h-6 w-6 mb-2 mx-auto"></i>
                             <span class="block text-sm font-medium">Weigh Now</span>
                         </button>
-                        <button class="btn-hover-effect bg-pastel-accent1 text-white p-4 rounded-2xl shadow-pastel transition-all duration-300 hover:bg-pastel-accent1/90 hover:transform hover:-translate-y-0.5">
+                        <button onclick="openMeasurementModal('height')"
+                                class="btn-hover-effect bg-pastel-accent1 text-white p-4 rounded-2xl shadow-pastel transition-all duration-300 hover:bg-pastel-accent1/90 hover:transform hover:-translate-y-0.5">
                             <i data-lucide="maximize-2" class="h-6 w-6 mb-2 mx-auto"></i>
                             <span class="block text-sm font-medium">Measure Height</span>
                         </button>
-                        <button class="btn-hover-effect bg-pastel-accent2 text-white p-4 rounded-2xl shadow-pastel transition-all duration-300 hover:bg-pastel-accent2/90 hover:transform hover:-translate-y-0.5">
+                        <button onclick="openMeasurementModal('head')"
+                                class="btn-hover-effect bg-pastel-accent2 text-white p-4 rounded-2xl shadow-pastel transition-all duration-300 hover:bg-pastel-accent2/90 hover:transform hover:-translate-y-0.5">
                             <i data-lucide="circle" class="h-6 w-6 mb-2 mx-auto"></i>
                             <span class="block text-sm font-medium">Head Circumference</span>
                         </button>
@@ -424,7 +543,8 @@
                             <i data-lucide="bluetooth" class="h-4 w-4"></i>
                             Smart Scale
                         </button>
-                        <button class="flex items-center gap-2 px-4 py-2 bg-pastel-light rounded-full text-sm hover:bg-pastel-secondary transition-colors">
+                        <button onclick="openMeasurementModal()"
+                                class="flex items-center gap-2 px-4 py-2 bg-pastel-light rounded-full text-sm hover:bg-pastel-secondary transition-colors">
                             <i data-lucide="keyboard" class="h-4 w-4"></i>
                             Manual Entry
                         </button>
@@ -446,57 +566,18 @@
                     <!-- Current Weight Display -->
                     <div class="text-center mb-6">
                         <p class="text-5xl font-bold text-pastel-heading font-serif mb-2">
-                            <span id="currentWeight">7.8</span>
-                            <span class="text-2xl font-normal text-pastel-textLight ml-1">kg</span>
+                            <span id="currentWeight">--</span>
+                            <span class="text-2xl font-normal text-pastel-textLight ml-1 weight-unit">kg</span>
                         </p>
-                        <p class="text-sm text-pastel-textLight">
-                            <span class="text-pastel-success">+0.3 kg</span> since last measurement (5 days ago)
+                        <p class="text-sm text-pastel-textLight" id="weightChangeDetail">
+                            No previous measurements
                         </p>
                     </div>
 
-                    <!-- Weight Input Controls -->
-                    <div class="space-y-4">
-                        <!-- Decimal Stepper Control -->
-                        <div class="flex items-center justify-center gap-4">
-                            <button class="w-12 h-12 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors flex items-center justify-center">
-                                <i data-lucide="minus" class="h-5 w-5"></i>
-                            </button>
-                            <input type="number"
-                                   class="w-24 text-center text-2xl font-semibold bg-pastel-lightest rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-primary"
-                                   value="7.8" step="0.1">
-                            <button class="w-12 h-12 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors flex items-center justify-center">
-                                <i data-lucide="plus" class="h-5 w-5"></i>
-                            </button>
-                        </div>
-
-                        <!-- Measurement Context -->
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm text-pastel-textLight mb-2">Clothing Status</label>
-                                <div class="flex bg-pastel-light rounded-full p-1">
-                                    <button class="flex-1 px-3 py-1.5 rounded-full text-sm bg-white shadow-pastel">
-                                        Naked
-                                    </button>
-                                    <button class="flex-1 px-3 py-1.5 rounded-full text-sm">Clothed</button>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm text-pastel-textLight mb-2">Feeding Status</label>
-                                <div class="flex bg-pastel-light rounded-full p-1">
-                                    <button class="flex-1 px-3 py-1.5 rounded-full text-sm">Before</button>
-                                    <button class="flex-1 px-3 py-1.5 rounded-full text-sm bg-white shadow-pastel">
-                                        After
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Visual Weight Representation -->
-                        <div class="bg-pastel-lightest rounded-xl p-4 text-center">
-                            <div class="inline-flex items-center justify-center w-32 h-32 rounded-full bg-pastel-secondary animate-pulse-soft">
-                                <i data-lucide="baby" class="h-16 w-16 text-pastel-primary"></i>
-                            </div>
-                            <p class="text-sm text-pastel-textLight mt-2">Diaper: Wet</p>
+                    <!-- Visual Weight Representation -->
+                    <div class="bg-pastel-lightest rounded-xl p-4 text-center">
+                        <div class="inline-flex items-center justify-center w-32 h-32 rounded-full bg-pastel-secondary animate-pulse-soft">
+                            <i data-lucide="baby" class="h-16 w-16 text-pastel-primary"></i>
                         </div>
                     </div>
                 </div>
@@ -509,63 +590,25 @@
                         Height/Length Tracking
                     </h3>
 
-                    <!-- Measurement Mode Selector -->
-                    <div class="mb-6">
-                        <label class="block text-sm text-pastel-textLight mb-2">Measurement Position</label>
-                        <div class="flex bg-pastel-light rounded-full p-1">
-                            <button class="flex-1 px-4 py-2 rounded-full text-sm font-medium bg-white text-pastel-primary shadow-pastel">
-                                Lying (0-24mo)
-                            </button>
-                            <button class="flex-1 px-4 py-2 rounded-full text-sm font-medium text-pastel-text">Standing
-                                (24mo+)
-                            </button>
-                        </div>
-                    </div>
-
                     <!-- Height Display -->
                     <div class="text-center mb-6">
                         <p class="text-5xl font-bold text-pastel-heading font-serif mb-2">
-                            <span id="currentHeight">68.5</span>
-                            <span class="text-2xl font-normal text-pastel-textLight ml-1">cm</span>
+                            <span id="currentHeight">--</span>
+                            <span class="text-2xl font-normal text-pastel-textLight ml-1 height-unit">cm</span>
                         </p>
-                        <p class="text-sm text-pastel-textLight">
-                            <span class="text-pastel-success">+1.2 cm</span> since last month
+                        <p class="text-sm text-pastel-textLight" id="heightChangeDetail">
+                            No previous measurements
                         </p>
                     </div>
 
-                    <!-- Height Input Controls -->
-                    <div class="space-y-4">
-                        <!-- Slider Control -->
-                        <div>
-                            <input type="range" class="custom-slider w-full" min="40" max="100" value="68.5" step="0.1">
-                            <div class="flex justify-between text-xs text-pastel-textLight mt-2">
-                                <span>40 cm</span>
-                                <span>100 cm</span>
-                            </div>
-                        </div>
-
-                        <!-- Fine Adjustment -->
-                        <div class="flex items-center justify-center gap-4">
-                            <button class="px-4 py-2 bg-pastel-light rounded-full hover:bg-pastel-secondary transition-colors">
-                                <i data-lucide="minus" class="h-4 w-4"></i> 0.1
-                            </button>
-                            <input type="number"
-                                   class="w-24 text-center text-xl font-semibold bg-pastel-lightest rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-accent1"
-                                   value="68.5" step="0.1">
-                            <button class="px-4 py-2 bg-pastel-light rounded-full hover:bg-pastel-secondary transition-colors">
-                                <i data-lucide="plus" class="h-4 w-4"></i> 0.1
-                            </button>
-                        </div>
-
-                        <!-- Measurement Tips -->
-                        <div class="bg-pastel-lightest rounded-xl p-4 text-sm text-pastel-text">
-                            <p class="font-medium mb-2">📏 Measurement Tips:</p>
-                            <ul class="space-y-1 text-xs">
-                                <li>• Place baby on a flat surface</li>
-                                <li>• Ensure legs are fully extended</li>
-                                <li>• Measure from crown to heel</li>
-                            </ul>
-                        </div>
+                    <!-- Measurement Tips -->
+                    <div class="bg-pastel-lightest rounded-xl p-4 text-sm text-pastel-text">
+                        <p class="font-medium mb-2">📏 Measurement Tips:</p>
+                        <ul class="space-y-1 text-xs">
+                            <li>• Place baby on a flat surface</li>
+                            <li>• Ensure legs are fully extended</li>
+                            <li>• Measure from crown to heel</li>
+                        </ul>
                     </div>
                 </div>
 
@@ -587,24 +630,12 @@
                             </svg>
                             <div class="absolute inset-0 flex items-center justify-center">
                                 <div>
-                                    <p class="text-3xl font-bold text-pastel-heading font-serif">42.5</p>
-                                    <p class="text-sm text-pastel-textLight">cm</p>
+                                    <p class="text-3xl font-bold text-pastel-heading font-serif" id="currentHeadCirc">
+                                        --</p>
+                                    <p class="text-sm text-pastel-textLight height-unit">cm</p>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Input with Precision -->
-                    <div class="flex items-center justify-center gap-4 mb-4">
-                        <button class="w-10 h-10 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors flex items-center justify-center">
-                            <i data-lucide="minus" class="h-4 w-4"></i>
-                        </button>
-                        <input type="number"
-                               class="w-20 text-center text-xl font-semibold bg-pastel-lightest rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-accent2"
-                               value="42.5" step="0.1">
-                        <button class="w-10 h-10 rounded-full bg-pastel-light hover:bg-pastel-secondary transition-colors flex items-center justify-center">
-                            <i data-lucide="plus" class="h-4 w-4"></i>
-                        </button>
                     </div>
 
                     <!-- Measurement Guide -->
@@ -619,78 +650,6 @@
                     </div>
                 </div>
 
-                <!-- Percentile Visualization -->
-                <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
-                     style="animation-delay: 1.2s; animation-fill-mode: forwards;">
-                    <h3 class="text-lg font-serif font-medium text-pastel-heading mb-4 flex items-center gap-2">
-                        <i data-lucide="bar-chart" class="h-5 w-5 text-pastel-primary"></i>
-                        Percentile Rankings
-                    </h3>
-
-                    <div class="space-y-6">
-                        <!-- Weight Percentile -->
-                        <div>
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-sm font-medium text-pastel-text">Weight</span>
-                                <span class="text-sm font-semibold text-pastel-primary">75th percentile</span>
-                            </div>
-                            <div class="relative h-8 bg-pastel-light rounded-full overflow-hidden">
-                                <div class="absolute h-full bg-gradient-to-r from-pastel-success/20 via-pastel-success to-pastel-success/20"
-                                     style="width: 75%;"></div>
-                                <div class="percentile-indicator absolute top-1/2 transform -translate-y-1/2 w-4 h-4 bg-white border-2 border-pastel-success rounded-full shadow-pastel"
-                                     style="left: 75%;"></div>
-                            </div>
-                            <p class="text-xs text-pastel-textLight mt-1">Growing well - above average</p>
-                        </div>
-
-                        <!-- Height Percentile -->
-                        <div>
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-sm font-medium text-pastel-text">Height</span>
-                                <span class="text-sm font-semibold text-pastel-primary">60th percentile</span>
-                            </div>
-                            <div class="relative h-8 bg-pastel-light rounded-full overflow-hidden">
-                                <div class="absolute h-full bg-gradient-to-r from-pastel-success/20 via-pastel-success to-pastel-success/20"
-                                     style="width: 60%;"></div>
-                                <div class="percentile-indicator absolute top-1/2 transform -translate-y-1/2 w-4 h-4 bg-white border-2 border-pastel-success rounded-full shadow-pastel"
-                                     style="left: 60%;"></div>
-                            </div>
-                            <p class="text-xs text-pastel-textLight mt-1">Normal range - growing steadily</p>
-                        </div>
-
-                        <!-- Head Circumference Percentile -->
-                        <div>
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-sm font-medium text-pastel-text">Head Circumference</span>
-                                <span class="text-sm font-semibold text-pastel-primary">50th percentile</span>
-                            </div>
-                            <div class="relative h-8 bg-pastel-light rounded-full overflow-hidden">
-                                <div class="absolute h-full bg-gradient-to-r from-pastel-success/20 via-pastel-success to-pastel-success/20"
-                                     style="width: 50%;"></div>
-                                <div class="percentile-indicator absolute top-1/2 transform -translate-y-1/2 w-4 h-4 bg-white border-2 border-pastel-success rounded-full shadow-pastel"
-                                     style="left: 50%;"></div>
-                            </div>
-                            <p class="text-xs text-pastel-textLight mt-1">Perfect average</p>
-                        </div>
-                    </div>
-
-                    <!-- Legend -->
-                    <div class="mt-6 flex flex-wrap gap-4 text-xs">
-                        <div class="flex items-center gap-2">
-                            <div class="w-3 h-3 rounded-full bg-pastel-success"></div>
-                            <span>Normal (10th-90th)</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-3 h-3 rounded-full bg-pastel-warning"></div>
-                            <span>Watch (5th-10th, 90th-95th)</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-3 h-3 rounded-full bg-pastel-danger"></div>
-                            <span>Concern (Below 5th, Above 95th)</span>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Growth Charts -->
                 <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
                      style="animation-delay: 1.3s; animation-fill-mode: forwards;">
@@ -699,11 +658,11 @@
                             <i data-lucide="trending-up" class="h-5 w-5 text-pastel-accent2"></i>
                             Growth Charts
                         </h3>
-                        <select class="text-sm bg-pastel-light rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-primary">
-                            <option>Weight-for-age</option>
-                            <option>Length-for-age</option>
-                            <option>Weight-for-length</option>
-                            <option>Head circumference-for-age</option>
+                        <select id="chartTypeSelector"
+                                class="text-sm bg-pastel-light rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-primary">
+                            <option value="weight">Weight-for-age</option>
+                            <option value="height">Length-for-age</option>
+                            <option value="head">Head circumference-for-age</option>
                         </select>
                     </div>
 
@@ -713,15 +672,13 @@
 
                     <!-- Chart Actions -->
                     <div class="flex flex-wrap gap-2 justify-center">
-                        <button class="flex items-center gap-2 px-3 py-1.5 bg-pastel-light rounded-full text-sm hover:bg-pastel-secondary transition-colors">
-                            <i data-lucide="zoom-in" class="h-4 w-4"></i>
-                            Zoom
-                        </button>
-                        <button class="flex items-center gap-2 px-3 py-1.5 bg-pastel-light rounded-full text-sm hover:bg-pastel-secondary transition-colors">
+                        <button onclick="exportChart()"
+                                class="flex items-center gap-2 px-3 py-1.5 bg-pastel-light rounded-full text-sm hover:bg-pastel-secondary transition-colors">
                             <i data-lucide="download" class="h-4 w-4"></i>
                             Export
                         </button>
-                        <button class="flex items-center gap-2 px-3 py-1.5 bg-pastel-light rounded-full text-sm hover:bg-pastel-secondary transition-colors">
+                        <button onclick="shareChart()"
+                                class="flex items-center gap-2 px-3 py-1.5 bg-pastel-light rounded-full text-sm hover:bg-pastel-secondary transition-colors">
                             <i data-lucide="share-2" class="h-4 w-4"></i>
                             Share
                         </button>
@@ -747,41 +704,16 @@
                                 <th class="text-center py-2 px-3 font-medium text-pastel-textLight">Actions</th>
                             </tr>
                             </thead>
-                            <tbody>
-                            <tr class="border-b border-pastel-light hover:bg-pastel-lightest transition-colors">
-                                <td class="py-3 px-3">Nov 15, 2024</td>
-                                <td class="py-3 px-3">7.8 kg <span class="text-xs text-pastel-success">(75th)</span>
-                                </td>
-                                <td class="py-3 px-3">68.5 cm <span class="text-xs text-pastel-success">(60th)</span>
-                                </td>
-                                <td class="py-3 px-3">42.5 cm <span class="text-xs text-pastel-success">(50th)</span>
-                                </td>
-                                <td class="py-3 px-3 text-center">
-                                    <button class="text-pastel-primary hover:text-pastel-primaryHover">
-                                        <i data-lucide="edit-2" class="h-4 w-4"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr class="border-b border-pastel-light hover:bg-pastel-lightest transition-colors">
-                                <td class="py-3 px-3">Nov 10, 2024</td>
-                                <td class="py-3 px-3">7.5 kg <span class="text-xs text-pastel-success">(73rd)</span>
-                                </td>
-                                <td class="py-3 px-3">67.3 cm <span class="text-xs text-pastel-success">(58th)</span>
-                                </td>
-                                <td class="py-3 px-3">42.2 cm <span class="text-xs text-pastel-success">(48th)</span>
-                                </td>
-                                <td class="py-3 px-3 text-center">
-                                    <button class="text-pastel-primary hover:text-pastel-primaryHover">
-                                        <i data-lucide="edit-2" class="h-4 w-4"></i>
-                                    </button>
-                                </td>
-                            </tr>
+                            <tbody id="measurementHistoryBody">
+                            <!-- Measurement history will be populated here -->
                             </tbody>
                         </table>
                     </div>
 
                     <div class="mt-4 text-center">
-                        <button class="text-sm text-pastel-primary hover:underline">View All History</button>
+                        <button onclick="loadMoreHistory()" class="text-sm text-pastel-primary hover:underline">View All
+                            History
+                        </button>
                     </div>
                 </div>
 
@@ -793,39 +725,8 @@
                         Growth Insights & Recommendations
                     </h3>
 
-                    <div class="space-y-3">
-                        <div class="bg-pastel-success/10 rounded-xl p-4 border border-pastel-success/20">
-                            <div class="flex items-start gap-3">
-                                <i data-lucide="check-circle" class="h-5 w-5 text-pastel-success mt-0.5"></i>
-                                <div>
-                                    <p class="font-medium text-pastel-text">Healthy Growth Pattern</p>
-                                    <p class="text-sm text-pastel-textLight mt-1">Emma's growth is following a
-                                        consistent curve. Continue current feeding routine.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-pastel-warning/10 rounded-xl p-4 border border-pastel-warning/20">
-                            <div class="flex items-start gap-3">
-                                <i data-lucide="info" class="h-5 w-5 text-pastel-warning mt-0.5"></i>
-                                <div>
-                                    <p class="font-medium text-pastel-text">Next Check-up Reminder</p>
-                                    <p class="text-sm text-pastel-textLight mt-1">Schedule 9-month wellness visit with
-                                        pediatrician in 2 weeks.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light">
-                            <div class="flex items-start gap-3">
-                                <i data-lucide="lightbulb" class="h-5 w-5 text-pastel-accent2 mt-0.5"></i>
-                                <div>
-                                    <p class="font-medium text-pastel-text">Nutrition Tip</p>
-                                    <p class="text-sm text-pastel-textLight mt-1">Consider introducing iron-rich foods
-                                        like pureed meats and fortified cereals.</p>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="space-y-3" id="growthRecommendations">
+                        <!-- Recommendations will be populated here -->
                     </div>
                 </div>
 
@@ -838,78 +739,26 @@
                     </h3>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <button class="flex items-center justify-center gap-3 p-4 bg-pastel-lightest rounded-xl hover:bg-pastel-light transition-colors">
+                        <button onclick="generatePDFReport()"
+                                class="flex items-center justify-center gap-3 p-4 bg-pastel-lightest rounded-xl hover:bg-pastel-light transition-colors">
                             <i data-lucide="file-text" class="h-5 w-5 text-pastel-primary"></i>
                             <span class="text-sm font-medium">Generate PDF Report</span>
                         </button>
-                        <button class="flex items-center justify-center gap-3 p-4 bg-pastel-lightest rounded-xl hover:bg-pastel-light transition-colors">
+                        <button onclick="emailToDoctor()"
+                                class="flex items-center justify-center gap-3 p-4 bg-pastel-lightest rounded-xl hover:bg-pastel-light transition-colors">
                             <i data-lucide="mail" class="h-5 w-5 text-pastel-accent1"></i>
                             <span class="text-sm font-medium">Email to Doctor</span>
                         </button>
-                        <button class="flex items-center justify-center gap-3 p-4 bg-pastel-lightest rounded-xl hover:bg-pastel-light transition-colors">
+                        <button onclick="printSummary()"
+                                class="flex items-center justify-center gap-3 p-4 bg-pastel-lightest rounded-xl hover:bg-pastel-light transition-colors">
                             <i data-lucide="printer" class="h-5 w-5 text-pastel-accent2"></i>
                             <span class="text-sm font-medium">Print Summary</span>
                         </button>
-                        <button class="flex items-center justify-center gap-3 p-4 bg-pastel-lightest rounded-xl hover:bg-pastel-light transition-colors">
+                        <button onclick="prepareDoctorVisit()"
+                                class="flex items-center justify-center gap-3 p-4 bg-pastel-lightest rounded-xl hover:bg-pastel-light transition-colors">
                             <i data-lucide="clipboard" class="h-5 w-5 text-pastel-text"></i>
                             <span class="text-sm font-medium">Doctor Visit Prep</span>
                         </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Behavioral Trends Section -->
-            <div class="grid lg:grid-cols-2 gap-6">
-                <!-- Sleep Trends Chart -->
-                <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-left"
-                     style="animation-delay: 0.8s; animation-fill-mode: forwards;">
-                    <h2 class="text-lg font-serif font-medium text-pastel-heading mb-4 flex items-center gap-2">
-                        <i data-lucide="trending-up" class="h-5 w-5 text-pastel-accent2"></i>
-                        Sleep Trends
-                    </h2>
-                    <div class="h-48 mb-4">
-                        <canvas id="sleepChart"></canvas>
-                    </div>
-                    <p class="text-sm text-pastel-textLight">
-                        Observing a consistent improvement in uninterrupted sleep patterns.
-                    </p>
-                </div>
-
-                <!-- Feeding Habits Chart -->
-                <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-right"
-                     style="animation-delay: 0.9s; animation-fill-mode: forwards;">
-                    <h2 class="text-lg font-serif font-medium text-pastel-heading mb-4 flex items-center gap-2">
-                        <i data-lucide="utensils" class="h-5 w-5 text-pastel-accent1"></i>
-                        Feeding Habits
-                    </h2>
-                    <div class="h-48 mb-4">
-                        <canvas id="feedingChart"></canvas>
-                    </div>
-                    <p class="text-sm text-pastel-textLight">
-                        Regular feeding times have been established successfully.
-                    </p>
-                </div>
-            </div>
-
-            <!-- Personalized Recommendations -->
-            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
-                 style="animation-delay: 1.0s; animation-fill-mode: forwards;">
-                <h2 class="text-xl font-serif font-medium text-pastel-heading mb-4 flex items-center gap-2">
-                    <i data-lucide="sparkles" class="h-5 w-5 text-pastel-accent2"></i>
-                    Personalized Recommendations
-                </h2>
-                <div class="grid gap-3">
-                    <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light flex items-start gap-3 hover:shadow-pastel transition-shadow">
-                        <i data-lucide="check-circle" class="h-5 w-5 text-pastel-primary mt-0.5"></i>
-                        <p class="text-pastel-text">Maintain the current bedtime routine to support sleep quality.</p>
-                    </div>
-                    <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light flex items-start gap-3 hover:shadow-pastel transition-shadow">
-                        <i data-lucide="info" class="h-5 w-5 text-pastel-accent1 mt-0.5"></i>
-                        <p class="text-pastel-text">Introduce new foods gradually to diversify diet.</p>
-                    </div>
-                    <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light flex items-start gap-3 hover:shadow-pastel transition-shadow">
-                        <i data-lucide="sun" class="h-5 w-5 text-pastel-accent2 mt-0.5"></i>
-                        <p class="text-pastel-text">Consider incorporating more outdoor playtime for vitamin D.</p>
                     </div>
                 </div>
             </div>
@@ -930,7 +779,8 @@
                     <i data-lucide="bar-chart-3" class="h-5 w-5"></i>
                     <span class="text-xs">Insights</span>
                 </button>
-                <button class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
+                <button onclick="openMeasurementModal()"
+                        class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
                     <i data-lucide="plus-circle" class="h-5 w-5"></i>
                     <span class="text-xs">Add</span>
                 </button>
@@ -945,11 +795,46 @@
 
 <script src="../js/auth.js" data-auto-init="true"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    // Global variables for storing app state
+    let currentBaby = null;
+    let currentUser = null;
+    let measurements = [];
+    let currentUnit = 'metric';
+    let growthChart = null;
+    let editingMeasurementId = null;
+
+    // Initialize the application
+    document.addEventListener('DOMContentLoaded', async () => {
         // Initialize Lucide icons
         lucide.createIcons();
 
-        // Mobile menu toggle functionality
+        // Initialize mobile menu
+        initializeMobileMenu();
+
+        // Initialize unit selector
+        initializeUnitSelector();
+
+        // Initialize chart type selector
+        initializeChartSelector();
+
+        // Load user data and babies
+        await loadUserData();
+        await loadBabies();
+
+        // Initialize measurement form
+        initializeMeasurementForm();
+
+        // Set default datetime to now
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('measurementDate').value = now.toISOString().slice(0, 16);
+
+        // Add keyboard shortcuts
+        initializeKeyboardShortcuts();
+    });
+
+    // Mobile menu toggle functionality
+    function initializeMobileMenu() {
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('overlay');
@@ -961,73 +846,478 @@
 
         mobileMenuBtn.addEventListener('click', toggleMobileMenu);
         overlay.addEventListener('click', toggleMobileMenu);
+    }
 
-        // Unit selector functionality
+    // Unit selector functionality
+    function initializeUnitSelector() {
         const metricBtn = document.getElementById('metricBtn');
         const imperialBtn = document.getElementById('imperialBtn');
-        let currentUnit = 'metric';
 
-        metricBtn.addEventListener('click', () => {
-            currentUnit = 'metric';
+        metricBtn.addEventListener('click', () => setUnit('metric'));
+        imperialBtn.addEventListener('click', () => setUnit('imperial'));
+    }
+
+    function setUnit(unit) {
+        currentUnit = unit;
+        const metricBtn = document.getElementById('metricBtn');
+        const imperialBtn = document.getElementById('imperialBtn');
+
+        if (unit === 'metric') {
             metricBtn.classList.add('bg-white', 'text-pastel-primary', 'shadow-pastel');
             metricBtn.classList.remove('text-pastel-text');
             imperialBtn.classList.remove('bg-white', 'text-pastel-primary', 'shadow-pastel');
             imperialBtn.classList.add('text-pastel-text');
-            updateUnits();
-        });
-
-        imperialBtn.addEventListener('click', () => {
-            currentUnit = 'imperial';
+        } else {
             imperialBtn.classList.add('bg-white', 'text-pastel-primary', 'shadow-pastel');
             imperialBtn.classList.remove('text-pastel-text');
             metricBtn.classList.remove('bg-white', 'text-pastel-primary', 'shadow-pastel');
             metricBtn.classList.add('text-pastel-text');
-            updateUnits();
-        });
-
-        function updateUnits() {
-            // Update weight units
-            const weightUnit = currentUnit === 'metric' ? 'kg' : 'lbs';
-            const heightUnit = currentUnit === 'metric' ? 'cm' : 'in';
-
-            // Update displays
-            document.querySelectorAll('.weight-unit').forEach(el => el.textContent = weightUnit);
-            document.querySelectorAll('.height-unit').forEach(el => el.textContent = heightUnit);
         }
 
-        // Chart.js configuration for pastel theme
-        Chart.defaults.color = '#938278'; // pastel.textLight
-        Chart.defaults.borderColor = '#ffe8d9'; // pastel.light
+        updateUnits();
+        displayCurrentMeasurements();
+        updateGrowthChart();
+    }
+
+    function updateUnits() {
+        const weightUnit = currentUnit === 'metric' ? 'kg' : 'lbs';
+        const heightUnit = currentUnit === 'metric' ? 'cm' : 'in';
+
+        document.querySelectorAll('.weight-unit').forEach(el => el.textContent = weightUnit);
+        document.querySelectorAll('.height-unit').forEach(el => el.textContent = heightUnit);
+    }
+
+    // Convert measurements between units
+    function convertWeight(value, toImperial = false) {
+        return toImperial ? (value * 2.20462).toFixed(2) : (value / 2.20462).toFixed(2);
+    }
+
+    function convertHeight(value, toImperial = false) {
+        return toImperial ? (value * 0.393701).toFixed(1) : (value / 0.393701).toFixed(1);
+    }
+
+    // Load user data
+    async function loadUserData() {
+        try {
+            currentUser = await BabyHelperAuth.api.endpoints.getUserProfile();
+
+            // Update user avatar
+            const userAvatar = document.getElementById('userAvatar');
+            if (currentUser && currentUser.name) {
+                const initials = currentUser.name.split(' ')
+                    .map(word => word[0])
+                    .join('')
+                    .toUpperCase()
+                    .slice(0, 2);
+                userAvatar.textContent = initials;
+            }
+        } catch (error) {
+            console.error('Failed to load user data:', error);
+        }
+    }
+
+    // Load babies and select one
+    async function loadBabies() {
+        showLoading();
+        try {
+            const babies = await BabyHelperAuth.api.endpoints.getBabies();
+
+            if (babies && babies.length > 0) {
+                // Select the first baby or previously selected one
+                const savedBabyId = localStorage.getItem('selectedBabyId');
+                currentBaby = babies.find(b => b.id == savedBabyId) || babies[0];
+
+                updateBabyInfo();
+                await loadMeasurements();
+            } else {
+                // No babies found
+                document.getElementById('babyName').textContent = 'No baby added';
+                document.getElementById('babyAge').textContent = 'Add a baby to start';
+                showNoDataMessage();
+            }
+        } catch (error) {
+            console.error('Failed to load babies:', error);
+            showError('Failed to load baby data');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    // Update baby info display
+    function updateBabyInfo() {
+        if (!currentBaby) return;
+
+        document.getElementById('babyName').textContent = currentBaby.name;
+        document.getElementById('babyAge').textContent = calculateAge(currentBaby.date_of_birth);
+
+        // Save selected baby
+        localStorage.setItem('selectedBabyId', currentBaby.id);
+
+        // Make baby info clickable to change selection
+        document.getElementById('babyInfo').onclick = openBabySelector;
+    }
+
+    // Calculate age from date of birth
+    function calculateAge(dateOfBirth) {
+        const today = new Date();
+        const birthDate = new Date(dateOfBirth);
+        const monthsDiff = (today.getFullYear() - birthDate.getFullYear()) * 12 +
+            (today.getMonth() - birthDate.getMonth());
+
+        if (monthsDiff < 1) {
+            const daysDiff = Math.floor((today - birthDate) / (1000 * 60 * 60 * 24));
+            return `${daysDiff} days`;
+        } else if (monthsDiff < 24) {
+            return `${monthsDiff} months`;
+        } else {
+            const years = Math.floor(monthsDiff / 12);
+            const months = monthsDiff % 12;
+            return months > 0 ? `${years} years ${months} months` : `${years} years`;
+        }
+    }
+
+    // Baby selector
+    async function openBabySelector() {
+        const babies = await BabyHelperAuth.api.endpoints.getBabies();
+        const babyList = document.getElementById('babyList');
+
+        babyList.innerHTML = babies.map(baby => `
+            <button onclick="selectBaby(${baby.id})"
+                    class="w-full text-left p-3 rounded-xl hover:bg-pastel-light transition-colors ${baby.id === currentBaby?.id ? 'bg-pastel-light' : ''}">
+                <div class="font-medium">${baby.name}</div>
+                <div class="text-sm text-pastel-textLight">${calculateAge(baby.date_of_birth)}</div>
+            </button>
+        `).join('');
+
+        document.getElementById('babySelectorModal').classList.remove('hidden');
+    }
+
+    function closeBabySelector() {
+        document.getElementById('babySelectorModal').classList.add('hidden');
+    }
+
+    async function selectBaby(babyId) {
+        const babies = await BabyHelperAuth.api.endpoints.getBabies();
+        currentBaby = babies.find(b => b.id === babyId);
+
+        if (currentBaby) {
+            updateBabyInfo();
+            await loadMeasurements();
+            closeBabySelector();
+        }
+    }
+
+    // Load growth measurements
+    async function loadMeasurements() {
+        if (!currentBaby) return;
+
+        showLoading();
+        try {
+            const response = await BabyHelperAuth.api.request(`/growth/baby/${currentBaby.id}`);
+
+            if (response.ok) {
+                measurements = await response.json();
+
+                // Update displays
+                displayCurrentMeasurements();
+                displayMeasurementHistory();
+                updateGrowthChart();
+                updateStatistics();
+                generateRecommendations();
+
+                // Update last updated time
+                document.getElementById('lastUpdated').textContent = formatTimeAgo(new Date());
+            } else {
+                const error = await BabyHelperAuth.api.parseErrorResponse(response);
+                console.error('Failed to load measurements:', error);
+                measurements = [];
+                showNoDataMessage();
+            }
+        } catch (error) {
+            console.error('Request failed:', error);
+            measurements = [];
+            showError('Failed to load measurements');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    // Display current measurements
+    function displayCurrentMeasurements() {
+        if (measurements.length === 0) {
+            document.getElementById('currentWeight').textContent = '--';
+            document.getElementById('currentWeightValue').textContent = '--';
+            document.getElementById('weightChange').textContent = '--';
+            document.getElementById('weightChangeDetail').textContent = 'No measurements recorded';
+
+            document.getElementById('currentHeight').textContent = '--';
+            document.getElementById('currentHeightValue').textContent = '--';
+            document.getElementById('heightChange').textContent = '--';
+            document.getElementById('heightChangeDetail').textContent = 'No measurements recorded';
+
+            document.getElementById('currentHeadCirc').textContent = '--';
+            document.getElementById('currentHeadValue').textContent = '--';
+            document.getElementById('headChange').textContent = '--';
+
+            return;
+        }
+
+        // Get the most recent measurement
+        const latest = measurements[0];
+        const previous = measurements[1];
+
+        // Weight
+        if (latest.weight !== null) {
+            const weight = currentUnit === 'metric' ? latest.weight : convertWeight(latest.weight, true);
+            document.getElementById('currentWeight').textContent = weight;
+            document.getElementById('currentWeightValue').textContent = weight;
+
+            if (previous && previous.weight !== null) {
+                const change = latest.weight - previous.weight;
+                const changeStr = change >= 0 ? `+${change.toFixed(2)}` : change.toFixed(2);
+                const changeClass = change >= 0 ? 'text-pastel-success' : 'text-pastel-warning';
+
+                document.getElementById('weightChange').innerHTML = `<span class="${changeClass}">${changeStr} ${currentUnit === 'metric' ? 'kg' : 'lbs'}</span>`;
+                document.getElementById('weightChangeDetail').innerHTML = `<span class="${changeClass}">${changeStr} ${currentUnit === 'metric' ? 'kg' : 'lbs'}</span> since ${formatDate(previous.measurement_date)}`;
+            }
+        }
+
+        // Height
+        if (latest.height !== null) {
+            const height = currentUnit === 'metric' ? latest.height : convertHeight(latest.height, true);
+            document.getElementById('currentHeight').textContent = height;
+            document.getElementById('currentHeightValue').textContent = height;
+
+            if (previous && previous.height !== null) {
+                const change = latest.height - previous.height;
+                const changeStr = change >= 0 ? `+${change.toFixed(1)}` : change.toFixed(1);
+                const changeClass = change >= 0 ? 'text-pastel-success' : 'text-pastel-warning';
+
+                document.getElementById('heightChange').innerHTML = `<span class="${changeClass}">${changeStr} ${currentUnit === 'metric' ? 'cm' : 'in'}</span>`;
+                document.getElementById('heightChangeDetail').innerHTML = `<span class="${changeClass}">${changeStr} ${currentUnit === 'metric' ? 'cm' : 'in'}</span> since ${formatDate(previous.measurement_date)}`;
+            }
+        }
+
+        // Head circumference
+        if (latest.head_circumference !== null) {
+            const head = currentUnit === 'metric' ? latest.head_circumference : convertHeight(latest.head_circumference, true);
+            document.getElementById('currentHeadCirc').textContent = head;
+            document.getElementById('currentHeadValue').textContent = head;
+
+            if (previous && previous.head_circumference !== null) {
+                const change = latest.head_circumference - previous.head_circumference;
+                const changeStr = change >= 0 ? `+${change.toFixed(1)}` : change.toFixed(1);
+                const changeClass = change >= 0 ? 'text-pastel-success' : 'text-pastel-warning';
+
+                document.getElementById('headChange').innerHTML = `<span class="${changeClass}">${changeStr} ${currentUnit === 'metric' ? 'cm' : 'in'}</span>`;
+            }
+        }
+    }
+
+    // Display measurement history
+    function displayMeasurementHistory() {
+        const tbody = document.getElementById('measurementHistoryBody');
+
+        if (measurements.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-8 text-pastel-textLight">
+                        No measurements recorded yet. Click "Add New Entry" to start tracking!
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        // Display first 10 measurements
+        const displayMeasurements = measurements.slice(0, 10);
+
+        tbody.innerHTML = displayMeasurements.map(m => {
+            const weight = m.weight !== null ?
+                `${currentUnit === 'metric' ? m.weight : convertWeight(m.weight, true)} ${currentUnit === 'metric' ? 'kg' : 'lbs'}` :
+                '--';
+            const height = m.height !== null ?
+                `${currentUnit === 'metric' ? m.height : convertHeight(m.height, true)} ${currentUnit === 'metric' ? 'cm' : 'in'}` :
+                '--';
+            const head = m.head_circumference !== null ?
+                `${currentUnit === 'metric' ? m.head_circumference : convertHeight(m.head_circumference, true)} ${currentUnit === 'metric' ? 'cm' : 'in'}` :
+                '--';
+
+            return `
+                <tr class="border-b border-pastel-light hover:bg-pastel-lightest transition-colors">
+                    <td class="py-3 px-3">${formatDate(m.measurement_date)}</td>
+                    <td class="py-3 px-3">${weight}</td>
+                    <td class="py-3 px-3">${height}</td>
+                    <td class="py-3 px-3">${head}</td>
+                    <td class="py-3 px-3 text-center">
+                        <button onclick="editMeasurement(${m.id})" class="text-pastel-primary hover:text-pastel-primaryHover mr-2">
+                            <i data-lucide="edit-2" class="h-4 w-4"></i>
+                        </button>
+                        <button onclick="deleteMeasurement(${m.id})" class="text-pastel-danger hover:text-red-700">
+                            <i data-lucide="trash-2" class="h-4 w-4"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        // Re-render icons
+        lucide.createIcons();
+    }
+
+    // Update statistics
+    function updateStatistics() {
+        document.getElementById('totalMeasurements').textContent = measurements.length;
+
+        // Calculate key insights
+        if (measurements.length > 0) {
+            const latest = measurements[0];
+            const insights = [];
+
+            if (latest.weight !== null && measurements.length > 1) {
+                const weightGain = calculateAverageGain(measurements, 'weight');
+                if (weightGain > 0) {
+                    insights.push(`${currentBaby.name} has been gaining an average of <span class="font-semibold text-pastel-primary">${weightGain.toFixed(2)} ${currentUnit === 'metric' ? 'kg' : 'lbs'} per month</span>.`);
+                }
+            }
+
+            if (latest.height !== null && measurements.length > 1) {
+                const heightGain = calculateAverageGain(measurements, 'height');
+                if (heightGain > 0) {
+                    insights.push(`Growing at an average rate of <span class="font-semibold text-pastel-primary">${heightGain.toFixed(1)} ${currentUnit === 'metric' ? 'cm' : 'inches'} per month</span>.`);
+                }
+            }
+
+            if (insights.length > 0) {
+                document.getElementById('keyInsights').innerHTML = insights.join(' ') + ' <span class="text-pastel-accent1 font-medium">Keep up the great work! 🌟</span>';
+            } else {
+                document.getElementById('keyInsights').innerHTML = `Start tracking ${currentBaby.name}'s growth regularly to see insights and trends. <span class="text-pastel-accent1 font-medium">Every measurement counts! 📊</span>`;
+            }
+        }
+    }
+
+    // Calculate average gain per month
+    function calculateAverageGain(measurements, field) {
+        const validMeasurements = measurements.filter(m => m[field] !== null);
+        if (validMeasurements.length < 2) return 0;
+
+        const latest = validMeasurements[0];
+        const oldest = validMeasurements[validMeasurements.length - 1];
+
+        const monthsDiff = (new Date(latest.measurement_date) - new Date(oldest.measurement_date)) / (1000 * 60 * 60 * 24 * 30);
+
+        if (monthsDiff === 0) return 0;
+
+        return (latest[field] - oldest[field]) / monthsDiff;
+    }
+
+    // Generate growth recommendations
+    function generateRecommendations() {
+        const recommendations = document.getElementById('growthRecommendations');
+        const items = [];
+
+        if (measurements.length === 0) {
+            items.push({
+                type: 'info',
+                icon: 'info',
+                title: 'Get Started',
+                text: 'Start tracking your baby\'s growth by adding your first measurement!'
+            });
+        } else {
+            // Check measurement frequency
+            if (measurements.length > 0) {
+                const daysSinceLastMeasurement = (new Date() - new Date(measurements[0].measurement_date)) / (1000 * 60 * 60 * 24);
+
+                if (daysSinceLastMeasurement > 30) {
+                    items.push({
+                        type: 'warning',
+                        icon: 'alert-circle',
+                        title: 'Time for a Check-up',
+                        text: `It's been ${Math.floor(daysSinceLastMeasurement)} days since the last measurement. Regular tracking helps monitor healthy growth.`
+                    });
+                }
+            }
+
+            // Growth pattern analysis
+            if (measurements.length > 2) {
+                items.push({
+                    type: 'success',
+                    icon: 'check-circle',
+                    title: 'Consistent Tracking',
+                    text: `You've recorded ${measurements.length} measurements. This data helps track ${currentBaby.name}'s growth patterns effectively.`
+                });
+            }
+
+            // Age-specific recommendations
+            const ageMonths = getAgeInMonths(currentBaby.date_of_birth);
+            if (ageMonths < 12) {
+                items.push({
+                    type: 'info',
+                    icon: 'lightbulb',
+                    title: 'Growth Tips',
+                    text: 'During the first year, babies typically triple their birth weight and grow about 10 inches in length.'
+                });
+            }
+        }
+
+        recommendations.innerHTML = items.map(item => `
+            <div class="bg-pastel-${item.type === 'success' ? 'success' : item.type === 'warning' ? 'warning' : 'lightest'}/10 rounded-xl p-4 border border-pastel-${item.type === 'success' ? 'success' : item.type === 'warning' ? 'warning' : 'light'}/20">
+                <div class="flex items-start gap-3">
+                    <i data-lucide="${item.icon}" class="h-5 w-5 text-pastel-${item.type === 'success' ? 'success' : item.type === 'warning' ? 'warning' : 'accent2'} mt-0.5"></i>
+                    <div>
+                        <p class="font-medium text-pastel-text">${item.title}</p>
+                        <p class="text-sm text-pastel-textLight mt-1">${item.text}</p>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        // Re-render icons
+        lucide.createIcons();
+    }
+
+    // Get age in months
+    function getAgeInMonths(dateOfBirth) {
+        const today = new Date();
+        const birthDate = new Date(dateOfBirth);
+        return (today.getFullYear() - birthDate.getFullYear()) * 12 +
+            (today.getMonth() - birthDate.getMonth());
+    }
+
+    // Chart functionality
+    function initializeChartSelector() {
+        document.getElementById('chartTypeSelector').addEventListener('change', updateGrowthChart);
+    }
+
+    function updateGrowthChart() {
+        const chartType = document.getElementById('chartTypeSelector').value;
+        const ctx = document.getElementById('growthChart').getContext('2d');
+
+        // Destroy existing chart
+        if (growthChart) {
+            growthChart.destroy();
+        }
+
+        // Prepare data
+        const chartData = prepareChartData(chartType);
+
+        if (!chartData) {
+            // No data available
+            ctx.font = '14px Nunito Sans';
+            ctx.fillStyle = '#938278';
+            ctx.textAlign = 'center';
+            ctx.fillText('No data available for this chart', ctx.canvas.width / 2, ctx.canvas.height / 2);
+            return;
+        }
+
+        // Chart.js configuration
+        Chart.defaults.color = '#938278';
+        Chart.defaults.borderColor = '#ffe8d9';
         Chart.defaults.font.family = "'Nunito Sans', sans-serif";
 
-        // Sleep Trends Chart
-        const sleepCtx = document.getElementById('sleepChart').getContext('2d');
-        new Chart(sleepCtx, {
+        growthChart = new Chart(ctx, {
             type: 'line',
-            data: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                datasets: [{
-                    label: 'Sleep Hours',
-                    data: [7.5, 7.8, 8.2, 7.9, 8.5, 8.8, 8.7],
-                    borderColor: '#ff8c69', // pastel.primary
-                    backgroundColor: 'rgba(255, 140, 105, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#ff8c69',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: 4,
-                    pointHoverRadius: 6
-                }, {
-                    label: 'Recommended',
-                    data: [8, 8, 8, 8, 8, 8, 8],
-                    borderColor: '#ffb5a7', // pastel.accent1
-                    backgroundColor: 'transparent',
-                    borderDash: [5, 5],
-                    pointRadius: 0,
-                    tension: 0
-                }]
-            },
+            data: chartData,
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -1039,7 +1329,6 @@
                             usePointStyle: true,
                             padding: 15,
                             font: {
-                                family: "'Nunito Sans', sans-serif",
                                 size: 12
                             }
                         }
@@ -1048,148 +1337,12 @@
                 scales: {
                     y: {
                         beginAtZero: false,
-                        min: 6,
-                        max: 10,
                         ticks: {
                             callback: function (value) {
-                                return value + 'h';
-                            },
-                            font: {
-                                family: "'Nunito Sans', sans-serif"
-                            }
-                        },
-                        grid: {
-                            color: '#ffe8d9'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            color: '#ffe8d9'
-                        },
-                        ticks: {
-                            font: {
-                                family: "'Nunito Sans', sans-serif"
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        // Feeding Habits Chart
-        const feedingCtx = document.getElementById('feedingChart').getContext('2d');
-        new Chart(feedingCtx, {
-            type: 'bar',
-            data: {
-                labels: ['6am', '9am', '12pm', '3pm', '6pm', '9pm'],
-                datasets: [{
-                    label: 'Feeding Amount (oz)',
-                    data: [6, 5, 6, 4, 6, 5],
-                    backgroundColor: '#ffb5a7', // pastel.accent1
-                    borderRadius: 8,
-                    borderWidth: 2,
-                    borderColor: '#ffd8cc' // pastel.secondary
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {display: false}
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 8,
-                        ticks: {
-                            callback: function (value) {
-                                return value + ' oz';
-                            },
-                            font: {
-                                family: "'Nunito Sans', sans-serif"
-                            }
-                        },
-                        grid: {
-                            color: '#ffe8d9'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            font: {
-                                family: "'Nunito Sans', sans-serif"
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        // Growth Chart
-        const growthCtx = document.getElementById('growthChart').getContext('2d');
-        new Chart(growthCtx, {
-            type: 'line',
-            data: {
-                labels: ['Birth', '1mo', '2mo', '3mo', '4mo', '5mo', '6mo', '7mo', '8mo'],
-                datasets: [{
-                    label: "Emma's Weight",
-                    data: [3.2, 4.1, 5.0, 5.8, 6.4, 6.9, 7.3, 7.5, 7.8],
-                    borderColor: '#ff8c69',
-                    backgroundColor: 'rgba(255, 140, 105, 0.1)',
-                    fill: false,
-                    tension: 0.4,
-                    pointBackgroundColor: '#ff8c69',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: 5,
-                    pointHoverRadius: 7
-                }, {
-                    label: '95th Percentile',
-                    data: [4.2, 5.5, 6.8, 7.9, 8.8, 9.5, 10.1, 10.6, 11.0],
-                    borderColor: '#fec89a',
-                    borderDash: [5, 5],
-                    fill: false,
-                    pointRadius: 0
-                }, {
-                    label: '50th Percentile',
-                    data: [3.3, 4.3, 5.3, 6.2, 6.9, 7.5, 8.0, 8.4, 8.8],
-                    borderColor: '#ffb5a7',
-                    borderDash: [5, 5],
-                    fill: false,
-                    pointRadius: 0
-                }, {
-                    label: '5th Percentile',
-                    data: [2.5, 3.2, 3.9, 4.5, 5.0, 5.4, 5.8, 6.1, 6.4],
-                    borderColor: '#ffd8cc',
-                    borderDash: [5, 5],
-                    fill: false,
-                    pointRadius: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'bottom',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 10,
-                            font: {
-                                size: 11
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function (value) {
-                                return value + ' kg';
+                                const unit = chartType === 'weight' ?
+                                    (currentUnit === 'metric' ? ' kg' : ' lbs') :
+                                    (currentUnit === 'metric' ? ' cm' : ' in');
+                                return value + unit;
                             }
                         },
                         grid: {
@@ -1204,33 +1357,359 @@
                 }
             }
         });
+    }
 
-        // Add keyboard shortcuts
+    function prepareChartData(type) {
+        let field;
+        let label;
+        let color;
+
+        switch (type) {
+            case 'weight':
+                field = 'weight';
+                label = 'Weight';
+                color = '#ff8c69';
+                break;
+            case 'height':
+                field = 'height';
+                label = 'Height';
+                color = '#ffb5a7';
+                break;
+            case 'head':
+                field = 'head_circumference';
+                label = 'Head Circumference';
+                color = '#fec89a';
+                break;
+        }
+
+        const validMeasurements = measurements.filter(m => m[field] !== null).reverse();
+
+        if (validMeasurements.length === 0) {
+            return null;
+        }
+
+        const labels = validMeasurements.map(m => formatShortDate(m.measurement_date));
+        const data = validMeasurements.map(m => {
+            const value = m[field];
+            if (type === 'weight' && currentUnit === 'imperial') {
+                return parseFloat(convertWeight(value, true));
+            } else if ((type === 'height' || type === 'head') && currentUnit === 'imperial') {
+                return parseFloat(convertHeight(value, true));
+            }
+            return value;
+        });
+
+        return {
+            labels: labels,
+            datasets: [{
+                label: `${currentBaby.name}'s ${label}`,
+                data: data,
+                borderColor: color,
+                backgroundColor: color + '20',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: color,
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }]
+        };
+    }
+
+    // Measurement modal functions
+    function openMeasurementModal(focusField = null) {
+        editingMeasurementId = null;
+        document.getElementById('measurementForm').reset();
+
+        // Set default datetime to now
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('measurementDate').value = now.toISOString().slice(0, 16);
+
+        // Focus on specific field if requested
+        if (focusField) {
+            setTimeout(() => {
+                switch (focusField) {
+                    case 'weight':
+                        document.getElementById('measurementWeight').focus();
+                        break;
+                    case 'height':
+                        document.getElementById('measurementHeight').focus();
+                        break;
+                    case 'head':
+                        document.getElementById('measurementHead').focus();
+                        break;
+                }
+            }, 100);
+        }
+
+        document.getElementById('measurementModal').classList.remove('hidden');
+    }
+
+    function closeMeasurementModal() {
+        document.getElementById('measurementModal').classList.add('hidden');
+        editingMeasurementId = null;
+    }
+
+    // Initialize measurement form
+    function initializeMeasurementForm() {
+        document.getElementById('measurementForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!currentBaby) {
+                showError('Please select a baby first');
+                return;
+            }
+
+            const formData = {
+                baby_id: currentBaby.id,
+                measurement_date: new Date(document.getElementById('measurementDate').value).toISOString(),
+                weight: parseFloat(document.getElementById('measurementWeight').value) || null,
+                height: parseFloat(document.getElementById('measurementHeight').value) || null,
+                head_circumference: parseFloat(document.getElementById('measurementHead').value) || null,
+                notes: document.getElementById('measurementNotes').value || null
+            };
+
+            // Convert from imperial if needed
+            if (currentUnit === 'imperial') {
+                if (formData.weight !== null) {
+                    formData.weight = parseFloat(convertWeight(formData.weight, false));
+                }
+                if (formData.height !== null) {
+                    formData.height = parseFloat(convertHeight(formData.height, false));
+                }
+                if (formData.head_circumference !== null) {
+                    formData.head_circumference = parseFloat(convertHeight(formData.head_circumference, false));
+                }
+            }
+
+            // Validate at least one measurement
+            if (formData.weight === null && formData.height === null && formData.head_circumference === null) {
+                showError('Please enter at least one measurement');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                let response;
+                if (editingMeasurementId) {
+                    // Update existing measurement
+                    response = await BabyHelperAuth.api.request(`/growth/${editingMeasurementId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                } else {
+                    // Create new measurement
+                    response = await BabyHelperAuth.api.request('/growth/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+                }
+
+                if (response.ok) {
+                    closeMeasurementModal();
+                    await loadMeasurements();
+                    showSuccess(editingMeasurementId ? 'Measurement updated successfully!' : 'Measurement added successfully!');
+                } else {
+                    const error = await BabyHelperAuth.api.parseErrorResponse(response);
+                    showError(error.message || 'Failed to save measurement');
+                }
+            } catch (error) {
+                console.error('Failed to save measurement:', error);
+                showError('Failed to save measurement');
+            } finally {
+                hideLoading();
+            }
+        });
+    }
+
+    // Edit measurement
+    async function editMeasurement(measurementId) {
+        const measurement = measurements.find(m => m.id === measurementId);
+        if (!measurement) return;
+
+        editingMeasurementId = measurementId;
+
+        // Fill form with existing data
+        const date = new Date(measurement.measurement_date);
+        date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+        document.getElementById('measurementDate').value = date.toISOString().slice(0, 16);
+
+        if (measurement.weight !== null) {
+            document.getElementById('measurementWeight').value = currentUnit === 'metric' ?
+                measurement.weight : convertWeight(measurement.weight, true);
+        }
+
+        if (measurement.height !== null) {
+            document.getElementById('measurementHeight').value = currentUnit === 'metric' ?
+                measurement.height : convertHeight(measurement.height, true);
+        }
+
+        if (measurement.head_circumference !== null) {
+            document.getElementById('measurementHead').value = currentUnit === 'metric' ?
+                measurement.head_circumference : convertHeight(measurement.head_circumference, true);
+        }
+
+        document.getElementById('measurementNotes').value = measurement.notes || '';
+
+        document.getElementById('measurementModal').classList.remove('hidden');
+    }
+
+    // Delete measurement
+    async function deleteMeasurement(measurementId) {
+        if (!confirm('Are you sure you want to delete this measurement?')) {
+            return;
+        }
+
+        showLoading();
+
+        try {
+            const response = await BabyHelperAuth.api.request(`/growth/${measurementId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                await loadMeasurements();
+                showSuccess('Measurement deleted successfully!');
+            } else {
+                const error = await BabyHelperAuth.api.parseErrorResponse(response);
+                showError(error.message || 'Failed to delete measurement');
+            }
+        } catch (error) {
+            console.error('Failed to delete measurement:', error);
+            showError('Failed to delete measurement');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    // Export functions (placeholders for future implementation)
+    function exportChart() {
+        // TODO: Implement chart export functionality
+        showInfo('Chart export feature coming soon!');
+    }
+
+    function shareChart() {
+        // TODO: Implement chart sharing functionality
+        showInfo('Chart sharing feature coming soon!');
+    }
+
+    function generatePDFReport() {
+        // TODO: Implement PDF generation
+        showInfo('PDF report generation coming soon!');
+    }
+
+    function emailToDoctor() {
+        // TODO: Implement email functionality
+        showInfo('Email to doctor feature coming soon!');
+    }
+
+    function printSummary() {
+        // TODO: Implement print functionality
+        window.print();
+    }
+
+    function prepareDoctorVisit() {
+        // TODO: Implement doctor visit preparation
+        showInfo('Doctor visit preparation feature coming soon!');
+    }
+
+    function loadMoreHistory() {
+        // TODO: Implement pagination for history
+        showInfo('Load more feature coming soon!');
+    }
+
+    // Utility functions
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    }
+
+    function formatShortDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+
+    function formatTimeAgo(date) {
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+
+        if (diffMins < 1) return 'just now';
+        if (diffMins < 60) return `${diffMins} minutes ago`;
+
+        const diffHours = Math.floor(diffMins / 60);
+        if (diffHours < 24) return `${diffHours} hours ago`;
+
+        const diffDays = Math.floor(diffHours / 24);
+        return `${diffDays} days ago`;
+    }
+
+    // UI feedback functions
+    function showLoading() {
+        document.getElementById('loadingOverlay').classList.add('show');
+    }
+
+    function hideLoading() {
+        document.getElementById('loadingOverlay').classList.remove('show');
+    }
+
+    function showSuccess(message) {
+        // TODO: Implement toast notification
+        console.log('Success:', message);
+    }
+
+    function showError(message) {
+        // TODO: Implement toast notification
+        console.error('Error:', message);
+        alert(message);
+    }
+
+    function showInfo(message) {
+        // TODO: Implement toast notification
+        alert(message);
+    }
+
+    function showNoDataMessage() {
+        document.getElementById('keyInsights').innerHTML =
+            `Welcome to ${currentBaby ? currentBaby.name + "'s" : "your baby's"} growth tracker! Start by adding your first measurement to track growth patterns.`;
+    }
+
+    // Keyboard shortcuts
+    function initializeKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
             // Cmd/Ctrl + A to add new entry
             if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
                 e.preventDefault();
-                console.log('Add new entry shortcut triggered');
-                // Future implementation: Show add entry modal
+                openMeasurementModal();
             }
         });
+    }
 
-        // Add smooth scroll behavior
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({behavior: 'smooth'});
-                }
-            });
+    // Add smooth scroll behavior
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({behavior: 'smooth'});
+            }
         });
-
-        // Re-render icons when mobile menu is toggled
-        const observer = new MutationObserver(() => {
-            lucide.createIcons();
-        });
-        observer.observe(sidebar, {attributes: true, attributeFilter: ['class']});
     });
 </script>
 </body>
