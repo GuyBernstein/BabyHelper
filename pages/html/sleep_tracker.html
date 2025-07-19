@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BabyHelper Dashboard - Insights & Analysis</title>
+    <title>BabyHelper Dashboard - Sleep Tracking</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=Lora:wght@400;500;600&display=swap"
@@ -193,6 +193,22 @@
             font-variant-numeric: tabular-nums;
             letter-spacing: 0.05em;
         }
+
+        /* Loading spinner */
+        .spinner {
+            border: 2px solid #ffe8d9;
+            border-top-color: #ff8c69;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 <body class="h-full bg-pastel-lightest font-sans text-pastel-text">
@@ -296,12 +312,19 @@
             <div class="flex items-center gap-4">
                 <div class="lg:hidden w-8"></div>
                 <div>
-                    <h1 class="text-base lg:text-lg font-serif font-medium text-pastel-heading">Dashboard &
-                        Insights</h1>
-                    <p class="text-xs lg:text-sm text-pastel-textLight">Last updated: 2 hours ago • Emma, 8 months</p>
+                    <h1 class="text-base lg:text-lg font-serif font-medium text-pastel-heading">Sleep Tracking</h1>
+                    <p class="text-xs lg:text-sm text-pastel-textLight">
+                        <span id="lastUpdateText">Loading...</span> •
+                        <span id="selectedBabyInfo">Loading baby data...</span>
+                    </p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
+                <!-- Baby Selector -->
+                <select id="babySelector"
+                        class="text-sm px-3 py-1.5 rounded-full border border-pastel-light bg-white focus:outline-none focus:ring-2 focus:ring-pastel-primary/30">
+                    <option value="">Loading babies...</option>
+                </select>
                 <button class="relative hidden sm:block p-2 hover:bg-pastel-light rounded-full transition-colors">
                     <i data-lucide="bell" class="h-5 w-5 text-pastel-text"></i>
                     <span class="absolute top-1 right-1 h-2 w-2 rounded-full bg-pastel-primary"></span>
@@ -310,7 +333,7 @@
                     <i data-lucide="help-circle" class="h-5 w-5 text-pastel-text"></i>
                 </button>
                 <div class="h-9 w-9 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-sm font-medium text-white shadow-pastel">
-                    JD
+                    <span id="userInitials">--</span>
                 </div>
             </div>
         </header>
@@ -338,7 +361,8 @@
                 <!-- Start/Stop Controls -->
                 <div class="flex justify-center mb-8">
                     <button id="sleepControlBtn"
-                            class="w-[120px] h-[120px] rounded-full bg-pastel-primary hover:bg-pastel-primaryHover text-white shadow-pastel-lg transition-all duration-300 hover:transform hover:scale-105 btn-hover-effect flex items-center justify-center">
+                            class="w-[120px] h-[120px] rounded-full bg-pastel-primary hover:bg-pastel-primaryHover text-white shadow-pastel-lg transition-all duration-300 hover:transform hover:scale-105 btn-hover-effect flex items-center justify-center"
+                            disabled>
                         <i data-lucide="moon" class="h-12 w-12" id="sleepControlIcon"></i>
                     </button>
                 </div>
@@ -354,13 +378,16 @@
                                 data-location="bassinet">Bassinet
                         </button>
                         <button class="location-btn px-4 py-2 rounded-full border border-pastel-light bg-white hover:bg-pastel-light transition-colors text-sm"
-                                data-location="car-seat">Car Seat
+                                data-location="car_seat">Car Seat
                         </button>
                         <button class="location-btn px-4 py-2 rounded-full border border-pastel-light bg-white hover:bg-pastel-light transition-colors text-sm"
-                                data-location="carrier">Carrier
+                                data-location="stroller">Stroller
+                        </button>
+                        <button class="location-btn px-4 py-2 rounded-full border border-pastel-light bg-white hover:bg-pastel-light transition-colors text-sm"
+                                data-location="parents_bed">Parents' Bed
                         </button>
                     </div>
-                    <input type="text" placeholder="Custom location..."
+                    <input type="text" placeholder="Other location..."
                            class="w-full px-4 py-2 rounded-full border border-pastel-light focus:outline-none focus:ring-2 focus:ring-pastel-primary/30 text-sm"
                            id="customLocationInput">
                 </div>
@@ -399,52 +426,36 @@
                     <div class="mb-6">
                         <p class="text-sm text-pastel-textLight mb-3">How was the sleep quality?</p>
                         <div class="star-rating" id="sleepQualityRating">
-                            <button data-rating="1"><i data-lucide="star" class="h-12 w-12"></i></button>
-                            <button data-rating="2"><i data-lucide="star" class="h-12 w-12"></i></button>
-                            <button data-rating="3"><i data-lucide="star" class="h-12 w-12"></i></button>
-                            <button data-rating="4"><i data-lucide="star" class="h-12 w-12"></i></button>
-                            <button data-rating="5"><i data-lucide="star" class="h-12 w-12"></i></button>
+                            <button data-rating="1" title="Poor"><i data-lucide="star" class="h-12 w-12"></i></button>
+                            <button data-rating="2" title="Fair"><i data-lucide="star" class="h-12 w-12"></i></button>
+                            <button data-rating="3" title="Good"><i data-lucide="star" class="h-12 w-12"></i></button>
+                            <button data-rating="4" title="Good"><i data-lucide="star" class="h-12 w-12"></i></button>
+                            <button data-rating="5" title="Excellent"><i data-lucide="star" class="h-12 w-12"></i>
+                            </button>
                         </div>
+                    </div>
+
+                    <!-- Sleep Training Method -->
+                    <div class="mb-6">
+                        <p class="text-sm text-pastel-textLight mb-3">Sleep training method used?</p>
+                        <select id="trainingMethodSelect"
+                                class="w-full px-4 py-2 rounded-full border border-pastel-light focus:outline-none focus:ring-2 focus:ring-pastel-primary/30 text-sm">
+                            <option value="none">None</option>
+                            <option value="cry_it_out">Cry It Out</option>
+                            <option value="ferber">Ferber Method</option>
+                            <option value="chair">Chair Method</option>
+                            <option value="pick_up_put_down">Pick Up Put Down</option>
+                            <option value="bedtime_fading">Bedtime Fading</option>
+                            <option value="other">Other</option>
+                        </select>
                     </div>
 
                     <!-- Notes Section -->
                     <div class="mb-6">
-                        <p class="text-sm text-pastel-textLight mb-3">How did baby fall asleep?</p>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <button class="sleep-method-btn px-3 py-1.5 rounded-full border border-pastel-light bg-white hover:bg-pastel-light transition-colors text-sm">
-                                Rocking
-                            </button>
-                            <button class="sleep-method-btn px-3 py-1.5 rounded-full border border-pastel-light bg-white hover:bg-pastel-light transition-colors text-sm">
-                                Feeding
-                            </button>
-                            <button class="sleep-method-btn px-3 py-1.5 rounded-full border border-pastel-light bg-white hover:bg-pastel-light transition-colors text-sm">
-                                Self-soothed
-                            </button>
-                            <button class="sleep-method-btn px-3 py-1.5 rounded-full border border-pastel-light bg-white hover:bg-pastel-light transition-colors text-sm">
-                                Singing
-                            </button>
-                        </div>
-
-                        <p class="text-sm text-pastel-textLight mb-3">Any interruptions?</p>
-                        <div class="space-y-2 mb-4">
-                            <label class="flex items-center gap-2 text-sm cursor-pointer">
-                                <input type="checkbox"
-                                       class="w-4 h-4 text-pastel-primary rounded border-pastel-light focus:ring-pastel-primary/30">
-                                <span>Woke up crying</span>
-                            </label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer">
-                                <input type="checkbox"
-                                       class="w-4 h-4 text-pastel-primary rounded border-pastel-light focus:ring-pastel-primary/30">
-                                <span>Needed feeding</span>
-                            </label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer">
-                                <input type="checkbox"
-                                       class="w-4 h-4 text-pastel-primary rounded border-pastel-light focus:ring-pastel-primary/30">
-                                <span>Diaper change</span>
-                            </label>
-                        </div>
-
-                        <textarea placeholder="Additional notes..." rows="3"
+                        <p class="text-sm text-pastel-textLight mb-3">Additional notes</p>
+                        <textarea id="sleepNotes"
+                                  placeholder="How did baby fall asleep? Any interruptions? Other observations..."
+                                  rows="3"
                                   class="w-full px-4 py-3 rounded-2xl border border-pastel-light focus:outline-none focus:ring-2 focus:ring-pastel-primary/30 text-sm resize-none"></textarea>
                     </div>
 
@@ -458,55 +469,9 @@
                 <div class="mt-8 pt-6 border-t border-pastel-light">
                     <p class="text-sm font-medium text-pastel-heading mb-4">Recent Sleep Sessions</p>
                     <div class="space-y-3" id="recentSleepList">
-                        <div class="flex items-center justify-between p-3 rounded-xl bg-pastel-lightest hover:bg-pastel-light transition-colors cursor-pointer">
-                            <div class="flex items-center gap-3">
-                                <i data-lucide="moon" class="h-4 w-4 text-pastel-textLight"></i>
-                                <div>
-                                    <p class="text-sm font-medium">Today, 2:30 PM</p>
-                                    <p class="text-xs text-pastel-textLight">Duration: 1h 45m • Quality: ★★★★☆</p>
-                                </div>
-                            </div>
-                            <i data-lucide="chevron-right" class="h-4 w-4 text-pastel-textLight"></i>
-                        </div>
-                        <div class="flex items-center justify-between p-3 rounded-xl bg-pastel-lightest hover:bg-pastel-light transition-colors cursor-pointer">
-                            <div class="flex items-center gap-3">
-                                <i data-lucide="moon" class="h-4 w-4 text-pastel-textLight"></i>
-                                <div>
-                                    <p class="text-sm font-medium">Today, 9:00 AM</p>
-                                    <p class="text-xs text-pastel-textLight">Duration: 2h 15m • Quality: ★★★★★</p>
-                                </div>
-                            </div>
-                            <i data-lucide="chevron-right" class="h-4 w-4 text-pastel-textLight"></i>
-                        </div>
-                        <div class="flex items-center justify-between p-3 rounded-xl bg-pastel-lightest hover:bg-pastel-light transition-colors cursor-pointer">
-                            <div class="flex items-center gap-3">
-                                <i data-lucide="moon" class="h-4 w-4 text-pastel-textLight"></i>
-                                <div>
-                                    <p class="text-sm font-medium">Yesterday, 8:30 PM</p>
-                                    <p class="text-xs text-pastel-textLight">Duration: 9h 30m • Quality: ★★★★☆</p>
-                                </div>
-                            </div>
-                            <i data-lucide="chevron-right" class="h-4 w-4 text-pastel-textLight"></i>
-                        </div>
-                        <div class="flex items-center justify-between p-3 rounded-xl bg-pastel-lightest hover:bg-pastel-light transition-colors cursor-pointer">
-                            <div class="flex items-center gap-3">
-                                <i data-lucide="moon" class="h-4 w-4 text-pastel-textLight"></i>
-                                <div>
-                                    <p class="text-sm font-medium">Yesterday, 2:00 PM</p>
-                                    <p class="text-xs text-pastel-textLight">Duration: 1h 30m • Quality: ★★★☆☆</p>
-                                </div>
-                            </div>
-                            <i data-lucide="chevron-right" class="h-4 w-4 text-pastel-textLight"></i>
-                        </div>
-                        <div class="flex items-center justify-between p-3 rounded-xl bg-pastel-lightest hover:bg-pastel-light transition-colors cursor-pointer">
-                            <div class="flex items-center gap-3">
-                                <i data-lucide="moon" class="h-4 w-4 text-pastel-textLight"></i>
-                                <div>
-                                    <p class="text-sm font-medium">2 days ago, 7:45 PM</p>
-                                    <p class="text-xs text-pastel-textLight">Duration: 10h 15m • Quality: ★★★★★</p>
-                                </div>
-                            </div>
-                            <i data-lucide="chevron-right" class="h-4 w-4 text-pastel-textLight"></i>
+                        <div class="text-center text-pastel-textLight py-4">
+                            <div class="spinner mx-auto mb-2"></div>
+                            <p class="text-sm">Loading sleep history...</p>
                         </div>
                     </div>
                 </div>
@@ -519,69 +484,16 @@
                     <i data-lucide="lightbulb" class="h-5 w-5 text-pastel-accent2"></i>
                     Key Insights
                 </h2>
-                <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light">
+                <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light" id="keyInsightsContent">
                     <p class="text-pastel-text leading-relaxed">
-                        Emma has shown an improved sleep pattern over the last week, with an average of
-                        <span class="font-semibold text-pastel-primary">8 hours of sleep</span> per night.
-                        <span class="text-pastel-accent1 font-medium">That's wonderful progress! 🌙</span>
+                        <span class="text-pastel-textLight">Loading sleep insights...</span>
                     </p>
                 </div>
             </div>
 
             <!-- Stats Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4 opacity-0 animate-fade-in-up"
-                     style="animation-delay: 0.4s; animation-fill-mode: forwards;">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs text-pastel-textLight">Avg Sleep/Night</p>
-                            <p class="text-2xl font-semibold text-pastel-heading font-serif">8.2 hrs</p>
-                            <p class="text-xs text-pastel-primary mt-1">↑ 12% vs last week</p>
-                        </div>
-                        <div class="h-10 w-10 bg-pastel-secondary rounded-full flex items-center justify-center">
-                            <i data-lucide="moon" class="h-5 w-5 text-pastel-primary"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4 opacity-0 animate-fade-in-up"
-                     style="animation-delay: 0.5s; animation-fill-mode: forwards;">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs text-pastel-textLight">Daily Feedings</p>
-                            <p class="text-2xl font-semibold text-pastel-heading font-serif">6</p>
-                            <p class="text-xs text-pastel-textLight mt-1">On schedule</p>
-                        </div>
-                        <div class="h-10 w-10 bg-pastel-accent1/20 rounded-full flex items-center justify-center">
-                            <i data-lucide="baby-bottle" class="h-5 w-5 text-pastel-accent1"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4 opacity-0 animate-fade-in-up"
-                     style="animation-delay: 0.6s; animation-fill-mode: forwards;">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs text-pastel-textLight">Activity Level</p>
-                            <p class="text-2xl font-semibold text-pastel-heading font-serif">High</p>
-                            <p class="text-xs text-pastel-accent2 mt-1">Very active today</p>
-                        </div>
-                        <div class="h-10 w-10 bg-pastel-accent2/20 rounded-full flex items-center justify-center">
-                            <i data-lucide="zap" class="h-5 w-5 text-pastel-accent2"></i>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4 opacity-0 animate-fade-in-up"
-                     style="animation-delay: 0.7s; animation-fill-mode: forwards;">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs text-pastel-textLight">Mood Score</p>
-                            <p class="text-2xl font-semibold text-pastel-heading font-serif">9/10</p>
-                            <p class="text-xs text-pastel-primary mt-1">Happy baby! 😊</p>
-                        </div>
-                        <div class="h-10 w-10 bg-pastel-primary/20 rounded-full flex items-center justify-center">
-                            <i data-lucide="smile" class="h-5 w-5 text-pastel-primary"></i>
-                        </div>
-                    </div>
-                </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="statsGrid">
+                <!-- Stats will be dynamically populated -->
             </div>
 
             <!-- Behavioral Trends Section -->
@@ -591,28 +503,31 @@
                      style="animation-delay: 0.8s; animation-fill-mode: forwards;">
                     <h2 class="text-lg font-serif font-medium text-pastel-heading mb-4 flex items-center gap-2">
                         <i data-lucide="trending-up" class="h-5 w-5 text-pastel-accent2"></i>
-                        Sleep Trends
+                        Sleep Trends (7 Days)
                     </h2>
                     <div class="h-48 mb-4">
                         <canvas id="sleepChart"></canvas>
                     </div>
-                    <p class="text-sm text-pastel-textLight">
-                        Observing a consistent improvement in uninterrupted sleep patterns.
+                    <p class="text-sm text-pastel-textLight" id="sleepChartDescription">
+                        Loading sleep trend data...
                     </p>
                 </div>
 
-                <!-- Feeding Habits Chart -->
+                <!-- Sleep Quality Chart -->
                 <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-right"
                      style="animation-delay: 0.9s; animation-fill-mode: forwards;">
                     <h2 class="text-lg font-serif font-medium text-pastel-heading mb-4 flex items-center gap-2">
-                        <i data-lucide="utensils" class="h-5 w-5 text-pastel-accent1"></i>
-                        Feeding Habits
+                        <i data-lucide="star" class="h-5 w-5 text-pastel-accent1"></i>
+                        Sleep Quality Score
                     </h2>
-                    <div class="h-48 mb-4">
-                        <canvas id="feedingChart"></canvas>
+                    <div class="h-48 mb-4" id="qualityScoreContainer">
+                        <div class="text-center py-8">
+                            <div class="spinner mx-auto mb-2"></div>
+                            <p class="text-sm text-pastel-textLight">Analyzing sleep quality...</p>
+                        </div>
                     </div>
-                    <p class="text-sm text-pastel-textLight">
-                        Regular feeding times have been established successfully.
+                    <p class="text-sm text-pastel-textLight" id="qualityDescription">
+                        Based on PSQI-inspired scoring methodology
                     </p>
                 </div>
             </div>
@@ -624,18 +539,9 @@
                     <i data-lucide="sparkles" class="h-5 w-5 text-pastel-accent2"></i>
                     Personalized Recommendations
                 </h2>
-                <div class="grid gap-3">
-                    <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light flex items-start gap-3 hover:shadow-pastel transition-shadow">
-                        <i data-lucide="check-circle" class="h-5 w-5 text-pastel-primary mt-0.5"></i>
-                        <p class="text-pastel-text">Maintain the current bedtime routine to support sleep quality.</p>
-                    </div>
-                    <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light flex items-start gap-3 hover:shadow-pastel transition-shadow">
-                        <i data-lucide="info" class="h-5 w-5 text-pastel-accent1 mt-0.5"></i>
-                        <p class="text-pastel-text">Introduce new foods gradually to diversify diet.</p>
-                    </div>
-                    <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light flex items-start gap-3 hover:shadow-pastel transition-shadow">
-                        <i data-lucide="sun" class="h-5 w-5 text-pastel-accent2 mt-0.5"></i>
-                        <p class="text-pastel-text">Consider incorporating more outdoor playtime for vitamin D.</p>
+                <div class="grid gap-3" id="recommendationsContainer">
+                    <div class="text-center text-pastel-textLight py-4">
+                        <p class="text-sm">Analyzing sleep patterns for recommendations...</p>
                     </div>
                 </div>
             </div>
@@ -653,8 +559,8 @@
                     <span class="text-xs">Home</span>
                 </button>
                 <button class="flex flex-col items-center gap-1 py-3 text-pastel-primary">
-                    <i data-lucide="bar-chart-3" class="h-5 w-5"></i>
-                    <span class="text-xs">Insights</span>
+                    <i data-lucide="moon" class="h-5 w-5"></i>
+                    <span class="text-xs">Sleep</span>
                 </button>
                 <button class="flex flex-col items-center gap-1 py-3 text-pastel-textLight hover:text-pastel-primary transition-colors">
                     <i data-lucide="plus-circle" class="h-5 w-5"></i>
@@ -671,228 +577,336 @@
 
 <script src="../js/auth.js" data-auto-init="true"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    // Sleep Tracker Application State
+    const SleepTracker = {
+        currentBaby: null,
+        selectedBabyId: null,
+        sleepTimer: null,
+        sleepStartTime: null,
+        isSleeping: false,
+        selectedLocation: null,
+        sleepQuality: 0,
+        environmentalFactors: {
+            'white-noise': false,
+            'pacifier': false,
+            'swaddled': false
+        },
+        sleepChart: null,
+        qualityChart: null
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
         // Initialize Lucide icons
         lucide.createIcons();
 
-        // Mobile menu toggle functionality
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('overlay');
+        // Initialize the application
+        await initializeSleepTracker();
+    });
 
-        function toggleMobileMenu() {
-            sidebar.classList.toggle('-translate-x-full');
-            overlay.classList.toggle('hidden');
+    // Initialize Sleep Tracker
+    async function initializeSleepTracker() {
+        try {
+            // Load user profile first
+            const userProfile = await BabyHelperAuth.api.endpoints.getUserProfile();
+            updateUserDisplay(userProfile);
+
+            // Load babies
+            await loadBabies();
+
+            // Setup event listeners
+            setupEventListeners();
+
+            // Enable sleep control after initialization
+            document.getElementById('sleepControlBtn').disabled = false;
+        } catch (error) {
+            console.error('Failed to initialize sleep tracker:', error);
+            showNotification('Failed to initialize app. Please refresh the page.', 'error');
         }
+    }
 
-        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
-        overlay.addEventListener('click', toggleMobileMenu);
+    // Update user display
+    function updateUserDisplay(userProfile) {
+        const initials = userProfile.name
+            .split(' ')
+            .map(n => n[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
+        document.getElementById('userInitials').textContent = initials;
+    }
 
-        // Sleep Tracker Functionality
-        let sleepTimer = null;
-        let sleepStartTime = null;
-        let isSleeping = false;
-        let selectedLocation = null;
-        let sleepQuality = 0;
-        let selectedSleepMethod = null;
+    // Load babies and populate selector
+    async function loadBabies() {
+        try {
+            const babies = await BabyHelperAuth.api.endpoints.getBabies();
+            const selector = document.getElementById('babySelector');
 
-        const sleepControlBtn = document.getElementById('sleepControlBtn');
-        const sleepControlIcon = document.getElementById('sleepControlIcon');
-        const sleepStatus = document.getElementById('sleepStatus');
-        const sleepStatusBg = document.getElementById('sleepStatusBg');
-        const sleepDuration = document.getElementById('sleepDuration');
-        const postSleepSection = document.getElementById('postSleepSection');
-        const saveSleepSessionBtn = document.getElementById('saveSleepSession');
+            selector.innerHTML = '<option value="">Select a baby</option>';
 
-        // Update sleep timer display
-        function updateSleepTimer() {
-            if (!sleepStartTime) return;
+            babies.forEach(baby => {
+                const option = document.createElement('option');
+                option.value = baby.id;
+                option.textContent = `${baby.name} (${calculateAgeInMonths(baby.birthdate)} months)`;
+                selector.appendChild(option);
+            });
 
-            const now = new Date();
-            const elapsed = Math.floor((now - sleepStartTime) / 1000);
-            const hours = Math.floor(elapsed / 3600);
-            const minutes = Math.floor((elapsed % 3600) / 60);
-            const seconds = elapsed % 60;
-
-            sleepDuration.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            // Auto-select if only one baby
+            if (babies.length === 1) {
+                selector.value = babies[0].id;
+                await selectBaby(babies[0].id);
+            }
+        } catch (error) {
+            console.error('Failed to load babies:', error);
+            showNotification('Failed to load babies', 'error');
         }
+    }
 
-        // Toggle sleep state
-        function toggleSleep() {
-            isSleeping = !isSleeping;
+    // Calculate baby's age in months
+    function calculateAgeInMonths(birthdate) {
+        const birth = new Date(birthdate);
+        const now = new Date();
+        const months = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth());
+        return Math.max(0, months);
+    }
 
-            if (isSleeping) {
-                // Start sleep
-                sleepStartTime = new Date();
-                sleepStatus.textContent = 'Sleeping';
-                sleepStatusBg.classList.add('bg-pastel-primary/20', 'animate-pulse-soft');
-                sleepStatusBg.classList.remove('bg-pastel-light');
-                sleepControlIcon.setAttribute('data-lucide', 'sun');
-                postSleepSection.classList.add('hidden');
+    // Select a baby and load their data
+    async function selectBaby(babyId) {
+        if (!babyId) return;
 
-                // Start timer
-                sleepTimer = setInterval(updateSleepTimer, 1000);
+        SleepTracker.selectedBabyId = babyId;
 
-                // Provide haptic feedback if available
-                if ('vibrate' in navigator) {
-                    navigator.vibrate(100);
-                }
+        try {
+            // Get baby info
+            const babies = await BabyHelperAuth.api.endpoints.getBabies();
+            SleepTracker.currentBaby = babies.find(b => b.id === parseInt(babyId));
+
+            if (SleepTracker.currentBaby) {
+                // Update display
+                const ageInMonths = calculateAgeInMonths(SleepTracker.currentBaby.birthdate);
+                document.getElementById('selectedBabyInfo').textContent =
+                    `${SleepTracker.currentBaby.name}, ${ageInMonths} months`;
+
+                // Load sleep data
+                await loadRecentSleepSessions();
+                await loadSleepPatterns();
+                await loadSleepStats();
+            }
+        } catch (error) {
+            console.error('Failed to select baby:', error);
+            showNotification('Failed to load baby data', 'error');
+        }
+    }
+
+    // Load recent sleep sessions
+    async function loadRecentSleepSessions() {
+        try {
+            const response = await BabyHelperAuth.api.request(
+                `/sleep/baby/${SleepTracker.selectedBabyId}?limit=5`
+            );
+
+            if (response.ok) {
+                const sleepSessions = await response.json();
+                displayRecentSleepSessions(sleepSessions);
             } else {
-                // End sleep
-                clearInterval(sleepTimer);
-                sleepStatus.textContent = 'Awake';
-                sleepStatusBg.classList.remove('bg-pastel-primary/20', 'animate-pulse-soft');
-                sleepStatusBg.classList.add('bg-pastel-light');
-                sleepControlIcon.setAttribute('data-lucide', 'moon');
-                postSleepSection.classList.remove('hidden');
-
-                // Provide haptic feedback if available
-                if ('vibrate' in navigator) {
-                    navigator.vibrate([100, 50, 100]);
-                }
+                throw new Error('Failed to load sleep sessions');
             }
+        } catch (error) {
+            console.error('Failed to load recent sleep sessions:', error);
+            document.getElementById('recentSleepList').innerHTML =
+                '<p class="text-sm text-pastel-textLight text-center py-4">No sleep data available</p>';
+        }
+    }
 
-            // Re-render the icon
-            lucide.createIcons();
+    // Display recent sleep sessions
+    function displayRecentSleepSessions(sessions) {
+        const container = document.getElementById('recentSleepList');
+
+        if (sessions.length === 0) {
+            container.innerHTML = '<p class="text-sm text-pastel-textLight text-center py-4">No sleep sessions recorded yet</p>';
+            return;
         }
 
-        sleepControlBtn.addEventListener('click', toggleSleep);
+        container.innerHTML = sessions.map(session => {
+            const startTime = new Date(session.start_time);
+            const endTime = session.end_time ? new Date(session.end_time) : null;
+            const duration = session.duration || 0;
+            const quality = getQualityStars(session.quality);
 
-        // Location selector
-        const locationBtns = document.querySelectorAll('.location-btn');
-        const customLocationInput = document.getElementById('customLocationInput');
+            return `
+                <div class="flex items-center justify-between p-3 rounded-xl bg-pastel-lightest hover:bg-pastel-light transition-colors cursor-pointer"
+                     data-sleep-id="${session.id}">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="moon" class="h-4 w-4 text-pastel-textLight"></i>
+                        <div>
+                            <p class="text-sm font-medium">${formatSessionDate(startTime)}</p>
+                            <p class="text-xs text-pastel-textLight">
+                                Duration: ${formatDuration(duration)} •
+                                Quality: ${quality} •
+                                ${session.location ? formatLocation(session.location) : 'No location'}
+                            </p>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" class="h-4 w-4 text-pastel-textLight"></i>
+                </div>
+            `;
+        }).join('');
 
-        locationBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                // Remove active state from all buttons
-                locationBtns.forEach(b => {
-                    b.classList.remove('bg-pastel-primary', 'text-white');
-                    b.classList.add('bg-white', 'text-pastel-text');
-                });
+        // Re-render icons
+        lucide.createIcons();
+    }
 
-                // Set active state
-                btn.classList.remove('bg-white', 'text-pastel-text');
-                btn.classList.add('bg-pastel-primary', 'text-white');
-                selectedLocation = btn.dataset.location;
-                customLocationInput.value = '';
-            });
-        });
+    // Format quality as stars
+    function getQualityStars(quality) {
+        const qualityMap = {
+            'poor': '★☆☆☆☆',
+            'fair': '★★☆☆☆',
+            'good': '★★★☆☆',
+            'excellent': '★★★★★'
+        };
+        return qualityMap[quality] || '---';
+    }
 
-        customLocationInput.addEventListener('input', () => {
-            if (customLocationInput.value) {
-                // Remove active state from all buttons when custom location is entered
-                locationBtns.forEach(b => {
-                    b.classList.remove('bg-pastel-primary', 'text-white');
-                    b.classList.add('bg-white', 'text-pastel-text');
-                });
-                selectedLocation = customLocationInput.value;
+    // Format location enum
+    function formatLocation(location) {
+        const locationMap = {
+            'crib': 'Crib',
+            'bassinet': 'Bassinet',
+            'parents_room': "Parents' Room",
+            'parents_bed': "Parents' Bed",
+            'car_seat': 'Car Seat',
+            'stroller': 'Stroller',
+            'other': 'Other'
+        };
+        return locationMap[location] || location;
+    }
+
+    // Format session date
+    function formatSessionDate(date) {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        const sessionDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+        if (sessionDate.getTime() === today.getTime()) {
+            return `Today, ${date.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', hour12: true})}`;
+        } else if (sessionDate.getTime() === yesterday.getTime()) {
+            return `Yesterday, ${date.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', hour12: true})}`;
+        } else {
+            return date.toLocaleDateString('en-US', {month: 'short', day: 'numeric'}) + ', ' +
+                date.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', hour12: true});
+        }
+    }
+
+    // Format duration in minutes to human readable
+    function formatDuration(minutes) {
+        if (!minutes) return '0m';
+
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+
+        if (hours > 0) {
+            return `${hours}h ${mins}m`;
+        }
+        return `${mins}m`;
+    }
+
+    // Load sleep patterns and analysis
+    async function loadSleepPatterns() {
+        try {
+            const response = await BabyHelperAuth.api.request(
+                `/sleep/baby/${SleepTracker.selectedBabyId}/patterns?days=7&calculation_method=PSQI`
+            );
+
+            if (response.ok) {
+                const patterns = await response.json();
+                displaySleepPatterns(patterns);
+                updateKeyInsights(patterns);
+                updateRecommendations(patterns);
             }
+        } catch (error) {
+            console.error('Failed to load sleep patterns:', error);
+        }
+    }
+
+    // Display sleep patterns in charts
+    function displaySleepPatterns(patterns) {
+        if (!patterns.patterns) return;
+
+        const {summary, daily_sleep} = patterns.patterns;
+
+        // Update sleep quality score display
+        if (summary.sleep_quality_score !== undefined) {
+            displayQualityScore(summary);
+        }
+
+        // Update sleep trends chart
+        if (daily_sleep && daily_sleep.length > 0) {
+            updateSleepTrendsChart(daily_sleep);
+        }
+    }
+
+    // Display quality score
+    function displayQualityScore(summary) {
+        const container = document.getElementById('qualityScoreContainer');
+        const scoreColor = getScoreColor(summary.sleep_quality_score);
+
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <div class="relative inline-block">
+                    <svg class="w-32 h-32 transform -rotate-90">
+                        <circle cx="64" cy="64" r="56" stroke="#ffe8d9" stroke-width="12" fill="none"></circle>
+                        <circle cx="64" cy="64" r="56" stroke="${scoreColor}" stroke-width="12" fill="none"
+                                stroke-dasharray="${summary.sleep_quality_score * 3.51} 351.86"
+                                stroke-linecap="round"></circle>
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div>
+                            <div class="text-3xl font-serif font-bold text-pastel-heading">${Math.round(summary.sleep_quality_score)}</div>
+                            <div class="text-sm text-pastel-textLight">${summary.sleep_quality_rating}</div>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-xs text-pastel-textLight mt-4">${summary.sleep_quality_explanation}</p>
+            </div>
+        `;
+    }
+
+    // Get color based on score
+    function getScoreColor(score) {
+        if (score >= 85) return '#22c55e'; // Excellent - green
+        if (score >= 70) return '#ff8c69'; // Good - primary color
+        if (score >= 50) return '#fec89a'; // Fair - accent2
+        return '#ef4444'; // Poor - red
+    }
+
+    // Update sleep trends chart
+    function updateSleepTrendsChart(dailySleep) {
+        const ctx = document.getElementById('sleepChart').getContext('2d');
+
+        // Destroy existing chart if it exists
+        if (SleepTracker.sleepChart) {
+            SleepTracker.sleepChart.destroy();
+        }
+
+        const labels = dailySleep.map(d => {
+            const date = new Date(d.date);
+            return date.toLocaleDateString('en-US', {weekday: 'short'});
         });
 
-        // Environmental factors toggle switches
-        const toggleSwitches = document.querySelectorAll('.toggle-switch');
+        const totalSleepData = dailySleep.map(d => d.total_hours);
+        const nightSleepData = dailySleep.map(d => (d.night_minutes / 60).toFixed(2));
+        const napData = dailySleep.map(d => (d.nap_minutes / 60).toFixed(2));
 
-        toggleSwitches.forEach(toggle => {
-            toggle.addEventListener('click', () => {
-                toggle.classList.toggle('active');
-            });
-        });
-
-        // Sleep quality rating
-        const starButtons = document.querySelectorAll('#sleepQualityRating button');
-
-        starButtons.forEach((btn, index) => {
-            btn.addEventListener('click', () => {
-                sleepQuality = parseInt(btn.dataset.rating);
-
-                // Update star display
-                starButtons.forEach((star, starIndex) => {
-                    if (starIndex < sleepQuality) {
-                        star.classList.add('filled');
-                    } else {
-                        star.classList.remove('filled');
-                    }
-                });
-
-                // Re-render icons to update star fill
-                lucide.createIcons();
-            });
-        });
-
-        // Sleep method buttons
-        const sleepMethodBtns = document.querySelectorAll('.sleep-method-btn');
-
-        sleepMethodBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                // Remove active state from all buttons
-                sleepMethodBtns.forEach(b => {
-                    b.classList.remove('bg-pastel-primary', 'text-white');
-                    b.classList.add('bg-white', 'text-pastel-text');
-                });
-
-                // Set active state
-                btn.classList.remove('bg-white', 'text-pastel-text');
-                btn.classList.add('bg-pastel-primary', 'text-white');
-                selectedSleepMethod = btn.textContent;
-            });
-        });
-
-        // Save sleep session
-        saveSleepSessionBtn.addEventListener('click', () => {
-            // Reset form
-            sleepDuration.textContent = '00:00:00';
-            sleepStartTime = null;
-            selectedLocation = null;
-            sleepQuality = 0;
-            selectedSleepMethod = null;
-
-            // Reset UI elements
-            locationBtns.forEach(btn => {
-                btn.classList.remove('bg-pastel-primary', 'text-white');
-                btn.classList.add('bg-white', 'text-pastel-text');
-            });
-            customLocationInput.value = '';
-
-            toggleSwitches.forEach(toggle => {
-                toggle.classList.remove('active');
-            });
-
-            starButtons.forEach(btn => {
-                btn.classList.remove('filled');
-            });
-
-            sleepMethodBtns.forEach(btn => {
-                btn.classList.remove('bg-pastel-primary', 'text-white');
-                btn.classList.add('bg-white', 'text-pastel-text');
-            });
-
-            document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-                cb.checked = false;
-            });
-
-            document.querySelector('textarea').value = '';
-
-            postSleepSection.classList.add('hidden');
-
-            // Show success message (would typically save to database)
-            alert('Sleep session saved successfully!');
-        });
-
-        // Chart.js configuration for pastel theme
-        Chart.defaults.color = '#938278'; // pastel.textLight
-        Chart.defaults.borderColor = '#ffe8d9'; // pastel.light
-        Chart.defaults.font.family = "'Nunito Sans', sans-serif";
-
-        // Sleep Trends Chart
-        const sleepCtx = document.getElementById('sleepChart').getContext('2d');
-        new Chart(sleepCtx, {
+        SleepTracker.sleepChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                labels: labels,
                 datasets: [{
-                    label: 'Sleep Hours',
-                    data: [7.5, 7.8, 8.2, 7.9, 8.5, 8.8, 8.7],
-                    borderColor: '#ff8c69', // pastel.primary
+                    label: 'Total Sleep',
+                    data: totalSleepData,
+                    borderColor: '#ff8c69',
                     backgroundColor: 'rgba(255, 140, 105, 0.1)',
                     fill: true,
                     tension: 0.4,
@@ -902,13 +916,29 @@
                     pointRadius: 4,
                     pointHoverRadius: 6
                 }, {
-                    label: 'Recommended',
-                    data: [8, 8, 8, 8, 8, 8, 8],
-                    borderColor: '#ffb5a7', // pastel.accent1
-                    backgroundColor: 'transparent',
-                    borderDash: [5, 5],
-                    pointRadius: 0,
-                    tension: 0
+                    label: 'Night Sleep',
+                    data: nightSleepData,
+                    borderColor: '#ffb5a7',
+                    backgroundColor: 'rgba(255, 181, 167, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#ffb5a7',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }, {
+                    label: 'Naps',
+                    data: napData,
+                    borderColor: '#fec89a',
+                    backgroundColor: 'rgba(254, 200, 154, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#fec89a',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
                 }]
             },
             options: {
@@ -930,15 +960,10 @@
                 },
                 scales: {
                     y: {
-                        beginAtZero: false,
-                        min: 6,
-                        max: 10,
+                        beginAtZero: true,
                         ticks: {
                             callback: function (value) {
                                 return value + 'h';
-                            },
-                            font: {
-                                family: "'Nunito Sans', sans-serif"
                             }
                         },
                         grid: {
@@ -948,94 +973,467 @@
                     x: {
                         grid: {
                             color: '#ffe8d9'
-                        },
-                        ticks: {
-                            font: {
-                                family: "'Nunito Sans', sans-serif"
-                            }
                         }
                     }
                 }
             }
         });
 
-        // Feeding Habits Chart
-        const feedingCtx = document.getElementById('feedingChart').getContext('2d');
-        new Chart(feedingCtx, {
-            type: 'bar',
-            data: {
-                labels: ['6am', '9am', '12pm', '3pm', '6pm', '9pm'],
-                datasets: [{
-                    label: 'Feeding Amount (oz)',
-                    data: [6, 5, 6, 4, 6, 5],
-                    backgroundColor: '#ffb5a7', // pastel.accent1
-                    borderRadius: 8,
-                    borderWidth: 2,
-                    borderColor: '#ffd8cc' // pastel.secondary
-                }]
+        // Update description
+        const avgSleep = (totalSleepData.reduce((a, b) => a + parseFloat(b), 0) / totalSleepData.length).toFixed(1);
+        document.getElementById('sleepChartDescription').textContent =
+            `Average sleep: ${avgSleep} hours per day over the last ${dailySleep.length} days`;
+    }
+
+    // Update key insights
+    function updateKeyInsights(patterns) {
+        const insights = document.getElementById('keyInsightsContent');
+        const {summary} = patterns.patterns;
+
+        if (!summary) return;
+
+        const babyName = SleepTracker.currentBaby?.name || 'Your baby';
+        const avgHours = summary.avg_total_sleep_hours.toFixed(1);
+        const trend = summary.avg_total_sleep_hours >= 8 ? 'wonderful' : 'improving';
+
+        insights.innerHTML = `
+            <p class="text-pastel-text leading-relaxed">
+                ${babyName} has averaged
+                <span class="font-semibold text-pastel-primary">${avgHours} hours of sleep</span>
+                per day over the last week.
+                <span class="text-pastel-accent1 font-medium">That's ${trend}! 🌙</span>
+                ${summary.avg_naps_per_day > 0 ?
+            `<br><span class="text-sm">Average of ${summary.avg_naps_per_day.toFixed(1)} naps per day.</span>`
+            : ''}
+            </p>
+        `;
+    }
+
+    // Load sleep statistics
+    async function loadSleepStats() {
+        try {
+            const response = await BabyHelperAuth.api.request(
+                `/sleep/baby/${SleepTracker.selectedBabyId}/patterns?days=7`
+            );
+
+            if (response.ok) {
+                const data = await response.json();
+                updateStatsGrid(data.patterns.summary);
+            }
+        } catch (error) {
+            console.error('Failed to load sleep stats:', error);
+        }
+    }
+
+    // Update stats grid
+    function updateStatsGrid(summary) {
+        const grid = document.getElementById('statsGrid');
+
+        const stats = [
+            {
+                title: 'Avg Sleep/Night',
+                value: `${summary.avg_night_sleep_hours.toFixed(1)} hrs`,
+                subtitle: summary.avg_night_sleep_hours >= 8 ? '↑ Great sleep!' : 'Room to improve',
+                icon: 'moon',
+                color: 'secondary'
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {display: false}
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 8,
-                        ticks: {
-                            callback: function (value) {
-                                return value + ' oz';
-                            },
-                            font: {
-                                family: "'Nunito Sans', sans-serif"
-                            }
-                        },
-                        grid: {
-                            color: '#ffe8d9'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            font: {
-                                family: "'Nunito Sans', sans-serif"
-                            }
-                        }
-                    }
-                }
+            {
+                title: 'Daily Naps',
+                value: summary.avg_naps_per_day.toFixed(1),
+                subtitle: 'Average per day',
+                icon: 'sun',
+                color: 'accent1'
+            },
+            {
+                title: 'Sleep Quality',
+                value: summary.sleep_quality_rating || 'N/A',
+                subtitle: summary.sleep_quality_score ? `Score: ${Math.round(summary.sleep_quality_score)}` : 'No data',
+                icon: 'star',
+                color: 'accent2'
+            },
+            {
+                title: 'Total Sleep',
+                value: `${summary.avg_total_sleep_hours.toFixed(1)} hrs`,
+                subtitle: 'Daily average',
+                icon: 'clock',
+                color: 'primary'
             }
+        ];
+
+        grid.innerHTML = stats.map((stat, index) => `
+            <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-4 opacity-0 animate-fade-in-up"
+                 style="animation-delay: ${0.4 + (index * 0.1)}s; animation-fill-mode: forwards;">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-pastel-textLight">${stat.title}</p>
+                        <p class="text-2xl font-semibold text-pastel-heading font-serif">${stat.value}</p>
+                        <p class="text-xs text-pastel-${stat.color === 'primary' ? 'primary' : 'textLight'} mt-1">${stat.subtitle}</p>
+                    </div>
+                    <div class="h-10 w-10 bg-pastel-${stat.color}/20 rounded-full flex items-center justify-center">
+                        <i data-lucide="${stat.icon}" class="h-5 w-5 text-pastel-${stat.color === 'secondary' ? 'primary' : stat.color}"></i>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        // Re-render icons
+        lucide.createIcons();
+    }
+
+    // Update recommendations
+    function updateRecommendations(patterns) {
+        const container = document.getElementById('recommendationsContainer');
+        const {summary} = patterns.patterns;
+
+        const recommendations = [];
+
+        // Generate recommendations based on sleep data
+        if (summary.avg_total_sleep_hours < 10) {
+            recommendations.push({
+                icon: 'clock',
+                color: 'primary',
+                text: 'Consider an earlier bedtime to increase total sleep hours.'
+            });
+        }
+
+        if (summary.avg_naps_per_day > 3) {
+            recommendations.push({
+                icon: 'sun',
+                color: 'accent2',
+                text: 'Try consolidating daytime naps for better nighttime sleep.'
+            });
+        }
+
+        if (summary.sleep_quality_score && summary.sleep_quality_score < 70) {
+            recommendations.push({
+                icon: 'moon',
+                color: 'accent1',
+                text: 'Focus on sleep environment: ensure room is dark, quiet, and cool.'
+            });
+        }
+
+        // Always add a positive recommendation
+        recommendations.push({
+            icon: 'check-circle',
+            color: 'primary',
+            text: 'Keep tracking sleep patterns to identify what works best for your baby.'
         });
 
-        // Add keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            // Cmd/Ctrl + A to add new entry
-            if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
-                e.preventDefault();
-                console.log('Add new entry shortcut triggered');
-                // Future implementation: Show add entry modal
-            }
+        container.innerHTML = recommendations.map(rec => `
+            <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light flex items-start gap-3 hover:shadow-pastel transition-shadow">
+                <i data-lucide="${rec.icon}" class="h-5 w-5 text-pastel-${rec.color} mt-0.5"></i>
+                <p class="text-pastel-text">${rec.text}</p>
+            </div>
+        `).join('');
+
+        // Re-render icons
+        lucide.createIcons();
+    }
+
+    // Setup event listeners
+    function setupEventListeners() {
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+
+        function toggleMobileMenu() {
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+        overlay.addEventListener('click', toggleMobileMenu);
+
+        // Baby selector
+        document.getElementById('babySelector').addEventListener('change', (e) => {
+            selectBaby(e.target.value);
         });
 
-        // Add smooth scroll behavior
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({behavior: 'smooth'});
-                }
+        // Sleep control button
+        document.getElementById('sleepControlBtn').addEventListener('click', toggleSleep);
+
+        // Location buttons
+        const locationBtns = document.querySelectorAll('.location-btn');
+        const customLocationInput = document.getElementById('customLocationInput');
+
+        locationBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active state from all buttons
+                locationBtns.forEach(b => {
+                    b.classList.remove('bg-pastel-primary', 'text-white');
+                    b.classList.add('bg-white', 'text-pastel-text');
+                });
+
+                // Set active state
+                btn.classList.remove('bg-white', 'text-pastel-text');
+                btn.classList.add('bg-pastel-primary', 'text-white');
+                SleepTracker.selectedLocation = btn.dataset.location;
+                customLocationInput.value = '';
             });
         });
 
-        // Re-render icons when mobile menu is toggled
-        const observer = new MutationObserver(() => {
-            lucide.createIcons();
+        customLocationInput.addEventListener('input', () => {
+            if (customLocationInput.value) {
+                // Remove active state from all buttons
+                locationBtns.forEach(b => {
+                    b.classList.remove('bg-pastel-primary', 'text-white');
+                    b.classList.add('bg-white', 'text-pastel-text');
+                });
+                SleepTracker.selectedLocation = 'other';
+            }
         });
-        observer.observe(sidebar, {attributes: true, attributeFilter: ['class']});
+
+        // Environmental factors
+        const toggleSwitches = document.querySelectorAll('.toggle-switch');
+        toggleSwitches.forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                toggle.classList.toggle('active');
+                const factor = toggle.dataset.factor;
+                SleepTracker.environmentalFactors[factor] = toggle.classList.contains('active');
+            });
+        });
+
+        // Sleep quality rating
+        const starButtons = document.querySelectorAll('#sleepQualityRating button');
+        starButtons.forEach((btn, index) => {
+            btn.addEventListener('click', () => {
+                SleepTracker.sleepQuality = parseInt(btn.dataset.rating);
+
+                // Update star display
+                starButtons.forEach((star, starIndex) => {
+                    if (starIndex < SleepTracker.sleepQuality) {
+                        star.classList.add('filled');
+                    } else {
+                        star.classList.remove('filled');
+                    }
+                });
+
+                // Re-render icons
+                lucide.createIcons();
+            });
+        });
+
+        // Save sleep session
+        document.getElementById('saveSleepSession').addEventListener('click', saveSleepSession);
+
+        // Update last update time
+        updateLastUpdateTime();
+        setInterval(updateLastUpdateTime, 60000); // Update every minute
+    }
+
+    // Toggle sleep state
+    function toggleSleep() {
+        if (!SleepTracker.selectedBabyId) {
+            showNotification('Please select a baby first', 'warning');
+            return;
+        }
+
+        SleepTracker.isSleeping = !SleepTracker.isSleeping;
+
+        const sleepStatus = document.getElementById('sleepStatus');
+        const sleepStatusBg = document.getElementById('sleepStatusBg');
+        const sleepControlIcon = document.getElementById('sleepControlIcon');
+        const postSleepSection = document.getElementById('postSleepSection');
+
+        if (SleepTracker.isSleeping) {
+            // Start sleep
+            SleepTracker.sleepStartTime = new Date();
+            sleepStatus.textContent = 'Sleeping';
+            sleepStatusBg.classList.add('bg-pastel-primary/20', 'animate-pulse-soft');
+            sleepStatusBg.classList.remove('bg-pastel-light');
+            sleepControlIcon.setAttribute('data-lucide', 'sun');
+            postSleepSection.classList.add('hidden');
+
+            // Start timer
+            SleepTracker.sleepTimer = setInterval(updateSleepTimer, 1000);
+
+            // Provide haptic feedback if available
+            if ('vibrate' in navigator) {
+                navigator.vibrate(100);
+            }
+        } else {
+            // End sleep
+            clearInterval(SleepTracker.sleepTimer);
+            sleepStatus.textContent = 'Awake';
+            sleepStatusBg.classList.remove('bg-pastel-primary/20', 'animate-pulse-soft');
+            sleepStatusBg.classList.add('bg-pastel-light');
+            sleepControlIcon.setAttribute('data-lucide', 'moon');
+            postSleepSection.classList.remove('hidden');
+
+            // Provide haptic feedback if available
+            if ('vibrate' in navigator) {
+                navigator.vibrate([100, 50, 100]);
+            }
+        }
+
+        // Re-render the icon
+        lucide.createIcons();
+    }
+
+    // Update sleep timer display
+    function updateSleepTimer() {
+        if (!SleepTracker.sleepStartTime) return;
+
+        const now = new Date();
+        const elapsed = Math.floor((now - SleepTracker.sleepStartTime) / 1000);
+        const hours = Math.floor(elapsed / 3600);
+        const minutes = Math.floor((elapsed % 3600) / 60);
+        const seconds = elapsed % 60;
+
+        document.getElementById('sleepDuration').textContent =
+            `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    // Save sleep session
+    async function saveSleepSession() {
+        if (!SleepTracker.sleepStartTime || !SleepTracker.selectedBabyId) {
+            showNotification('Invalid sleep session', 'error');
+            return;
+        }
+
+        // Gather environmental factors from notes
+        const notes = document.getElementById('sleepNotes').value;
+        const environmentalNotes = [];
+
+        if (SleepTracker.environmentalFactors['white-noise']) environmentalNotes.push('White noise');
+        if (SleepTracker.environmentalFactors['pacifier']) environmentalNotes.push('Pacifier used');
+        if (SleepTracker.environmentalFactors['swaddled']) environmentalNotes.push('Swaddled');
+
+        const fullNotes = environmentalNotes.length > 0
+            ? `${environmentalNotes.join(', ')}. ${notes}`.trim()
+            : notes;
+
+        // Map star rating to quality enum
+        const qualityMap = {
+            1: 'poor',
+            2: 'fair',
+            3: 'good',
+            4: 'good',
+            5: 'excellent'
+        };
+
+        const sleepData = {
+            baby_id: parseInt(SleepTracker.selectedBabyId),
+            start_time: SleepTracker.sleepStartTime.toISOString(),
+            end_time: new Date().toISOString(),
+            quality: qualityMap[SleepTracker.sleepQuality] || null,
+            location: SleepTracker.selectedLocation || null,
+            training_method: document.getElementById('trainingMethodSelect').value || 'none',
+            notes: fullNotes || null
+        };
+
+        try {
+            const response = await BabyHelperAuth.api.request('/sleep/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(sleepData)
+            });
+
+            if (response.ok) {
+                showNotification('Sleep session saved successfully!', 'success');
+                resetSleepForm();
+                // Reload data
+                await loadRecentSleepSessions();
+                await loadSleepPatterns();
+                await loadSleepStats();
+            } else {
+                const error = await BabyHelperAuth.api.parseErrorResponse(response);
+                throw new Error(error.message || 'Failed to save sleep session');
+            }
+        } catch (error) {
+            console.error('Failed to save sleep session:', error);
+            showNotification('Failed to save sleep session', 'error');
+        }
+    }
+
+    // Reset sleep form
+    function resetSleepForm() {
+        // Reset timer
+        document.getElementById('sleepDuration').textContent = '00:00:00';
+        SleepTracker.sleepStartTime = null;
+        SleepTracker.selectedLocation = null;
+        SleepTracker.sleepQuality = 0;
+
+        // Reset UI elements
+        document.querySelectorAll('.location-btn').forEach(btn => {
+            btn.classList.remove('bg-pastel-primary', 'text-white');
+            btn.classList.add('bg-white', 'text-pastel-text');
+        });
+
+        document.getElementById('customLocationInput').value = '';
+
+        document.querySelectorAll('.toggle-switch').forEach(toggle => {
+            toggle.classList.remove('active');
+        });
+
+        Object.keys(SleepTracker.environmentalFactors).forEach(key => {
+            SleepTracker.environmentalFactors[key] = false;
+        });
+
+        document.querySelectorAll('#sleepQualityRating button').forEach(btn => {
+            btn.classList.remove('filled');
+        });
+
+        document.getElementById('trainingMethodSelect').value = 'none';
+        document.getElementById('sleepNotes').value = '';
+        document.getElementById('postSleepSection').classList.add('hidden');
+    }
+
+    // Update last update time
+    function updateLastUpdateTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+        document.getElementById('lastUpdateText').textContent = `Last updated: ${timeString}`;
+    }
+
+    // Show notification
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-pastel-lg animate-fade-in-right`;
+
+        // Set color based on type
+        const colorClasses = {
+            success: 'bg-green-100 text-green-800 border border-green-200',
+            error: 'bg-red-100 text-red-800 border border-red-200',
+            warning: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
+            info: 'bg-pastel-light text-pastel-text border border-pastel-secondary'
+        };
+
+        notification.className += ` ${colorClasses[type] || colorClasses.info}`;
+        notification.innerHTML = `
+            <div class="flex items-center gap-2">
+                <i data-lucide="${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'info'}"
+                   class="h-5 w-5"></i>
+                <span class="text-sm font-medium">${message}</span>
+            </div>
+        `;
+
+        document.body.appendChild(notification);
+        lucide.createIcons();
+
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        // Cmd/Ctrl + S to toggle sleep
+        if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+            e.preventDefault();
+            if (!document.getElementById('sleepControlBtn').disabled) {
+                toggleSleep();
+            }
+        }
     });
 </script>
 </body>
