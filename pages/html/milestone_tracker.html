@@ -187,6 +187,30 @@
             background: rgba(255, 216, 204, 0.2);
             color: #dc2626;
         }
+
+        .category-emotional {
+            background: rgba(255, 200, 180, 0.2);
+            color: #e67e22;
+        }
+
+        /* Loading spinner */
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #ff8c69;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 <body class="h-full bg-pastel-lightest font-sans text-pastel-text">
@@ -293,7 +317,7 @@
                 <div>
                     <h1 class="text-base lg:text-lg font-serif font-medium text-pastel-heading">Milestone
                         Achievements</h1>
-                    <p class="text-xs lg:text-sm text-pastel-textLight">Emma, 8 months • 12 milestones achieved</p>
+                    <p class="text-xs lg:text-sm text-pastel-textLight" id="babyInfo">Loading...</p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
@@ -305,16 +329,23 @@
                         class="hidden sm:block p-2 hover:bg-pastel-light rounded-full transition-colors">
                     <i data-lucide="cloud" class="h-5 w-5 text-pastel-text"></i>
                 </button>
-                <div class="h-9 w-9 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-sm font-medium text-white shadow-pastel">
-                    JD
+                <div class="h-9 w-9 rounded-full bg-gradient-to-br from-pastel-primary to-pastel-accent1 flex items-center justify-center text-sm font-medium text-white shadow-pastel"
+                     id="userInitials">
+                    --
                 </div>
             </div>
         </header>
 
         <!-- Main Content Area -->
         <section class="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6">
+            <!-- Loading State -->
+            <div id="loadingState" class="flex items-center justify-center h-64">
+                <div class="loading-spinner"></div>
+            </div>
+
             <!-- Milestone Overview Dashboard -->
-            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+            <div id="developmentOverview"
+                 class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up hidden"
                  style="animation-delay: 0.3s; animation-fill-mode: forwards;">
                 <h2 class="text-xl font-serif font-medium text-pastel-heading mb-6 flex items-center gap-2">
                     <i data-lucide="trophy" class="h-5 w-5 text-pastel-accent2"></i>
@@ -322,89 +353,20 @@
                 </h2>
 
                 <!-- Progress Rings Grid -->
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <!-- Motor Skills Progress -->
-                    <div class="text-center">
-                        <div class="relative w-24 h-24 mx-auto mb-2">
-                            <svg class="progress-ring w-full h-full">
-                                <circle cx="48" cy="48" r="40"
-                                        class="progress-ring-circle stroke-pastel-light"></circle>
-                                <circle cx="48" cy="48" r="40"
-                                        class="progress-ring-circle stroke-pastel-accent1 animate-progress-ring"
-                                        style="stroke-dasharray: 75 100; --progress: 75;"></circle>
-                            </svg>
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <span class="text-lg font-semibold text-pastel-heading">75%</span>
-                            </div>
-                        </div>
-                        <p class="text-sm font-medium text-pastel-text">Motor Skills</p>
-                        <p class="text-xs text-pastel-textLight">6 of 8 achieved</p>
-                    </div>
-
-                    <!-- Social/Emotional Progress -->
-                    <div class="text-center">
-                        <div class="relative w-24 h-24 mx-auto mb-2">
-                            <svg class="progress-ring w-full h-full">
-                                <circle cx="48" cy="48" r="40"
-                                        class="progress-ring-circle stroke-pastel-light"></circle>
-                                <circle cx="48" cy="48" r="40"
-                                        class="progress-ring-circle stroke-pastel-accent2 animate-progress-ring"
-                                        style="stroke-dasharray: 60 100; --progress: 60;"></circle>
-                            </svg>
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <span class="text-lg font-semibold text-pastel-heading">60%</span>
-                            </div>
-                        </div>
-                        <p class="text-sm font-medium text-pastel-text">Social/Emotional</p>
-                        <p class="text-xs text-pastel-textLight">3 of 5 achieved</p>
-                    </div>
-
-                    <!-- Language Progress -->
-                    <div class="text-center">
-                        <div class="relative w-24 h-24 mx-auto mb-2">
-                            <svg class="progress-ring w-full h-full">
-                                <circle cx="48" cy="48" r="40"
-                                        class="progress-ring-circle stroke-pastel-light"></circle>
-                                <circle cx="48" cy="48" r="40"
-                                        class="progress-ring-circle stroke-pastel-primary animate-progress-ring"
-                                        style="stroke-dasharray: 80 100; --progress: 80;"></circle>
-                            </svg>
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <span class="text-lg font-semibold text-pastel-heading">80%</span>
-                            </div>
-                        </div>
-                        <p class="text-sm font-medium text-pastel-text">Language</p>
-                        <p class="text-xs text-pastel-textLight">4 of 5 achieved</p>
-                    </div>
-
-                    <!-- Cognitive Progress -->
-                    <div class="text-center">
-                        <div class="relative w-24 h-24 mx-auto mb-2">
-                            <svg class="progress-ring w-full h-full">
-                                <circle cx="48" cy="48" r="40"
-                                        class="progress-ring-circle stroke-pastel-light"></circle>
-                                <circle cx="48" cy="48" r="40"
-                                        class="progress-ring-circle stroke-pastel-secondary animate-progress-ring"
-                                        style="stroke-dasharray: 50 100; --progress: 50;"></circle>
-                            </svg>
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <span class="text-lg font-semibold text-pastel-heading">50%</span>
-                            </div>
-                        </div>
-                        <p class="text-sm font-medium text-pastel-text">Cognitive</p>
-                        <p class="text-xs text-pastel-textLight">2 of 4 achieved</p>
-                    </div>
+                <div id="progressRingsContainer" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <!-- Progress rings will be dynamically inserted here -->
                 </div>
 
                 <!-- Overall Progress Bar -->
                 <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-sm font-medium text-pastel-text">Overall Development Progress</span>
-                        <span class="text-sm font-semibold text-pastel-primary">15 of 22 milestones</span>
+                        <span class="text-sm font-semibold text-pastel-primary" id="overallProgressText">0 of 0 milestones</span>
                     </div>
                     <div class="w-full h-3 bg-pastel-light rounded-full overflow-hidden">
-                        <div class="h-full bg-gradient-to-r from-pastel-primary to-pastel-accent1 rounded-full transition-all duration-1000"
-                             style="width: 68%"></div>
+                        <div id="overallProgressBar"
+                             class="h-full bg-gradient-to-r from-pastel-primary to-pastel-accent1 rounded-full transition-all duration-1000"
+                             style="width: 0%"></div>
                     </div>
                 </div>
             </div>
@@ -412,98 +374,39 @@
             <!-- Current Focus & Recently Achieved -->
             <div class="grid lg:grid-cols-2 gap-6">
                 <!-- Current Focus Milestones -->
-                <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-left"
+                <div id="currentFocusSection"
+                     class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-left hidden"
                      style="animation-delay: 0.4s; animation-fill-mode: forwards;">
                     <h2 class="text-lg font-serif font-medium text-pastel-heading mb-4 flex items-center gap-2">
                         <i data-lucide="target" class="h-5 w-5 text-pastel-accent2"></i>
-                        Current Focus (8-10 months)
+                        <span id="currentFocusTitle">Current Focus</span>
                     </h2>
-                    <div class="space-y-3">
-                        <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light hover:shadow-pastel transition-shadow cursor-pointer">
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="flex-1">
-                                    <h3 class="font-medium text-pastel-heading mb-1">Crawling</h3>
-                                    <p class="text-sm text-pastel-textLight">Moving forward on hands and knees</p>
-                                    <span class="inline-block mt-2 px-2 py-1 text-xs rounded-full category-motor font-medium">Motor Skills</span>
-                                </div>
-                                <button onclick="openMilestoneModal('crawling')"
-                                        class="p-2 hover:bg-white rounded-full transition-colors">
-                                    <i data-lucide="plus-circle" class="h-5 w-5 text-pastel-primary"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light hover:shadow-pastel transition-shadow cursor-pointer">
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="flex-1">
-                                    <h3 class="font-medium text-pastel-heading mb-1">Clapping Hands</h3>
-                                    <p class="text-sm text-pastel-textLight">Bringing hands together in play</p>
-                                    <span class="inline-block mt-2 px-2 py-1 text-xs rounded-full category-social font-medium">Social/Emotional</span>
-                                </div>
-                                <button onclick="openMilestoneModal('clapping')"
-                                        class="p-2 hover:bg-white rounded-full transition-colors">
-                                    <i data-lucide="plus-circle" class="h-5 w-5 text-pastel-primary"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light hover:shadow-pastel transition-shadow cursor-pointer">
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="flex-1">
-                                    <h3 class="font-medium text-pastel-heading mb-1">First Words</h3>
-                                    <p class="text-sm text-pastel-textLight">"Mama" or "Dada" with meaning</p>
-                                    <span class="inline-block mt-2 px-2 py-1 text-xs rounded-full category-language font-medium">Language</span>
-                                </div>
-                                <button onclick="openMilestoneModal('first-words')"
-                                        class="p-2 hover:bg-white rounded-full transition-colors">
-                                    <i data-lucide="plus-circle" class="h-5 w-5 text-pastel-primary"></i>
-                                </button>
-                            </div>
-                        </div>
+                    <div id="currentFocusList" class="space-y-3">
+                        <!-- Current focus milestones will be dynamically inserted here -->
                     </div>
                 </div>
 
                 <!-- Recently Achieved Celebrations -->
-                <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-right"
+                <div id="recentlyAchievedSection"
+                     class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-right hidden"
                      style="animation-delay: 0.5s; animation-fill-mode: forwards;">
                     <h2 class="text-lg font-serif font-medium text-pastel-heading mb-4 flex items-center gap-2">
                         <i data-lucide="star" class="h-5 w-5 text-pastel-accent1"></i>
                         Recently Achieved 🎉
                     </h2>
-                    <div class="space-y-3">
-                        <div class="bg-gradient-to-r from-pastel-primary/10 to-pastel-accent1/10 rounded-xl p-4 border border-pastel-accent1/30">
-                            <div class="flex items-center gap-3">
-                                <div class="w-12 h-12 rounded-full overflow-hidden bg-white shadow-pastel">
-                                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23ffd8cc' width='100' height='100'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%23ff8c69' font-size='40' font-family='serif'%3E📸%3C/text%3E%3C/svg%3E"
-                                         alt="Milestone photo">
-                                </div>
-                                <div class="flex-1">
-                                    <h3 class="font-medium text-pastel-heading">Sitting Without Support</h3>
-                                    <p class="text-sm text-pastel-textLight">Achieved 3 days ago • 7.5 months</p>
-                                </div>
-                                <i data-lucide="award" class="h-5 w-5 text-pastel-accent1 animate-celebration"></i>
-                            </div>
-                        </div>
-                        <div class="bg-gradient-to-r from-pastel-accent2/10 to-pastel-secondary/10 rounded-xl p-4 border border-pastel-accent2/30">
-                            <div class="flex items-center gap-3">
-                                <div class="w-12 h-12 rounded-full overflow-hidden bg-white shadow-pastel">
-                                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23ffd8cc' width='100' height='100'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%23ff8c69' font-size='40' font-family='serif'%3E🎥%3C/text%3E%3C/svg%3E"
-                                         alt="Milestone video">
-                                </div>
-                                <div class="flex-1">
-                                    <h3 class="font-medium text-pastel-heading">Babbling Consonants</h3>
-                                    <p class="text-sm text-pastel-textLight">Achieved 1 week ago • 7 months</p>
-                                </div>
-                                <i data-lucide="award" class="h-5 w-5 text-pastel-accent2 animate-celebration"></i>
-                            </div>
-                        </div>
+                    <div id="recentlyAchievedList" class="space-y-3">
+                        <!-- Recently achieved milestones will be dynamically inserted here -->
                     </div>
-                    <button class="mt-4 w-full text-center text-sm text-pastel-primary hover:text-pastel-primaryHover font-medium">
+                    <button onclick="viewAllAchievements()"
+                            class="mt-4 w-full text-center text-sm text-pastel-primary hover:text-pastel-primaryHover font-medium">
                         View All Achievements →
                     </button>
                 </div>
             </div>
 
             <!-- Upcoming Milestones Timeline -->
-            <div class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up"
+            <div id="upcomingMilestonesSection"
+                 class="bg-white rounded-2xl shadow-pastel-lg border border-pastel-light p-6 opacity-0 animate-fade-in-up hidden"
                  style="animation-delay: 0.6s; animation-fill-mode: forwards;">
                 <h2 class="text-xl font-serif font-medium text-pastel-heading mb-6 flex items-center gap-2">
                     <i data-lucide="calendar-days" class="h-5 w-5 text-pastel-accent2"></i>
@@ -512,65 +415,8 @@
 
                 <!-- Horizontal Timeline -->
                 <div class="overflow-x-auto pb-4">
-                    <div class="flex gap-4 min-w-max">
-                        <!-- 9-10 months -->
-                        <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light w-64">
-                            <h3 class="font-medium text-pastel-heading mb-3">9-10 months</h3>
-                            <div class="space-y-2">
-                                <div class="flex items-center gap-2 text-sm">
-                                    <i data-lucide="circle" class="h-3 w-3 text-pastel-accent1"></i>
-                                    <span class="text-pastel-text">Pulling to stand</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-sm">
-                                    <i data-lucide="circle" class="h-3 w-3 text-pastel-accent2"></i>
-                                    <span class="text-pastel-text">Pincer grasp</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-sm">
-                                    <i data-lucide="circle" class="h-3 w-3 text-pastel-primary"></i>
-                                    <span class="text-pastel-text">Waving bye-bye</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 11-12 months -->
-                        <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light w-64 relative">
-                            <div class="timeline-connector"></div>
-                            <h3 class="font-medium text-pastel-heading mb-3">11-12 months</h3>
-                            <div class="space-y-2">
-                                <div class="flex items-center gap-2 text-sm">
-                                    <i data-lucide="circle" class="h-3 w-3 text-pastel-accent1"></i>
-                                    <span class="text-pastel-text">First steps</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-sm">
-                                    <i data-lucide="circle" class="h-3 w-3 text-pastel-accent2"></i>
-                                    <span class="text-pastel-text">2-3 word vocabulary</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-sm">
-                                    <i data-lucide="circle" class="h-3 w-3 text-pastel-primary"></i>
-                                    <span class="text-pastel-text">Drinking from cup</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 13-15 months -->
-                        <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light w-64 relative">
-                            <div class="timeline-connector"></div>
-                            <h3 class="font-medium text-pastel-heading mb-3">13-15 months</h3>
-                            <div class="space-y-2">
-                                <div class="flex items-center gap-2 text-sm">
-                                    <i data-lucide="circle" class="h-3 w-3 text-pastel-accent1"></i>
-                                    <span class="text-pastel-text">Walking confidently</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-sm">
-                                    <i data-lucide="circle" class="h-3 w-3 text-pastel-accent2"></i>
-                                    <span class="text-pastel-text">Stacking blocks</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-sm">
-                                    <i data-lucide="circle" class="h-3 w-3 text-pastel-primary"></i>
-                                    <span class="text-pastel-text">Following simple instructions</span>
-                                </div>
-                            </div>
-                        </div>
+                    <div id="upcomingTimeline" class="flex gap-4 min-w-max">
+                        <!-- Timeline items will be dynamically inserted here -->
                     </div>
                 </div>
             </div>
@@ -628,19 +474,20 @@
                 </h2>
                 <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light">
                     <p class="text-sm text-pastel-text mb-3">
-                        <span class="font-medium">Next checkup:</span> March 15, 2025 (9-month visit)
+                        <span class="font-medium">Next checkup:</span> <span id="nextCheckupDate">Loading...</span>
                     </p>
                     <div class="space-y-2">
                         <div class="flex items-center justify-between text-sm">
                             <span class="text-pastel-textLight">Development screening status:</span>
-                            <span class="text-pastel-primary font-medium">On track</span>
+                            <span class="text-pastel-primary font-medium" id="developmentStatus">On track</span>
                         </div>
                         <div class="flex items-center justify-between text-sm">
                             <span class="text-pastel-textLight">Areas to discuss:</span>
                             <span class="text-pastel-text">None currently</span>
                         </div>
                     </div>
-                    <button class="mt-4 text-sm text-pastel-primary hover:text-pastel-primaryHover font-medium">
+                    <button onclick="generateMilestoneReport()"
+                            class="mt-4 text-sm text-pastel-primary hover:text-pastel-primaryHover font-medium">
                         Generate Milestone Report for Doctor →
                     </button>
                 </div>
@@ -689,117 +536,96 @@
                 </button>
             </div>
 
-            <div class="p-4 space-y-4">
+            <form id="milestoneForm" class="p-4 space-y-4">
                 <!-- Quick Add Today Button -->
-                <button class="w-full bg-pastel-primary text-white py-3 rounded-xl font-medium hover:bg-pastel-primaryHover transition-colors flex items-center justify-center gap-2">
+                <button type="button" onclick="quickAddToday()"
+                        class="w-full bg-pastel-primary text-white py-3 rounded-xl font-medium hover:bg-pastel-primaryHover transition-colors flex items-center justify-center gap-2">
                     <i data-lucide="zap" class="h-5 w-5"></i>
                     Quick Add for Today
                 </button>
 
-                <!-- Search/Select Milestone -->
+                <!-- Title Input -->
                 <div>
-                    <label class="block text-sm font-medium text-pastel-text mb-2">Select Milestone</label>
-                    <div class="relative">
-                        <input type="text" placeholder="Search milestones..."
-                               class="w-full px-4 py-2.5 pr-10 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none">
-                        <i data-lucide="search"
-                           class="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-pastel-textLight"></i>
-                    </div>
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Milestone Title</label>
+                    <input type="text" id="milestoneTitle" required
+                           placeholder="e.g., First Steps, Sitting Without Support..."
+                           class="w-full px-4 py-2.5 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none">
                 </div>
 
-                <!-- Category Filters -->
+                <!-- Category Selection -->
                 <div>
-                    <label class="block text-sm font-medium text-pastel-text mb-2">Filter by Category</label>
-                    <div class="flex flex-wrap gap-2">
-                        <button class="px-3 py-1.5 rounded-full text-sm font-medium category-motor">Motor Skills
-                        </button>
-                        <button class="px-3 py-1.5 rounded-full text-sm font-medium category-social">Social/Emotional
-                        </button>
-                        <button class="px-3 py-1.5 rounded-full text-sm font-medium category-language">Language</button>
-                        <button class="px-3 py-1.5 rounded-full text-sm font-medium category-cognitive">Cognitive
-                        </button>
-                    </div>
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Category</label>
+                    <select id="milestoneCategory" required
+                            class="w-full px-4 py-2.5 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none">
+                        <option value="">Select a category</option>
+                        <option value="motor">Motor Skills</option>
+                        <option value="social">Social/Emotional</option>
+                        <option value="language">Language</option>
+                        <option value="cognitive">Cognitive</option>
+                        <option value="emotional">Emotional</option>
+                        <option value="other">Other</option>
+                    </select>
                 </div>
-
-                <!-- Milestone List -->
-                <div class="space-y-2 max-h-48 overflow-y-auto">
-                    <div class="p-3 rounded-xl border border-pastel-light hover:bg-pastel-lightest cursor-pointer">
-                        <h4 class="font-medium text-pastel-heading">Sitting Without Support</h4>
-                        <p class="text-sm text-pastel-textLight">Typical: 4-8 months</p>
-                    </div>
-                    <div class="p-3 rounded-xl border border-pastel-light hover:bg-pastel-lightest cursor-pointer">
-                        <h4 class="font-medium text-pastel-heading">Crawling</h4>
-                        <p class="text-sm text-pastel-textLight">Typical: 6-10 months</p>
-                    </div>
-                    <div class="p-3 rounded-xl border border-pastel-light hover:bg-pastel-lightest cursor-pointer">
-                        <h4 class="font-medium text-pastel-heading">First Words</h4>
-                        <p class="text-sm text-pastel-textLight">Typical: 10-14 months</p>
-                    </div>
-                </div>
-
-                <!-- Custom Milestone Option -->
-                <button class="w-full text-center text-sm text-pastel-primary hover:text-pastel-primaryHover font-medium py-2">
-                    + Add Custom Milestone
-                </button>
 
                 <!-- Date Selection -->
                 <div>
                     <label class="block text-sm font-medium text-pastel-text mb-2">Achievement Date</label>
-                    <div class="grid grid-cols-3 gap-2">
-                        <button class="px-3 py-2 rounded-xl bg-pastel-primary text-white font-medium text-sm">
+                    <div class="grid grid-cols-3 gap-2 mb-2">
+                        <button type="button" onclick="setMilestoneDate('today')"
+                                class="px-3 py-2 rounded-xl border border-pastel-light text-pastel-text font-medium text-sm hover:bg-pastel-lightest">
                             Today
                         </button>
-                        <button class="px-3 py-2 rounded-xl border border-pastel-light text-pastel-text font-medium text-sm hover:bg-pastel-lightest">
+                        <button type="button" onclick="setMilestoneDate('yesterday')"
+                                class="px-3 py-2 rounded-xl border border-pastel-light text-pastel-text font-medium text-sm hover:bg-pastel-lightest">
                             Yesterday
                         </button>
-                        <button class="px-3 py-2 rounded-xl border border-pastel-light text-pastel-text font-medium text-sm hover:bg-pastel-lightest">
+                        <button type="button" onclick="setMilestoneDate('custom')"
+                                class="px-3 py-2 rounded-xl border border-pastel-light text-pastel-text font-medium text-sm hover:bg-pastel-lightest">
                             Pick Date
                         </button>
                     </div>
-                    <label class="flex items-center gap-2 mt-2">
-                        <input type="checkbox" class="rounded text-pastel-primary">
-                        <span class="text-sm text-pastel-textLight">Approximate date (developed gradually)</span>
-                    </label>
+                    <input type="date" id="milestoneDate" required
+                           class="w-full px-4 py-2.5 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none">
                 </div>
 
-                <!-- Photo/Video Upload -->
+                <!-- Description -->
                 <div>
-                    <label class="block text-sm font-medium text-pastel-text mb-2">Add Photos or Videos</label>
-                    <div class="upload-area rounded-xl p-6 text-center cursor-pointer hover:bg-pastel-lightest/50">
-                        <i data-lucide="camera" class="h-8 w-8 text-pastel-primary mx-auto mb-2"></i>
-                        <p class="text-sm text-pastel-text">Click to upload or drag & drop</p>
-                        <p class="text-xs text-pastel-textLight mt-1">Up to 5 photos or 1 video (30s max)</p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 mt-2">
-                        <button class="flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-pastel-light text-sm font-medium hover:bg-pastel-lightest">
-                            <i data-lucide="camera" class="h-4 w-4"></i>
-                            Take Photo
-                        </button>
-                        <button class="flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-pastel-light text-sm font-medium hover:bg-pastel-lightest">
-                            <i data-lucide="video" class="h-4 w-4"></i>
-                            Record Video
-                        </button>
-                    </div>
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Description (Optional)</label>
+                    <input type="text" id="milestoneDescription"
+                           placeholder="Brief description of the milestone..."
+                           class="w-full px-4 py-2.5 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none">
                 </div>
 
                 <!-- Notes -->
                 <div>
                     <label class="block text-sm font-medium text-pastel-text mb-2">Notes (Optional)</label>
-                    <textarea rows="3" placeholder="Add any special notes about this milestone..."
+                    <textarea id="milestoneNotes" rows="3" placeholder="Add any special notes about this milestone..."
                               class="w-full px-4 py-2.5 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none resize-none"></textarea>
+                </div>
+
+                <!-- Photo Upload (Future Feature) -->
+                <div>
+                    <label class="block text-sm font-medium text-pastel-text mb-2">Add Photos or Videos</label>
+                    <div class="upload-area rounded-xl p-6 text-center cursor-pointer hover:bg-pastel-lightest/50">
+                        <i data-lucide="camera" class="h-8 w-8 text-pastel-primary mx-auto mb-2"></i>
+                        <p class="text-sm text-pastel-text">Photo upload coming soon!</p>
+                        <p class="text-xs text-pastel-textLight mt-1">This feature will be available in the next
+                            update</p>
+                    </div>
                 </div>
 
                 <!-- Action Buttons -->
                 <div class="flex gap-3 pt-4">
-                    <button onclick="closeMilestoneModal()"
+                    <button type="button" onclick="closeMilestoneModal()"
                             class="flex-1 px-4 py-2.5 rounded-xl border border-pastel-light text-pastel-text font-medium hover:bg-pastel-lightest">
                         Cancel
                     </button>
-                    <button class="flex-1 px-4 py-2.5 rounded-xl bg-pastel-primary text-white font-medium hover:bg-pastel-primaryHover">
+                    <button type="submit"
+                            class="flex-1 px-4 py-2.5 rounded-xl bg-pastel-primary text-white font-medium hover:bg-pastel-primaryHover">
                         Save Milestone
                     </button>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>
@@ -817,60 +643,14 @@
             </div>
 
             <div class="p-4 space-y-4">
-                <!-- Milestone Preview -->
                 <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light">
-                    <div class="flex items-center gap-3">
-                        <div class="w-16 h-16 rounded-xl overflow-hidden bg-white shadow-pastel">
-                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23ffd8cc' width='100' height='100'/%3E%3Ctext x='50' y='50' text-anchor='middle' dy='.3em' fill='%23ff8c69' font-size='40' font-family='serif'%3E👶%3C/text%3E%3C/svg%3E"
-                                 alt="Milestone">
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="font-medium text-pastel-heading">Sitting Without Support</h3>
-                            <p class="text-sm text-pastel-textLight">Emma • 7.5 months</p>
-                        </div>
-                    </div>
+                    <p class="text-center text-sm text-pastel-text">
+                        Sharing features coming soon! You'll be able to share milestones with family and friends.
+                    </p>
                 </div>
-
-                <!-- Share Options -->
-                <div>
-                    <h3 class="text-sm font-medium text-pastel-text mb-3">Share via</h3>
-                    <div class="grid grid-cols-3 gap-3">
-                        <button class="flex flex-col items-center gap-2 p-3 rounded-xl border border-pastel-light hover:bg-pastel-lightest">
-                            <i data-lucide="mail" class="h-6 w-6 text-pastel-primary"></i>
-                            <span class="text-xs text-pastel-text">Email</span>
-                        </button>
-                        <button class="flex flex-col items-center gap-2 p-3 rounded-xl border border-pastel-light hover:bg-pastel-lightest">
-                            <i data-lucide="users" class="h-6 w-6 text-pastel-accent1"></i>
-                            <span class="text-xs text-pastel-text">Family</span>
-                        </button>
-                        <button class="flex flex-col items-center gap-2 p-3 rounded-xl border border-pastel-light hover:bg-pastel-lightest">
-                            <i data-lucide="download" class="h-6 w-6 text-pastel-accent2"></i>
-                            <span class="text-xs text-pastel-text">Save</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Privacy Settings -->
-                <div>
-                    <h3 class="text-sm font-medium text-pastel-text mb-2">Privacy</h3>
-                    <select class="w-full px-4 py-2.5 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none">
-                        <option>Family Members Only</option>
-                        <option>Close Friends</option>
-                        <option>All Friends</option>
-                        <option>Public</option>
-                    </select>
-                </div>
-
-                <!-- Custom Message -->
-                <div>
-                    <label class="block text-sm font-medium text-pastel-text mb-2">Add a message</label>
-                    <textarea rows="2" placeholder="Look what Emma can do now!"
-                              class="w-full px-4 py-2.5 rounded-xl border border-pastel-light focus:border-pastel-primary focus:outline-none resize-none"></textarea>
-                </div>
-
-                <!-- Action Buttons -->
-                <button class="w-full px-4 py-2.5 rounded-xl bg-pastel-primary text-white font-medium hover:bg-pastel-primaryHover">
-                    Share Milestone
+                <button onclick="closeShareModal()"
+                        class="w-full px-4 py-2.5 rounded-xl bg-pastel-primary text-white font-medium hover:bg-pastel-primaryHover">
+                    Close
                 </button>
             </div>
         </div>
@@ -890,51 +670,14 @@
             </div>
 
             <div class="p-4 space-y-4">
-                <!-- Backup Status -->
                 <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-sm font-medium text-pastel-text">Cloud Backup</span>
-                        <span class="text-xs text-pastel-primary font-medium">Active</span>
-                    </div>
-                    <p class="text-xs text-pastel-textLight mb-2">Last backup: 2 hours ago</p>
-                    <div class="w-full h-2 bg-pastel-light rounded-full overflow-hidden">
-                        <div class="h-full bg-gradient-to-r from-pastel-primary to-pastel-accent1 rounded-full"
-                             style="width: 75%"></div>
-                    </div>
-                    <p class="text-xs text-pastel-textLight mt-2">7.5 GB of 10 GB used</p>
+                    <p class="text-center text-sm text-pastel-text">
+                        Your data is automatically backed up. Advanced backup features coming soon!
+                    </p>
                 </div>
-
-                <!-- Privacy Settings -->
-                <div>
-                    <h3 class="text-sm font-medium text-pastel-text mb-3">Privacy & Access</h3>
-                    <div class="space-y-2">
-                        <label class="flex items-center justify-between p-3 rounded-xl border border-pastel-light hover:bg-pastel-lightest cursor-pointer">
-                            <span class="text-sm text-pastel-text">Allow family member access</span>
-                            <input type="checkbox" checked class="rounded text-pastel-primary">
-                        </label>
-                        <label class="flex items-center justify-between p-3 rounded-xl border border-pastel-light hover:bg-pastel-lightest cursor-pointer">
-                            <span class="text-sm text-pastel-text">Share with pediatrician</span>
-                            <input type="checkbox" class="rounded text-pastel-primary">
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Export Options -->
-                <div>
-                    <h3 class="text-sm font-medium text-pastel-text mb-3">Export Data</h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button class="px-3 py-2 rounded-xl border border-pastel-light text-sm font-medium hover:bg-pastel-lightest">
-                            Download Photos
-                        </button>
-                        <button class="px-3 py-2 rounded-xl border border-pastel-light text-sm font-medium hover:bg-pastel-lightest">
-                            Export PDF Report
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <button class="w-full px-4 py-2.5 rounded-xl bg-pastel-primary text-white font-medium hover:bg-pastel-primaryHover">
-                    Backup Now
+                <button onclick="closeBackupModal()"
+                        class="w-full px-4 py-2.5 rounded-xl bg-pastel-primary text-white font-medium hover:bg-pastel-primaryHover">
+                    Close
                 </button>
             </div>
         </div>
@@ -943,11 +686,479 @@
 
 <script src="../js/auth.js" data-auto-init="true"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    // Global state management
+    let currentBaby = null;
+    let milestones = [];
+    let editingMilestoneId = null;
+
+    // Predefined milestones by age range (in months)
+    const predefinedMilestones = {
+        '0-3': [
+            {title: 'Social Smile', category: 'social', description: 'Smiles at people'},
+            {title: 'Lifts Head During Tummy Time', category: 'motor', description: 'Can hold head up briefly'},
+            {title: 'Follows Objects with Eyes', category: 'cognitive', description: 'Tracks moving objects'}
+        ],
+        '4-6': [
+            {title: 'Rolls Over', category: 'motor', description: 'Rolls from tummy to back'},
+            {title: 'Laughs', category: 'social', description: 'Laughs out loud'},
+            {title: 'Reaches for Toys', category: 'motor', description: 'Reaches and grasps objects'}
+        ],
+        '7-9': [
+            {title: 'Sitting Without Support', category: 'motor', description: 'Sits independently'},
+            {title: 'Crawling', category: 'motor', description: 'Moves forward on hands and knees'},
+            {title: 'Clapping Hands', category: 'social', description: 'Brings hands together in play'},
+            {title: 'Babbling Consonants', category: 'language', description: 'Makes sounds like "ba-ba" or "da-da"'}
+        ],
+        '10-12': [
+            {title: 'First Steps', category: 'motor', description: 'Takes first independent steps'},
+            {title: 'First Words', category: 'language', description: '"Mama" or "Dada" with meaning'},
+            {title: 'Waving Bye-Bye', category: 'social', description: 'Waves goodbye'},
+            {title: 'Pincer Grasp', category: 'motor', description: 'Picks up small objects with thumb and finger'}
+        ],
+        '13-18': [
+            {title: 'Walking Confidently', category: 'motor', description: 'Walks steadily without support'},
+            {title: 'Stacking Blocks', category: 'cognitive', description: 'Can stack 2-3 blocks'},
+            {title: 'Following Simple Instructions', category: 'cognitive', description: 'Understands simple commands'},
+            {title: 'Using Spoon', category: 'motor', description: 'Feeds self with spoon'}
+        ]
+    };
+
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            await initializePage();
+        } catch (error) {
+            console.error('Failed to initialize page:', error);
+            showError('Failed to load milestone data. Please refresh the page.');
+        }
+    });
+
+    // Main initialization function
+    async function initializePage() {
         // Initialize Lucide icons
         lucide.createIcons();
 
-        // Mobile menu toggle functionality
+        // Set up mobile menu
+        setupMobileMenu();
+
+        // Set up keyboard shortcuts
+        setupKeyboardShortcuts();
+
+        // Set up form submission
+        setupFormSubmission();
+
+        // Load user data
+        await loadUserData();
+
+        // Load babies and set current baby
+        await loadBabies();
+
+        // Load milestones for current baby
+        if (currentBaby) {
+            await loadMilestones();
+        }
+
+        // Hide loading state
+        document.getElementById('loadingState').classList.add('hidden');
+
+        // Show main content sections
+        document.getElementById('developmentOverview').classList.remove('hidden');
+        document.getElementById('currentFocusSection').classList.remove('hidden');
+        document.getElementById('recentlyAchievedSection').classList.remove('hidden');
+        document.getElementById('upcomingMilestonesSection').classList.remove('hidden');
+    }
+
+    // Load user data
+    async function loadUserData() {
+        try {
+            const profile = await BabyHelperAuth.api.endpoints.getUserProfile();
+            const initials = profile.name.split(' ').map(n => n[0]).join('').toUpperCase();
+            document.getElementById('userInitials').textContent = initials;
+        } catch (error) {
+            console.error('Failed to load user profile:', error);
+        }
+    }
+
+    // Load babies and set the first one as current
+    async function loadBabies() {
+        try {
+            const babies = await BabyHelperAuth.api.endpoints.getBabies();
+            if (babies && babies.length > 0) {
+                currentBaby = babies[0]; // For now, use the first baby
+                updateBabyInfo();
+            } else {
+                showError('No babies found. Please add a baby first.');
+            }
+        } catch (error) {
+            console.error('Failed to load babies:', error);
+            showError('Failed to load baby information.');
+        }
+    }
+
+    // Update baby info in header
+    function updateBabyInfo() {
+        if (!currentBaby) return;
+
+        const ageInMonths = calculateAgeInMonths(currentBaby.date_of_birth);
+        const milestoneCount = milestones.length;
+
+        document.getElementById('babyInfo').textContent =
+            `${currentBaby.name}, ${ageInMonths} months • ${milestoneCount} milestones achieved`;
+    }
+
+    // Calculate age in months
+    function calculateAgeInMonths(dateOfBirth) {
+        const birth = new Date(dateOfBirth);
+        const now = new Date();
+        const months = (now.getFullYear() - birth.getFullYear()) * 12 +
+            (now.getMonth() - birth.getMonth());
+        return Math.max(0, months);
+    }
+
+    // Load milestones from API
+    async function loadMilestones() {
+        try {
+            const response = await BabyHelperAuth.api.request(`/milestone/baby/${currentBaby.id}`);
+            if (response.ok) {
+                milestones = await response.json();
+                updateUI();
+            } else {
+                const error = await BabyHelperAuth.api.parseErrorResponse(response);
+                console.error('Failed to load milestones:', error);
+            }
+        } catch (error) {
+            console.error('Failed to load milestones:', error);
+        }
+    }
+
+    // Update all UI sections with milestone data
+    function updateUI() {
+        updateBabyInfo();
+        updateDevelopmentOverview();
+        updateCurrentFocus();
+        updateRecentlyAchieved();
+        updateUpcomingMilestones();
+        updateHealthcareSummary();
+    }
+
+    // Update development overview section
+    function updateDevelopmentOverview() {
+        const categories = ['motor', 'social', 'language', 'cognitive'];
+        const categoryNames = {
+            motor: 'Motor Skills',
+            social: 'Social/Emotional',
+            language: 'Language',
+            cognitive: 'Cognitive'
+        };
+        const categoryColors = {
+            motor: 'pastel-accent1',
+            social: 'pastel-accent2',
+            language: 'pastel-primary',
+            cognitive: 'pastel-secondary'
+        };
+
+        const container = document.getElementById('progressRingsContainer');
+        container.innerHTML = '';
+
+        let totalAchieved = 0;
+        let totalExpected = 0;
+
+        categories.forEach(category => {
+            const achieved = milestones.filter(m => m.category === category).length;
+            const expected = getExpectedMilestonesForCategory(category);
+            const percentage = expected > 0 ? Math.round((achieved / expected) * 100) : 0;
+
+            totalAchieved += achieved;
+            totalExpected += expected;
+
+            const html = `
+                <div class="text-center">
+                    <div class="relative w-24 h-24 mx-auto mb-2">
+                        <svg class="progress-ring w-full h-full">
+                            <circle cx="48" cy="48" r="40"
+                                    class="progress-ring-circle stroke-pastel-light"></circle>
+                            <circle cx="48" cy="48" r="40"
+                                    class="progress-ring-circle stroke-${categoryColors[category]} animate-progress-ring"
+                                    style="stroke-dasharray: ${percentage} 100; --progress: ${percentage};"></circle>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span class="text-lg font-semibold text-pastel-heading">${percentage}%</span>
+                        </div>
+                    </div>
+                    <p class="text-sm font-medium text-pastel-text">${categoryNames[category]}</p>
+                    <p class="text-xs text-pastel-textLight">${achieved} of ${expected} achieved</p>
+                </div>
+            `;
+            container.innerHTML += html;
+        });
+
+        // Update overall progress
+        const overallPercentage = totalExpected > 0 ? Math.round((totalAchieved / totalExpected) * 100) : 0;
+        document.getElementById('overallProgressText').textContent = `${totalAchieved} of ${totalExpected} milestones`;
+        document.getElementById('overallProgressBar').style.width = `${overallPercentage}%`;
+    }
+
+    // Get expected milestones for category based on baby's age
+    function getExpectedMilestonesForCategory(category) {
+        // This is a simplified estimation - in a real app, this would be based on
+        // pediatric development standards
+        const ageInMonths = calculateAgeInMonths(currentBaby.date_of_birth);
+        const baseMilestones = Math.floor(ageInMonths / 3); // Roughly 1 milestone per 3 months
+
+        return Math.max(1, baseMilestones);
+    }
+
+    // Update current focus section
+    function updateCurrentFocus() {
+        const ageInMonths = calculateAgeInMonths(currentBaby.date_of_birth);
+        const ageRange = getAgeRange(ageInMonths);
+
+        document.getElementById('currentFocusTitle').textContent =
+            `Current Focus (${ageRange} months)`;
+
+        const focusList = document.getElementById('currentFocusList');
+        focusList.innerHTML = '';
+
+        // Get appropriate milestones for current age
+        const suggestedMilestones = getSuggestedMilestones(ageInMonths);
+
+        suggestedMilestones.forEach(milestone => {
+            // Check if already achieved
+            const isAchieved = milestones.some(m =>
+                m.title.toLowerCase() === milestone.title.toLowerCase()
+            );
+
+            if (!isAchieved) {
+                const html = `
+                    <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light hover:shadow-pastel transition-shadow cursor-pointer">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex-1">
+                                <h3 class="font-medium text-pastel-heading mb-1">${milestone.title}</h3>
+                                <p class="text-sm text-pastel-textLight">${milestone.description}</p>
+                                <span class="inline-block mt-2 px-2 py-1 text-xs rounded-full category-${milestone.category} font-medium">
+                                    ${getCategoryDisplayName(milestone.category)}
+                                </span>
+                            </div>
+                            <button onclick="openMilestoneModalWithData('${milestone.title}', '${milestone.category}', '${milestone.description}')"
+                                    class="p-2 hover:bg-white rounded-full transition-colors">
+                                <i data-lucide="plus-circle" class="h-5 w-5 text-pastel-primary"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                focusList.innerHTML += html;
+            }
+        });
+
+        if (focusList.innerHTML === '') {
+            focusList.innerHTML = `
+                <p class="text-sm text-pastel-textLight text-center py-4">
+                    All age-appropriate milestones achieved! 🎉
+                </p>
+            `;
+        }
+
+        // Re-render icons
+        lucide.createIcons();
+    }
+
+    // Get age range string
+    function getAgeRange(ageInMonths) {
+        if (ageInMonths <= 3) return '0-3';
+        if (ageInMonths <= 6) return '4-6';
+        if (ageInMonths <= 9) return '7-9';
+        if (ageInMonths <= 12) return '10-12';
+        if (ageInMonths <= 18) return '13-18';
+        return `${ageInMonths}-${ageInMonths + 3}`;
+    }
+
+    // Get suggested milestones based on age
+    function getSuggestedMilestones(ageInMonths) {
+        let suggestions = [];
+
+        Object.entries(predefinedMilestones).forEach(([range, milestones]) => {
+            const [min, max] = range.split('-').map(Number);
+            if (ageInMonths >= min && ageInMonths <= max) {
+                suggestions = suggestions.concat(milestones);
+            }
+        });
+
+        return suggestions;
+    }
+
+    // Get category display name
+    function getCategoryDisplayName(category) {
+        const names = {
+            motor: 'Motor Skills',
+            social: 'Social/Emotional',
+            language: 'Language',
+            cognitive: 'Cognitive',
+            emotional: 'Emotional',
+            other: 'Other'
+        };
+        return names[category] || category;
+    }
+
+    // Update recently achieved section
+    function updateRecentlyAchieved() {
+        const recentList = document.getElementById('recentlyAchievedList');
+        recentList.innerHTML = '';
+
+        // Sort milestones by achieved date (most recent first)
+        const sortedMilestones = [...milestones].sort((a, b) =>
+            new Date(b.achieved_date) - new Date(a.achieved_date)
+        );
+
+        // Show top 2 recent achievements
+        const recentMilestones = sortedMilestones.slice(0, 2);
+
+        recentMilestones.forEach(milestone => {
+            const daysAgo = getDaysAgo(milestone.achieved_date);
+            const ageAtAchievement = getAgeAtDate(milestone.achieved_date);
+
+            const html = `
+                <div class="bg-gradient-to-r from-pastel-primary/10 to-pastel-accent1/10 rounded-xl p-4 border border-pastel-accent1/30">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-full overflow-hidden bg-white shadow-pastel flex items-center justify-center">
+                            <i data-lucide="star" class="h-6 w-6 text-pastel-accent1"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-medium text-pastel-heading">${milestone.title}</h3>
+                            <p class="text-sm text-pastel-textLight">Achieved ${daysAgo} • ${ageAtAchievement}</p>
+                        </div>
+                        <i data-lucide="award" class="h-5 w-5 text-pastel-accent1 animate-celebration"></i>
+                    </div>
+                </div>
+            `;
+            recentList.innerHTML += html;
+        });
+
+        if (recentList.innerHTML === '') {
+            recentList.innerHTML = `
+                <p class="text-sm text-pastel-textLight text-center py-4">
+                    No milestones recorded yet. Start tracking your baby's achievements!
+                </p>
+            `;
+        }
+
+        // Re-render icons
+        lucide.createIcons();
+    }
+
+    // Calculate days ago from date
+    function getDaysAgo(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffTime = Math.abs(now - date);
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) return 'today';
+        if (diffDays === 1) return 'yesterday';
+        if (diffDays < 7) return `${diffDays} days ago`;
+        if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+        return `${Math.floor(diffDays / 30)} months ago`;
+    }
+
+    // Get age at specific date
+    function getAgeAtDate(dateString) {
+        const achievedDate = new Date(dateString);
+        const birthDate = new Date(currentBaby.date_of_birth);
+        const months = (achievedDate.getFullYear() - birthDate.getFullYear()) * 12 +
+            (achievedDate.getMonth() - birthDate.getMonth());
+
+        if (months < 12) {
+            return `${months} months`;
+        } else {
+            const years = Math.floor(months / 12);
+            const remainingMonths = months % 12;
+            return remainingMonths > 0 ? `${years}y ${remainingMonths}m` : `${years} year${years > 1 ? 's' : ''}`;
+        }
+    }
+
+    // Update upcoming milestones section
+    function updateUpcomingMilestones() {
+        const timeline = document.getElementById('upcomingTimeline');
+        timeline.innerHTML = '';
+
+        const ageInMonths = calculateAgeInMonths(currentBaby.date_of_birth);
+
+        // Show next 3 age ranges
+        const upcomingRanges = [
+            {start: ageInMonths + 1, end: ageInMonths + 3},
+            {start: ageInMonths + 4, end: ageInMonths + 6},
+            {start: ageInMonths + 7, end: ageInMonths + 9}
+        ];
+
+        upcomingRanges.forEach((range, index) => {
+            const milestones = getUpcomingMilestonesForRange(range.start, range.end);
+
+            const html = `
+                <div class="bg-pastel-lightest rounded-xl p-4 border border-pastel-light w-64 ${index > 0 ? 'relative' : ''}">
+                    ${index > 0 ? '<div class="timeline-connector"></div>' : ''}
+                    <h3 class="font-medium text-pastel-heading mb-3">${range.start}-${range.end} months</h3>
+                    <div class="space-y-2">
+                        ${milestones.map(m => `
+                            <div class="flex items-center gap-2 text-sm">
+                                <i data-lucide="circle" class="h-3 w-3 text-pastel-${getColorForCategory(m.category)}"></i>
+                                <span class="text-pastel-text">${m.title}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            timeline.innerHTML += html;
+        });
+
+        // Re-render icons
+        lucide.createIcons();
+    }
+
+    // Get upcoming milestones for age range
+    function getUpcomingMilestonesForRange(startMonth, endMonth) {
+        let suggestions = [];
+
+        Object.entries(predefinedMilestones).forEach(([range, milestones]) => {
+            const [min, max] = range.split('-').map(Number);
+            if ((min >= startMonth && min <= endMonth) ||
+                (max >= startMonth && max <= endMonth)) {
+                suggestions = suggestions.concat(milestones.slice(0, 3)); // Show max 3 per range
+            }
+        });
+
+        return suggestions.slice(0, 3);
+    }
+
+    // Get color for category
+    function getColorForCategory(category) {
+        const colors = {
+            motor: 'accent1',
+            social: 'accent2',
+            language: 'primary',
+            cognitive: 'secondary',
+            emotional: 'accent1',
+            other: 'textLight'
+        };
+        return colors[category] || 'textLight';
+    }
+
+    // Update healthcare summary
+    function updateHealthcareSummary() {
+        const ageInMonths = calculateAgeInMonths(currentBaby.date_of_birth);
+        const nextCheckupMonth = Math.ceil(ageInMonths / 3) * 3; // Next 3-month interval
+
+        const nextCheckupDate = new Date(currentBaby.date_of_birth);
+        nextCheckupDate.setMonth(nextCheckupDate.getMonth() + nextCheckupMonth);
+
+        document.getElementById('nextCheckupDate').textContent =
+            `${nextCheckupDate.toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric'
+            })} (${nextCheckupMonth}-month visit)`;
+    }
+
+    // Mobile menu functionality
+    function setupMobileMenu() {
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('overlay');
@@ -959,18 +1170,10 @@
 
         mobileMenuBtn.addEventListener('click', toggleMobileMenu);
         overlay.addEventListener('click', toggleMobileMenu);
+    }
 
-        // Re-render icons when modals are opened
-        const observer = new MutationObserver(() => {
-            lucide.createIcons();
-        });
-
-        // Observe all modals
-        document.querySelectorAll('[id$="Modal"]').forEach(modal => {
-            observer.observe(modal, {attributes: true, attributeFilter: ['class']});
-        });
-
-        // Add keyboard shortcuts
+    // Keyboard shortcuts
+    function setupKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
             // Cmd/Ctrl + M to add new milestone
             if ((e.metaKey || e.ctrlKey) && e.key === 'm') {
@@ -984,55 +1187,89 @@
                 closeBackupModal();
             }
         });
+    }
 
-        // Initialize progress rings animation on scroll
-        const progressRings = document.querySelectorAll('.progress-ring-circle');
-        const observerOptions = {
-            threshold: 0.5
+    // Form submission
+    function setupFormSubmission() {
+        const form = document.getElementById('milestoneForm');
+        form.addEventListener('submit', handleMilestoneSubmit);
+    }
+
+    // Handle milestone form submission
+    async function handleMilestoneSubmit(e) {
+        e.preventDefault();
+
+        const formData = {
+            baby_id: currentBaby.id,
+            title: document.getElementById('milestoneTitle').value,
+            category: document.getElementById('milestoneCategory').value,
+            achieved_date: new Date(document.getElementById('milestoneDate').value).toISOString(),
+            description: document.getElementById('milestoneDescription').value || null,
+            notes: document.getElementById('milestoneNotes').value || null
         };
 
-        const animateOnScroll = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.animation = 'progressRing 2s ease-out forwards';
-                }
-            });
-        }, observerOptions);
+        try {
+            let response;
+            if (editingMilestoneId) {
+                // Update existing milestone
+                response = await BabyHelperAuth.api.request(`/milestone/${editingMilestoneId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+            } else {
+                // Create new milestone
+                response = await BabyHelperAuth.api.request('/milestone/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+            }
 
-        progressRings.forEach(ring => {
-            animateOnScroll.observe(ring);
-        });
-
-        // Smooth scroll behavior for internal links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({behavior: 'smooth'});
-                }
-            });
-        });
-    });
+            if (response.ok) {
+                closeMilestoneModal();
+                await loadMilestones(); // Reload milestones
+                showSuccess(editingMilestoneId ? 'Milestone updated!' : 'Milestone added!');
+            } else {
+                const error = await BabyHelperAuth.api.parseErrorResponse(response);
+                showError(error.message || 'Failed to save milestone');
+            }
+        } catch (error) {
+            console.error('Failed to save milestone:', error);
+            showError('Failed to save milestone. Please try again.');
+        }
+    }
 
     // Modal functions
-    function openMilestoneModal(milestone = null) {
+    function openMilestoneModal() {
+        editingMilestoneId = null;
+        document.getElementById('milestoneForm').reset();
         document.getElementById('milestoneModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
-        // Pre-select milestone if provided
-        if (milestone) {
-            console.log('Pre-selecting milestone:', milestone);
-        }
+        lucide.createIcons();
+    }
+
+    function openMilestoneModalWithData(title, category, description) {
+        openMilestoneModal();
+        document.getElementById('milestoneTitle').value = title;
+        document.getElementById('milestoneCategory').value = category;
+        document.getElementById('milestoneDescription').value = description;
     }
 
     function closeMilestoneModal() {
         document.getElementById('milestoneModal').classList.add('hidden');
         document.body.style.overflow = '';
+        editingMilestoneId = null;
     }
 
     function openShareModal() {
         document.getElementById('shareModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
+        lucide.createIcons();
     }
 
     function closeShareModal() {
@@ -1043,6 +1280,7 @@
     function openBackupModal() {
         document.getElementById('backupModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
+        lucide.createIcons();
     }
 
     function closeBackupModal() {
@@ -1050,30 +1288,71 @@
         document.body.style.overflow = '';
     }
 
-    // Photo/Video upload simulation
-    document.addEventListener('DOMContentLoaded', () => {
-        const uploadArea = document.querySelector('.upload-area');
-        if (uploadArea) {
-            uploadArea.addEventListener('click', () => {
-                console.log('Opening file picker...');
-            });
+    // Quick add for today
+    function quickAddToday() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('milestoneDate').value = today;
+    }
 
-            // Drag and drop functionality
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.classList.add('bg-pastel-lightest');
-            });
+    // Set milestone date helpers
+    function setMilestoneDate(option) {
+        const dateInput = document.getElementById('milestoneDate');
+        const today = new Date();
 
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.classList.remove('bg-pastel-lightest');
-            });
-
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('bg-pastel-lightest');
-                console.log('Files dropped:', e.dataTransfer.files);
-            });
+        switch (option) {
+            case 'today':
+                dateInput.value = today.toISOString().split('T')[0];
+                break;
+            case 'yesterday':
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+                dateInput.value = yesterday.toISOString().split('T')[0];
+                break;
+            case 'custom':
+                dateInput.focus();
+                break;
         }
+    }
+
+    // View all achievements
+    function viewAllAchievements() {
+        // This could navigate to a dedicated achievements page
+        // For now, we'll just show an alert
+        showInfo('Full achievements view coming soon!');
+    }
+
+    // Generate milestone report
+    function generateMilestoneReport() {
+        // Future feature: Generate PDF report of milestones
+        showInfo('Report generation feature coming soon!');
+    }
+
+    // Utility functions for notifications
+    function showSuccess(message) {
+        // In a real app, this would show a toast notification
+        console.log('Success:', message);
+    }
+
+    function showError(message) {
+        // In a real app, this would show a toast notification
+        console.error('Error:', message);
+        alert(message);
+    }
+
+    function showInfo(message) {
+        // In a real app, this would show a toast notification
+        console.log('Info:', message);
+        alert(message);
+    }
+
+    // Re-render icons when modals are shown
+    const observer = new MutationObserver(() => {
+        lucide.createIcons();
+    });
+
+    // Observe all modals
+    document.querySelectorAll('[id$="Modal"]').forEach(modal => {
+        observer.observe(modal, {attributes: true, attributeFilter: ['class']});
     });
 </script>
 </body>
