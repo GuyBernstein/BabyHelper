@@ -646,7 +646,7 @@
             babies.forEach(baby => {
                 const option = document.createElement('option');
                 option.value = baby.id;
-                option.textContent = `${baby.name} (${calculateAgeInMonths(baby.birthdate)} months)`;
+                option.textContent = `${baby.fullname} (${calculateAgeInMonths(baby.birthdate)} months)`;
                 selector.appendChild(option);
             });
 
