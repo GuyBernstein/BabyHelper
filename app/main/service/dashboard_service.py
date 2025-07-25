@@ -2,15 +2,15 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 
-from sqlalchemy import desc, func
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from app.main.model import Growth, Milestone, Pumping
+from app.main.model import Growth, Pumping
 from app.main.model.baby import Baby
 from app.main.model.dashboard import DashboardPreference, WidgetType, TimeFrame
 from app.main.model.diaper import Diaper
 from app.main.model.doctor_visit import DoctorVisit
-from app.main.model.feeding import Feeding, FeedingType
+from app.main.model.feeding import Feeding
 from app.main.model.health import Health
 from app.main.model.medication import Medication
 from app.main.model.milestone import Milestone
@@ -18,9 +18,7 @@ from app.main.model.photo import Photo
 from app.main.model.sleep import Sleep
 from app.main.model.user import User
 from app.main.service.baby_service import get_all_babies_for_user
-from app.main.service.feeding_service import get_feedings_for_baby
-from app.main.service.sleep_service import get_sleeps_for_baby, get_sleep_patterns as get_sleep_analysis
-from app.main.service.growth_service import get_growths_for_baby
+from app.main.service.sleep_service import get_sleep_patterns as get_sleep_analysis
 
 
 def get_or_create_dashboard_preferences(db: Session, user_id: int) -> DashboardPreference:

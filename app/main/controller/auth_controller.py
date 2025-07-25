@@ -387,7 +387,8 @@ async def callback(code: str, db: Session = Depends(get_db)):
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="No ID token found in the response"
             )
-
+        print("remove this print in app/main/controller/auth_controller.py in callback function")
+        print(id_token)
         # Verify the ID token and get user info
         user_info = verify_google_token(id_token)
 
