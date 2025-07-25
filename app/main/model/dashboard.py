@@ -33,7 +33,7 @@ class WidgetConfig(BaseModel):
     position: int
     enabled: bool = True
     timeframe: TimeFrame = TimeFrame.WEEK
-    custom_settings: Optional[Dict[str, Any]] = None
+    custom_settings: Optional[Dict[str, Any]] = None  # Can include custom_start_date and custom_end_date
 
 
 class DashboardPreferenceBase(BaseModel):
@@ -41,6 +41,8 @@ class DashboardPreferenceBase(BaseModel):
     default_baby_id: Optional[int] = None
     default_timeframe: TimeFrame = TimeFrame.WEEK
     widgets_config: List[Dict[str, Any]]
+    custom_start_date: Optional[datetime] = None
+    custom_end_date: Optional[datetime] = None
 
 class DashboardPreferenceCreate(DashboardPreferenceBase):
     pass
@@ -75,6 +77,8 @@ class DashboardPreference(Base):
     default_baby_id = Column(Integer, ForeignKey('baby.id'), nullable=True)
     default_timeframe = Column(String(20), nullable=False, default="week")
     widgets_config = Column(JSON, nullable=False)
+    custom_start_date = Column(DateTime, nullable=True)
+    custom_end_date = Column(DateTime, nullable=True)
 
     # Relationships
     user = relationship("User", back_populates="dashboard_preference")

@@ -76,6 +76,12 @@ def update_dashboard_preferences(db: Session, user_id: int, preferences_data: Di
     preferences.default_baby_id = preferences_data.get('default_baby_id', preferences.default_baby_id)
     preferences.default_timeframe = preferences_data.get('default_timeframe', preferences.default_timeframe)
 
+    # Update custom timeframe dates if provided
+    if 'custom_start_date' in preferences_data:
+        preferences.custom_start_date = preferences_data['custom_start_date']
+    if 'custom_end_date' in preferences_data:
+        preferences.custom_end_date = preferences_data['custom_end_date']
+
     # Update widgets configuration
     widgets_key = 'widgets_config' if 'widgets_config' in preferences_data else 'widgets'
     if widgets_key in preferences_data:
@@ -761,23 +767,23 @@ def _get_widget_data(
 
     # Widget data fetchers
     widget_fetchers = {
-        WidgetType.RECENT_ACTIVITIES: lambda tf: get_recent_activities(
-            db, baby_ids, tf, custom_start, custom_end, limit=10
+        WidgetType.RECENT_ACTIVITIES: lambda tf, cs, ce: get_recent_activities(
+            db, baby_ids, tf, cs, ce, limit=10
         ),
-        WidgetType.UPCOMING_EVENTS: lambda tf: get_upcoming_events(
+        WidgetType.UPCOMING_EVENTS: lambda tf, cs, ce: get_upcoming_events(
             db, baby_ids, days_ahead=7
         ),
-        WidgetType.CARE_METRICS: lambda tf: get_care_metrics(
-            db, baby_ids, tf, custom_start, custom_end
+        WidgetType.CARE_METRICS: lambda tf, cs, ce: get_care_metrics(
+            db, baby_ids, tf, cs, ce
         ),
-        WidgetType.FEEDING_STATS: lambda tf: get_feeding_stats(
-            db, baby_ids, tf, custom_start, custom_end
+        WidgetType.FEEDING_STATS: lambda tf, cs, ce: get_feeding_stats(
+            db, baby_ids, tf, cs, ce
         ),
-        WidgetType.SLEEP_PATTERNS: lambda tf: get_sleep_patterns(
-            db, baby_ids, tf, custom_start, custom_end
+        WidgetType.SLEEP_PATTERNS: lambda tf, cs, ce: get_sleep_patterns(
+            db, baby_ids, tf, cs, ce
         ),
-        WidgetType.GROWTH_CHART: lambda tf: get_growth_data(
-            db, baby_ids, tf, custom_start, custom_end
+        WidgetType.GROWTH_CHART: lambda tf, cs, ce: get_growth_data(
+            db, baby_ids, tf, cs, ce
         )
     }
 
@@ -785,6 +791,29 @@ def _get_widget_data(
     for widget_config in enabled_widgets:
         widget_type = widget_config.get('type')
         widget_timeframe = widget_config.get('timeframe', timeframe)
+
+        # Handle custom timeframe for widgets
+        widget_custom_start = custom_start
+        widget_custom_end = custom_end
+
+        if widget_timeframe == TimeFrame.CUSTOM:
+            # Check if widget has its own custom dates in custom_settings
+            custom_settings = widget_config.get('custom_settings', {})
+            if custom_settings.get('custom_start_date') and custom_settings.get('custom_end_date'):
+                # Parse custom dates from widget settings
+                widget_custom_start = custom_settings['custom_start_date']
+                widget_custom_end = custom_settings['custom_end_date']
+
+                # Convert string dates to datetime if needed
+                if isinstance(widget_custom_start, str):
+                    widget_custom_start = datetime.fromisoformat(widget_custom_start.replace('Z', '+00:00'))
+                if isinstance(widget_custom_end, str):
+                    widget_custom_end = datetime.fromisoformat(widget_custom_end.replace('Z', '+00:00'))
+            # Otherwise fall back to dashboard-level custom dates
+            elif widget_timeframe == TimeFrame.CUSTOM and not widget_custom_start:
+                # Use preference-level custom dates
+                widget_custom_start = preferences.custom_start_date
+                widget_custom_end = preferences.custom_end_date
 
         widget = {
             'type': widget_type,
@@ -795,7 +824,9 @@ def _get_widget_data(
 
         # Get widget data using appropriate fetcher
         if widget_type in widget_fetchers:
-            widget['data'] = widget_fetchers[widget_type](widget_timeframe)
+            widget['data'] = widget_fetchers[widget_type](
+                widget_timeframe, widget_custom_start, widget_custom_end
+            )
 
         widgets.append(widget)
 
