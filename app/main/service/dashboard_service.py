@@ -1,8 +1,8 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional, Type, Union
+from typing import Dict, List, Any, Optional
 
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
 
 from app.main.model import Growth, Milestone, Pumping
@@ -10,34 +10,47 @@ from app.main.model.baby import Baby
 from app.main.model.dashboard import DashboardPreference, WidgetType, TimeFrame
 from app.main.model.diaper import Diaper
 from app.main.model.doctor_visit import DoctorVisit
-from app.main.model.feeding import Feeding, FeedingType, BottleContentType
+from app.main.model.feeding import Feeding, FeedingType
 from app.main.model.health import Health
 from app.main.model.medication import Medication
+from app.main.model.milestone import Milestone
 from app.main.model.photo import Photo
 from app.main.model.sleep import Sleep
 from app.main.model.user import User
 from app.main.service.baby_service import get_all_babies_for_user
+from app.main.service.feeding_service import get_feedings_for_baby
+from app.main.service.sleep_service import get_sleeps_for_baby, get_sleep_patterns as get_sleep_analysis
+from app.main.service.growth_service import get_growths_for_baby
 
 
-def get_or_create_dashboard_preferences(db: Session, user_id: int) -> Union[DashboardPreference, Type[DashboardPreference]]:
-    """Get existing dashboard preferences or create default ones"""
-    preferences = db.query(DashboardPreference).filter(DashboardPreference.user_id == user_id).first()
+def get_or_create_dashboard_preferences(db: Session, user_id: int) -> DashboardPreference:
+    """
+    Get existing dashboard preferences or create default ones for a user.
+
+    Args:
+        db: Database session
+        user_id: ID of the user
+
+    Returns:
+        DashboardPreference object with user's preferences
+    """
+    preferences = db.query(DashboardPreference).filter(
+        DashboardPreference.user_id == user_id
+    ).first()
 
     if preferences:
         # Ensure widgets_config is not None
         if preferences.widgets_config is None:
-            preferences.widgets_config = default_widgets_config()
+            preferences.widgets_config = _get_default_widgets_config()
             db.commit()
         return preferences
 
-    # Create default preferences with all widgets enabled
-    default_widgets = default_widgets_config()
-
+    # Create default preferences
     new_preferences = DashboardPreference(
         user_id=user_id,
         layout_type="grid",
         default_timeframe=TimeFrame.WEEK,
-        widgets_config=default_widgets
+        widgets_config=_get_default_widgets_config()
     )
 
     db.add(new_preferences)
@@ -45,51 +58,32 @@ def get_or_create_dashboard_preferences(db: Session, user_id: int) -> Union[Dash
     db.refresh(new_preferences)
     return new_preferences
 
-def default_widgets_config():
-    """Return a default widget configuration"""
-    return [
-        {"type": WidgetType.UPCOMING_EVENTS, "position": 0, "enabled": True, "timeframe": TimeFrame.WEEK},
-        {"type": WidgetType.RECENT_ACTIVITIES, "position": 1, "enabled": True, "timeframe": TimeFrame.WEEK},
-        {"type": WidgetType.CARE_METRICS, "position": 2, "enabled": True, "timeframe": TimeFrame.MONTH},
-        {"type": WidgetType.FEEDING_STATS, "position": 3, "enabled": True, "timeframe": TimeFrame.WEEK},
-        {"type": WidgetType.SLEEP_PATTERNS, "position": 4, "enabled": True, "timeframe": TimeFrame.WEEK},
-        {"type": WidgetType.GROWTH_CHART, "position": 5, "enabled": True, "timeframe": TimeFrame.MONTH}
-    ]
-
 
 def update_dashboard_preferences(db: Session, user_id: int, preferences_data: Dict[str, Any]) -> DashboardPreference:
-    """Update dashboard preferences for a user"""
+    """
+    Update dashboard preferences for a user.
+
+    Args:
+        db: Database session
+        user_id: ID of the user
+        preferences_data: Dictionary containing preference updates
+
+    Returns:
+        Updated DashboardPreference object
+    """
     preferences = get_or_create_dashboard_preferences(db, user_id)
 
-    # Update the preferences
+    # Update basic preferences
     preferences.layout_type = preferences_data.get('layout_type', preferences.layout_type)
     preferences.default_baby_id = preferences_data.get('default_baby_id', preferences.default_baby_id)
     preferences.default_timeframe = preferences_data.get('default_timeframe', preferences.default_timeframe)
 
-    # Make sure we use widgets_config, not widgets
-    if 'widgets_config' in preferences_data:
+    # Update widgets configuration
+    widgets_key = 'widgets_config' if 'widgets_config' in preferences_data else 'widgets'
+    if widgets_key in preferences_data:
         preferences.widgets_config = [
-            {
-                "type": widget.get('type'),
-                "position": widget.get('position'),
-                "enabled": widget.get('enabled', True),
-                "timeframe": widget.get('timeframe', TimeFrame.WEEK),
-                "custom_settings": widget.get('custom_settings', {})
-            }
-            for widget in preferences_data['widgets_config']
-        ]
-
-    # For backward compatibility if someone sends 'widgets' instead of 'widgets_config'
-    elif 'widgets' in preferences_data:
-        preferences.widgets_config = [
-            {
-                "type": widget.get('type'),
-                "position": widget.get('position'),
-                "enabled": widget.get('enabled', True),
-                "timeframe": widget.get('timeframe', TimeFrame.WEEK),
-                "custom_settings": widget.get('custom_settings', {})
-            }
-            for widget in preferences_data['widgets']
+            _normalize_widget_config(widget)
+            for widget in preferences_data[widgets_key]
         ]
 
     db.commit()
@@ -97,9 +91,551 @@ def update_dashboard_preferences(db: Session, user_id: int, preferences_data: Di
     return preferences
 
 
-def get_timeframe_dates(timeframe: str, custom_start: Optional[datetime] = None,
-                        custom_end: Optional[datetime] = None) -> tuple:
-    """Calculate start and end dates based on timeframe"""
+def get_dashboard_data(
+        db: Session,
+        user_id: int,
+        baby_id: Optional[int] = None,
+        timeframe: Optional[str] = None,
+        custom_start: Optional[datetime] = None,
+        custom_end: Optional[datetime] = None
+) -> Dict[str, Any]:
+    """
+    Get all dashboard data based on user preferences.
+
+    Args:
+        db: Database session
+        user_id: ID of the user
+        baby_id: Optional specific baby ID to filter data
+        timeframe: Optional timeframe override
+        custom_start: Optional custom start date
+        custom_end: Optional custom end date
+
+    Returns:
+        Dictionary containing dashboard data with babies, preferences, and widgets
+    """
+    # Get user preferences
+    preferences = get_or_create_dashboard_preferences(db, user_id)
+
+    # Determine timeframe and baby scope
+    timeframe = timeframe or preferences.default_timeframe
+    baby_id = baby_id or preferences.default_baby_id
+
+    # Get accessible babies
+    babies = get_all_babies_for_user(db, user_id)
+    baby_ids = _get_baby_ids_for_dashboard(babies, baby_id)
+
+    # Build dashboard response
+    dashboard_data = {
+        'babies': _serialize_babies(babies),
+        'preferences': _serialize_preferences(preferences),
+        'widgets': _get_widget_data(db, preferences, baby_ids, timeframe, custom_start, custom_end)
+    }
+
+    return dashboard_data
+
+
+def get_recent_activities(
+        db: Session,
+        baby_ids: List[int],
+        timeframe: str,
+        custom_start: Optional[datetime] = None,
+        custom_end: Optional[datetime] = None,
+        limit: int = 10
+) -> List[Dict[str, Any]]:
+    """
+    Get recent activities across all tracking categories for specified babies.
+
+    Args:
+        db: Database session
+        baby_ids: List of baby IDs to get activities for
+        timeframe: Time period to query
+        custom_start: Optional custom start date
+        custom_end: Optional custom end date
+        limit: Maximum number of activities to return
+
+    Returns:
+        List of activity dictionaries sorted by time (newest first)
+    """
+    start_date, end_date = get_timeframe_dates(timeframe, custom_start, custom_end)
+    activities = []
+
+    # Activity type configurations
+    activity_configs = [
+        (Feeding, 'feeding', 'start_time', _format_feeding_details),
+        (Sleep, 'sleep', 'start_time', _format_sleep_details),
+        (Diaper, 'diaper', 'time', _format_diaper_details),
+        (Health, 'health', 'time', _format_health_details),
+    ]
+
+    # Collect activities from each type
+    for model, activity_type, time_field, formatter in activity_configs:
+        query = db.query(model).filter(
+            model.baby_id.in_(baby_ids),
+            getattr(model, time_field).between(start_date, end_date)
+        ).order_by(desc(getattr(model, time_field))).limit(limit)
+
+        for record in query.all():
+            activity = _create_activity_entry(
+                db, record, activity_type,
+                getattr(record, time_field),
+                formatter
+            )
+            activities.append(activity)
+
+    # Sort all activities by time and return top limit
+    activities.sort(key=lambda x: x['time'], reverse=True)
+    return activities[:limit]
+
+
+def get_upcoming_events(db: Session, baby_ids: List[int], days_ahead: int = 7) -> List[Dict[str, Any]]:
+    """
+    Get upcoming events like doctor visits and scheduled medications.
+
+    Args:
+        db: Database session
+        baby_ids: List of baby IDs to get events for
+        days_ahead: Number of days to look ahead
+
+    Returns:
+        List of upcoming events sorted by time
+    """
+    now = datetime.utcnow()
+    future_date = now + timedelta(days=days_ahead)
+    events = []
+
+    # Get upcoming doctor visits
+    doctor_visits = db.query(DoctorVisit).filter(
+        DoctorVisit.baby_id.in_(baby_ids),
+        DoctorVisit.visit_date > now,
+        DoctorVisit.visit_date <= future_date
+    ).order_by(DoctorVisit.visit_date).all()
+
+    for visit in doctor_visits:
+        event = _create_event_entry(
+            db, visit, 'doctor_visit',
+            visit.visit_date,
+            _format_doctor_visit_details
+        )
+        events.append(event)
+
+    # Get upcoming medications
+    medications = db.query(Medication).filter(
+        Medication.baby_id.in_(baby_ids),
+        Medication.time_given > now,
+        Medication.time_given <= future_date
+    ).order_by(Medication.time_given).all()
+
+    for medication in medications:
+        event = _create_event_entry(
+            db, medication, 'medication',
+            medication.time_given,
+            _format_medication_details
+        )
+        events.append(event)
+
+    # Sort by time ascending
+    events.sort(key=lambda x: x['time'])
+    return events
+
+
+def get_care_metrics(
+        db: Session,
+        baby_ids: List[int],
+        timeframe: str,
+        custom_start: Optional[datetime] = None,
+        custom_end: Optional[datetime] = None
+) -> Dict[str, Any]:
+    """
+    Calculate care sharing metrics for specified babies.
+
+    Args:
+        db: Database session
+        baby_ids: List of baby IDs to calculate metrics for
+        timeframe: Time period to analyze
+        custom_start: Optional custom start date
+        custom_end: Optional custom end date
+
+    Returns:
+        Dictionary containing care metrics by caregiver and activity type
+    """
+    start_date, end_date = get_timeframe_dates(timeframe, custom_start, custom_end)
+
+    # Initialize metrics structure
+    metrics = _initialize_care_metrics(db, baby_ids)
+
+    # Activity counting configurations
+    activity_configs = [
+        (Feeding, 'feeding', 'start_time'),
+        (Sleep, 'sleep', 'start_time'),
+        (Diaper, 'diaper', 'time'),
+        (Health, 'health', 'time'),
+        (Medication, 'medication', 'time_given'),
+        (DoctorVisit, 'doctor_visit', 'visit_date'),
+        (Growth, 'growth', 'measurement_date'),
+        (Milestone, 'milestone', 'achieved_date'),
+        (Photo, 'photo', 'date_taken'),
+    ]
+
+    # Count activities for each type
+    for model, activity_type, time_field in activity_configs:
+        _count_activities(
+            db, metrics, model, activity_type,
+            baby_ids, time_field, start_date, end_date
+        )
+
+    # Count pumping sessions (user-specific, not baby-specific)
+    _count_pumping_sessions(db, metrics, list(metrics['by_caregiver'].keys()), start_date, end_date)
+
+    # Calculate percentages
+    _calculate_care_percentages(metrics)
+
+    return metrics
+
+
+def get_feeding_stats(
+        db: Session,
+        baby_ids: List[int],
+        timeframe: str,
+        custom_start: Optional[datetime] = None,
+        custom_end: Optional[datetime] = None
+) -> Dict[str, Any]:
+    """
+    Calculate feeding statistics for specified babies.
+
+    Args:
+        db: Database session
+        baby_ids: List of baby IDs to calculate stats for
+        timeframe: Time period to analyze
+        custom_start: Optional custom start date
+        custom_end: Optional custom end date
+
+    Returns:
+        Dictionary containing feeding statistics
+    """
+    start_date, end_date = get_timeframe_dates(timeframe, custom_start, custom_end)
+
+    # Get all feedings in the timeframe
+    feedings = db.query(Feeding).filter(
+        Feeding.baby_id.in_(baby_ids),
+        Feeding.start_time.between(start_date, end_date)
+    ).all()
+
+    # Initialize statistics
+    stats = {
+        'total_feedings': len(feedings),
+        'by_type': defaultdict(int),
+        'by_baby': defaultdict(lambda: defaultdict(int)),
+        'average_duration': 0,
+        'average_amount': 0,
+        'daily_average': 0,
+        'feeding_intervals': [],
+        'last_feeding': None
+    }
+
+    if not feedings:
+        return stats
+
+    # Process feeding data
+    total_duration = 0
+    total_amount = 0
+    amount_count = 0
+
+    # Sort feedings by time for interval calculation
+    sorted_feedings = sorted(feedings, key=lambda f: f.start_time)
+
+    for i, feeding in enumerate(sorted_feedings):
+        # Count by type
+        feeding_type = feeding.feeding_type.value if hasattr(feeding.feeding_type, 'value') else str(
+            feeding.feeding_type)
+        stats['by_type'][feeding_type] += 1
+
+        # Count by baby
+        stats['by_baby'][feeding.baby_id][feeding_type] += 1
+
+        # Sum durations and amounts
+        if feeding.duration:
+            total_duration += feeding.duration
+        if feeding.amount:
+            total_amount += feeding.amount
+            amount_count += 1
+
+        # Calculate intervals between feedings
+        if i > 0 and sorted_feedings[i - 1].baby_id == feeding.baby_id:
+            interval = (feeding.start_time - sorted_feedings[i - 1].start_time).total_seconds() / 3600
+            stats['feeding_intervals'].append(round(interval, 1))
+
+    # Calculate averages
+    stats['average_duration'] = round(total_duration / len(feedings), 1) if feedings else 0
+    stats['average_amount'] = round(total_amount / amount_count, 1) if amount_count > 0 else 0
+
+    # Calculate daily average
+    days = max((end_date - start_date).days, 1)
+    stats['daily_average'] = round(len(feedings) / days, 1)
+
+    # Average feeding interval
+    if stats['feeding_intervals']:
+        stats['average_interval_hours'] = round(sum(stats['feeding_intervals']) / len(stats['feeding_intervals']), 1)
+    else:
+        stats['average_interval_hours'] = 0
+
+    # Get last feeding info
+    last_feeding = sorted_feedings[-1] if sorted_feedings else None
+    if last_feeding:
+        baby = db.query(Baby).filter(Baby.id == last_feeding.baby_id).first()
+        stats['last_feeding'] = {
+            'time': last_feeding.start_time,
+            'baby_name': baby.fullname if baby else "Unknown",
+            'type': feeding_type,
+            'time_ago_hours': round((datetime.utcnow() - last_feeding.start_time).total_seconds() / 3600, 1)
+        }
+
+    # Convert defaultdicts to regular dicts for JSON serialization
+    stats['by_type'] = dict(stats['by_type'])
+    stats['by_baby'] = {k: dict(v) for k, v in stats['by_baby'].items()}
+
+    return stats
+
+
+def get_sleep_patterns(
+        db: Session,
+        baby_ids: List[int],
+        timeframe: str,
+        custom_start: Optional[datetime] = None,
+        custom_end: Optional[datetime] = None
+) -> Dict[str, Any]:
+    """
+    Analyze sleep patterns for specified babies.
+
+    Args:
+        db: Database session
+        baby_ids: List of baby IDs to analyze
+        timeframe: Time period to analyze
+        custom_start: Optional custom start date
+        custom_end: Optional custom end date
+
+    Returns:
+        Dictionary containing sleep pattern analysis
+    """
+    start_date, end_date = get_timeframe_dates(timeframe, custom_start, custom_end)
+    days = max((end_date - start_date).days, 1)
+
+    # If analyzing a single baby, use the specialized sleep analysis
+    if len(baby_ids) == 1:
+        # Use the existing comprehensive sleep analysis function
+        from app.main.service.baby_service import get_baby_if_authorized
+        baby = get_baby_if_authorized(db, baby_ids[0], db.query(User).first().id)
+        if not isinstance(baby, dict):  # If authorized
+            return get_sleep_analysis(db, baby_ids[0], baby.parent_id, days, "custom")
+
+    # For multiple babies, provide aggregated analysis
+    sleep_records = db.query(Sleep).filter(
+        Sleep.baby_id.in_(baby_ids),
+        Sleep.start_time.between(start_date, end_date)
+    ).all()
+
+    # Initialize pattern analysis
+    patterns = {
+        'total_sleep_sessions': len(sleep_records),
+        'by_baby': defaultdict(lambda: {
+            'total_sessions': 0,
+            'total_duration_minutes': 0,
+            'average_duration_minutes': 0,
+            'night_sleep_minutes': 0,
+            'day_sleep_minutes': 0,
+            'sleep_quality_distribution': defaultdict(int)
+        }),
+        'by_time_of_day': {
+            'night': 0,  # 7pm - 7am
+            'morning': 0,  # 7am - 12pm
+            'afternoon': 0,  # 12pm - 5pm
+            'evening': 0  # 5pm - 7pm
+        },
+        'average_sleep_per_day': 0,
+        'longest_sleep': None,
+        'shortest_sleep': None
+    }
+
+    total_duration = 0
+
+    for sleep in sleep_records:
+        if not sleep.duration:
+            continue
+
+        baby_stats = patterns['by_baby'][sleep.baby_id]
+        baby_stats['total_sessions'] += 1
+        baby_stats['total_duration_minutes'] += sleep.duration
+        total_duration += sleep.duration
+
+        # Categorize by time of day
+        hour = sleep.start_time.hour
+        if 19 <= hour or hour < 7:
+            patterns['by_time_of_day']['night'] += 1
+            baby_stats['night_sleep_minutes'] += sleep.duration
+        elif 7 <= hour < 12:
+            patterns['by_time_of_day']['morning'] += 1
+            baby_stats['day_sleep_minutes'] += sleep.duration
+        elif 12 <= hour < 17:
+            patterns['by_time_of_day']['afternoon'] += 1
+            baby_stats['day_sleep_minutes'] += sleep.duration
+        else:
+            patterns['by_time_of_day']['evening'] += 1
+            baby_stats['day_sleep_minutes'] += sleep.duration
+
+        # Track quality distribution
+        if sleep.quality:
+            quality = sleep.quality.value if hasattr(sleep.quality, 'value') else str(sleep.quality)
+            baby_stats['sleep_quality_distribution'][quality] += 1
+
+        # Track longest and shortest sleep
+        if not patterns['longest_sleep'] or sleep.duration > patterns['longest_sleep']['duration']:
+            patterns['longest_sleep'] = {
+                'duration': sleep.duration,
+                'baby_id': sleep.baby_id,
+                'start_time': sleep.start_time
+            }
+
+        if not patterns['shortest_sleep'] or sleep.duration < patterns['shortest_sleep']['duration']:
+            patterns['shortest_sleep'] = {
+                'duration': sleep.duration,
+                'baby_id': sleep.baby_id,
+                'start_time': sleep.start_time
+            }
+
+    # Calculate averages
+    patterns['average_sleep_per_day'] = round(total_duration / days, 1) if days > 0 else 0
+
+    # Calculate per-baby averages
+    for baby_id, stats in patterns['by_baby'].items():
+        if stats['total_sessions'] > 0:
+            stats['average_duration_minutes'] = round(
+                stats['total_duration_minutes'] / stats['total_sessions'], 1
+            )
+        stats['sleep_quality_distribution'] = dict(stats['sleep_quality_distribution'])
+
+    # Convert defaultdicts to regular dicts
+    patterns['by_baby'] = dict(patterns['by_baby'])
+
+    return patterns
+
+
+def get_growth_data(
+        db: Session,
+        baby_ids: List[int],
+        timeframe: str,
+        custom_start: Optional[datetime] = None,
+        custom_end: Optional[datetime] = None
+) -> Dict[str, Any]:
+    """
+    Get growth measurement data for specified babies.
+
+    Args:
+        db: Database session
+        baby_ids: List of baby IDs to get growth data for
+        timeframe: Time period to query
+        custom_start: Optional custom start date
+        custom_end: Optional custom end date
+
+    Returns:
+        Dictionary containing growth data and trends
+    """
+    start_date, end_date = get_timeframe_dates(timeframe, custom_start, custom_end)
+
+    # Get growth records
+    growth_records = db.query(Growth).filter(
+        Growth.baby_id.in_(baby_ids),
+        Growth.measurement_date.between(start_date, end_date)
+    ).order_by(Growth.measurement_date).all()
+
+    # Initialize growth data structure
+    growth_data = {
+        'total_measurements': len(growth_records),
+        'by_baby': defaultdict(lambda: {
+            'measurements': [],
+            'latest': None,
+            'weight_change': None,
+            'height_change': None,
+            'trend': {
+                'weight': 'stable',
+                'height': 'stable'
+            }
+        })
+    }
+
+    # Process growth records by baby
+    for baby_id in baby_ids:
+        baby_records = [g for g in growth_records if g.baby_id == baby_id]
+        if not baby_records:
+            continue
+
+        baby_data = growth_data['by_baby'][baby_id]
+
+        # Store all measurements
+        for record in baby_records:
+            measurement = {
+                'date': record.measurement_date,
+                'weight': record.weight,
+                'height': record.height,
+                'notes': record.notes
+            }
+            baby_data['measurements'].append(measurement)
+
+        # Get latest measurement
+        latest = baby_records[-1]
+        baby_data['latest'] = {
+            'date': latest.measurement_date,
+            'weight': latest.weight,
+            'height': latest.height
+        }
+
+        # Calculate changes if we have at least 2 measurements
+        if len(baby_records) >= 2:
+            first = baby_records[0]
+
+            # Weight change
+            if first.weight and latest.weight:
+                baby_data['weight_change'] = round(latest.weight - first.weight, 2)
+                baby_data['trend']['weight'] = 'increasing' if baby_data['weight_change'] > 0 else 'decreasing'
+
+            # Height change
+            if first.height and latest.height:
+                baby_data['height_change'] = round(latest.height - first.height, 1)
+                baby_data['trend']['height'] = 'increasing' if baby_data['height_change'] > 0 else 'decreasing'
+
+    # Convert defaultdict to regular dict
+    growth_data['by_baby'] = dict(growth_data['by_baby'])
+
+    # Add summary statistics
+    if growth_records:
+        weights = [g.weight for g in growth_records if g.weight]
+        heights = [g.height for g in growth_records if g.height]
+
+        growth_data['summary'] = {
+            'average_weight': round(sum(weights) / len(weights), 2) if weights else None,
+            'average_height': round(sum(heights) / len(heights), 1) if heights else None,
+            'measurement_frequency_days': round(
+                (end_date - start_date).days / len(growth_records), 1
+            ) if len(growth_records) > 1 else None
+        }
+
+    return growth_data
+
+
+def get_timeframe_dates(
+        timeframe: str,
+        custom_start: Optional[datetime] = None,
+        custom_end: Optional[datetime] = None
+) -> tuple:
+    """
+    Calculate start and end dates based on timeframe.
+
+    Args:
+        timeframe: Timeframe string (TODAY, WEEK, MONTH, CUSTOM)
+        custom_start: Optional custom start date
+        custom_end: Optional custom end date
+
+    Returns:
+        Tuple of (start_date, end_date)
+    """
     now = datetime.utcnow()
 
     if timeframe == TimeFrame.TODAY:
@@ -115,193 +651,259 @@ def get_timeframe_dates(timeframe: str, custom_start: Optional[datetime] = None,
         start_date = custom_start
         end_date = custom_end
     else:
-        # Default to week if invalid timeframe
+        # Default to week
         start_date = now - timedelta(days=7)
         end_date = now
 
     return start_date, end_date
 
 
-def get_recent_activities(db: Session, baby_ids: List[int], timeframe: str,
-                          custom_start: Optional[datetime] = None,
-                          custom_end: Optional[datetime] = None,
-                          limit: int = 10) -> List[Dict[str, Any]]:
-    """Get recent activities across all tracking categories for specified babies"""
-    start_date, end_date = get_timeframe_dates(timeframe, custom_start, custom_end)
+# Helper functions
+def _get_default_widgets_config() -> List[Dict[str, Any]]:
+    """Return default widget configuration."""
+    return [
+        {"type": WidgetType.UPCOMING_EVENTS, "position": 0, "enabled": True, "timeframe": TimeFrame.WEEK},
+        {"type": WidgetType.RECENT_ACTIVITIES, "position": 1, "enabled": True, "timeframe": TimeFrame.WEEK},
+        {"type": WidgetType.CARE_METRICS, "position": 2, "enabled": True, "timeframe": TimeFrame.MONTH},
+        {"type": WidgetType.FEEDING_STATS, "position": 3, "enabled": True, "timeframe": TimeFrame.WEEK},
+        {"type": WidgetType.SLEEP_PATTERNS, "position": 4, "enabled": True, "timeframe": TimeFrame.WEEK},
+        {"type": WidgetType.GROWTH_CHART, "position": 5, "enabled": True, "timeframe": TimeFrame.MONTH}
+    ]
 
-    activities = []
 
-    # Get recent feedings
-    feedings = db.query(Feeding).filter(
-        Feeding.baby_id.in_(baby_ids),
-        Feeding.start_time.between(start_date, end_date)
-    ).order_by(desc(Feeding.start_time)).limit(limit).all()
+def _normalize_widget_config(widget: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize a widget configuration dictionary."""
+    return {
+        "type": widget.get('type'),
+        "position": widget.get('position'),
+        "enabled": widget.get('enabled', True),
+        "timeframe": widget.get('timeframe', TimeFrame.WEEK),
+        "custom_settings": widget.get('custom_settings', {})
+    }
 
-    for feeding in feedings:
-        baby = db.query(Baby).filter(Baby.id == feeding.baby_id).first()
-        user = db.query(User).filter(User.id == feeding.recorded_by).first()
 
-        activities.append({
-            'id': feeding.id,
-            'type': 'feeding',
-            'time': feeding.start_time,
-            'baby_id': feeding.baby_id,
-            'baby_name': baby.fullname if baby else "Unknown",
-            'caregiver_id': baby.parent_id if baby else None,
-            'caregiver_name': user.name if user else "Unknown",
-            'details': {
-                'feeding_type': feeding.feeding_type,
-                'amount': feeding.amount,
-                'duration': feeding.duration
+def _get_baby_ids_for_dashboard(babies: List[Baby], baby_id: Optional[int]) -> List[int]:
+    """Get list of baby IDs to use for dashboard data."""
+    baby_ids = [baby.id for baby in babies]
+    if baby_id and baby_id in baby_ids:
+        return [baby_id]
+    return baby_ids
+
+
+def _serialize_babies(babies: List[Baby]) -> List[Dict[str, Any]]:
+    """Serialize baby objects to dictionaries."""
+    serialized = []
+    for baby in babies:
+        baby_dict = {
+            'id': baby.id,
+            'created_at': baby.created_at,
+            'fullname': baby.fullname,
+            'birthdate': baby.birthdate,
+            'weight': baby.weight,
+            'height': baby.height,
+            'sex': baby.sex.value if baby.sex else None,
+            'picture': baby.picture,
+            'picture_url': getattr(baby, 'picture_url', None),
+            'parent_id': baby.parent_id
+        }
+
+        # Add parent info if available
+        if hasattr(baby, 'parent') and baby.parent:
+            baby_dict['parent'] = {
+                'id': baby.parent.id,
+                'name': baby.parent.name,
+                'email': baby.parent.email,
+                'picture': baby.parent.picture
             }
-        })
 
-    # Get recent sleeps
-    sleeps = db.query(Sleep).filter(
-        Sleep.baby_id.in_(baby_ids),
-        Sleep.start_time.between(start_date, end_date)
-    ).order_by(desc(Sleep.start_time)).limit(limit).all()
+        # Add coparents info if available
+        if hasattr(baby, 'coparents') and baby.coparents:
+            baby_dict['coparents'] = [{
+                'id': coparent.id,
+                'name': coparent.name,
+                'email': coparent.email,
+                'picture': coparent.picture
+            } for coparent in baby.coparents]
 
-    for sleep in sleeps:
-        baby = db.query(Baby).filter(Baby.id == sleep.baby_id).first()
-        user = db.query(User).filter(User.id == sleep.recorded_by).first()
+        serialized.append(baby_dict)
 
-        activities.append({
-            'id': sleep.id,
-            'type': 'sleep',
-            'time': sleep.start_time,
-            'baby_id': sleep.baby_id,
-            'baby_name': baby.fullname if baby else "Unknown",
-            'caregiver_id': baby.parent_id if baby else None,
-            'caregiver_name': user.name if user else "Unknown",
-            'details': {
-                'duration': sleep.duration,
-                'quality': sleep.quality,
-                'location': sleep.location
-            }
-        })
-
-    # Get recent diapers
-    diapers = db.query(Diaper).filter(
-        Diaper.baby_id.in_(baby_ids),
-        Diaper.time.between(start_date, end_date)
-    ).order_by(desc(Diaper.time)).limit(limit).all()
-
-    for diaper in diapers:
-        baby = db.query(Baby).filter(Baby.id == diaper.baby_id).first()
-        user = db.query(User).filter(User.id == diaper.recorded_by).first()
-
-        activities.append({
-            'id': diaper.id,
-            'type': 'diaper',
-            'time': diaper.time,
-            'baby_id': diaper.baby_id,
-            'baby_name': baby.fullname if baby else "Unknown",
-            'caregiver_id': baby.parent_id if baby else None,
-            'caregiver_name': user.name if user else "Unknown",
-            'details': {
-                'content': diaper.content,
-                'consistency': diaper.consistency,
-                'color': diaper.color
-            }
-        })
-
-    # Get recent health records
-    health_records = db.query(Health).filter(
-        Health.baby_id.in_(baby_ids),
-        Health.time.between(start_date, end_date)
-    ).order_by(desc(Health.time)).limit(limit).all()
-
-    for health in health_records:
-        baby = db.query(Baby).filter(Baby.id == health.baby_id).first()
-        user = db.query(User).filter(User.id == health.recorded_by).first()
-
-        activities.append({
-            'id': health.id,
-            'type': 'health',
-            'time': health.time,
-            'baby_id': health.baby_id,
-            'baby_name': baby.fullname if baby else "Unknown",
-            'caregiver_id': baby.parent_id if baby else None,
-            'caregiver_name': user.name if user else "Unknown",
-            'details': {
-                'temperature': health.temperature,
-                'symptoms': health.symptoms,
-                'medication': health.medication
-            }
-        })
-
-    # Sort all activities by time descending and limit to requested amount
-    activities.sort(key=lambda x: x['time'], reverse=True)
-    return activities[:limit]
+    return serialized
 
 
-def get_upcoming_events(db: Session, baby_ids: List[int], days_ahead: int = 7) -> List[Dict[str, Any]]:
-    """Get upcoming events like doctor visits and scheduled medications"""
-    now = datetime.utcnow()
-    future_date = now + timedelta(days=days_ahead)
-
-    events = []
-
-    # Get upcoming doctor visits
-    doctor_visits = db.query(DoctorVisit).filter(
-        DoctorVisit.baby_id.in_(baby_ids),
-        DoctorVisit.visit_date > now,
-        DoctorVisit.visit_date <= future_date
-    ).order_by(DoctorVisit.visit_date).all()
-
-    for visit in doctor_visits:
-        baby = db.query(Baby).filter(Baby.id == visit.baby_id).first()
-
-        events.append({
-            'id': visit.id,
-            'type': 'doctor_visit',
-            'time': visit.visit_date,
-            'baby_id': visit.baby_id,
-            'baby_name': baby.fullname if baby else "Unknown",
-            'details': {
-                'doctor_name': visit.doctor_name,
-                'visit_type': visit.visit_type,
-                'reason': visit.reason
-            }
-        })
-
-    # Get upcoming medications (if they have a future scheduled time)
-    medications = db.query(Medication).filter(
-        Medication.baby_id.in_(baby_ids),
-        Medication.time_given > now,
-        Medication.time_given <= future_date
-    ).order_by(Medication.time_given).all()
-
-    for medication in medications:
-        baby = db.query(Baby).filter(Baby.id == medication.baby_id).first()
-
-        events.append({
-            'id': medication.id,
-            'type': 'medication',
-            'time': medication.time_given,
-            'baby_id': medication.baby_id,
-            'baby_name': baby.fullname if baby else "Unknown",
-            'details': {
-                'name': medication.name,
-                'dosage': medication.dosage,
-                'dosage_unit': medication.dosage_unit,
-                'route': medication.route
-            }
-        })
-
-    # Sort events by time ascending
-    events.sort(key=lambda x: x['time'])
-    return events
+def _serialize_preferences(preferences: DashboardPreference) -> Dict[str, Any]:
+    """Serialize dashboard preferences to dictionary."""
+    return {
+        'id': preferences.id,
+        'created_at': preferences.created_at,
+        'user_id': preferences.user_id,
+        'layout_type': preferences.layout_type,
+        'default_baby_id': preferences.default_baby_id,
+        'default_timeframe': preferences.default_timeframe,
+        'widgets_config': preferences.widgets_config
+    }
 
 
-def get_care_metrics(db: Session, baby_ids: List[int], timeframe: str,
-                     custom_start: Optional[datetime] = None,
-                     custom_end: Optional[datetime] = None) -> Dict[str, Any]:
-    """Calculate care sharing metrics for specified babies"""
-    start_date, end_date = get_timeframe_dates(timeframe, custom_start, custom_end)
+def _get_widget_data(
+        db: Session,
+        preferences: DashboardPreference,
+        baby_ids: List[int],
+        timeframe: str,
+        custom_start: Optional[datetime],
+        custom_end: Optional[datetime]
+) -> List[Dict[str, Any]]:
+    """Get data for all enabled widgets."""
+    widgets = []
 
-    # Initialize metrics structure
+    # Get enabled widgets sorted by position
+    enabled_widgets = [
+        w for w in preferences.widgets_config
+        if isinstance(w, dict) and w.get('enabled', True)
+    ]
+    enabled_widgets.sort(key=lambda w: w.get('position', 0))
+
+    # Widget data fetchers
+    widget_fetchers = {
+        WidgetType.RECENT_ACTIVITIES: lambda tf: get_recent_activities(
+            db, baby_ids, tf, custom_start, custom_end, limit=10
+        ),
+        WidgetType.UPCOMING_EVENTS: lambda tf: get_upcoming_events(
+            db, baby_ids, days_ahead=7
+        ),
+        WidgetType.CARE_METRICS: lambda tf: get_care_metrics(
+            db, baby_ids, tf, custom_start, custom_end
+        ),
+        WidgetType.FEEDING_STATS: lambda tf: get_feeding_stats(
+            db, baby_ids, tf, custom_start, custom_end
+        ),
+        WidgetType.SLEEP_PATTERNS: lambda tf: get_sleep_patterns(
+            db, baby_ids, tf, custom_start, custom_end
+        ),
+        WidgetType.GROWTH_CHART: lambda tf: get_growth_data(
+            db, baby_ids, tf, custom_start, custom_end
+        )
+    }
+
+    # Process each widget
+    for widget_config in enabled_widgets:
+        widget_type = widget_config.get('type')
+        widget_timeframe = widget_config.get('timeframe', timeframe)
+
+        widget = {
+            'type': widget_type,
+            'timeframe': widget_timeframe,
+            'position': widget_config.get('position', 0),
+            'data': None
+        }
+
+        # Get widget data using appropriate fetcher
+        if widget_type in widget_fetchers:
+            widget['data'] = widget_fetchers[widget_type](widget_timeframe)
+
+        widgets.append(widget)
+
+    return widgets
+
+
+def _create_activity_entry(
+        db: Session,
+        record: Any,
+        activity_type: str,
+        time: datetime,
+        details_formatter: callable
+) -> Dict[str, Any]:
+    """Create a standardized activity entry."""
+    baby = db.query(Baby).filter(Baby.id == record.baby_id).first()
+    user = db.query(User).filter(User.id == record.recorded_by).first()
+
+    return {
+        'id': record.id,
+        'type': activity_type,
+        'time': time,
+        'baby_id': record.baby_id,
+        'baby_name': baby.fullname if baby else "Unknown",
+        'caregiver_id': baby.parent_id if baby else None,
+        'caregiver_name': user.name if user else "Unknown",
+        'details': details_formatter(record)
+    }
+
+
+def _create_event_entry(
+        db: Session,
+        record: Any,
+        event_type: str,
+        time: datetime,
+        details_formatter: callable
+) -> Dict[str, Any]:
+    """Create a standardized event entry."""
+    baby = db.query(Baby).filter(Baby.id == record.baby_id).first()
+
+    return {
+        'id': record.id,
+        'type': event_type,
+        'time': time,
+        'baby_id': record.baby_id,
+        'baby_name': baby.fullname if baby else "Unknown",
+        'details': details_formatter(record)
+    }
+
+
+def _format_feeding_details(feeding: Feeding) -> Dict[str, Any]:
+    """Format feeding details for activity entry."""
+    return {
+        'feeding_type': feeding.feeding_type,
+        'amount': feeding.amount,
+        'duration': feeding.duration
+    }
+
+
+def _format_sleep_details(sleep: Sleep) -> Dict[str, Any]:
+    """Format sleep details for activity entry."""
+    return {
+        'duration': sleep.duration,
+        'quality': sleep.quality,
+        'location': sleep.location
+    }
+
+
+def _format_diaper_details(diaper: Diaper) -> Dict[str, Any]:
+    """Format diaper details for activity entry."""
+    return {
+        'content': diaper.content,
+        'consistency': diaper.consistency,
+        'color': diaper.color
+    }
+
+
+def _format_health_details(health: Health) -> Dict[str, Any]:
+    """Format health details for activity entry."""
+    return {
+        'temperature': health.temperature,
+        'symptoms': health.symptoms,
+        'medication': health.medication
+    }
+
+
+def _format_doctor_visit_details(visit: DoctorVisit) -> Dict[str, Any]:
+    """Format doctor visit details for event entry."""
+    return {
+        'doctor_name': visit.doctor_name,
+        'visit_type': visit.visit_type,
+        'reason': visit.reason
+    }
+
+
+def _format_medication_details(medication: Medication) -> Dict[str, Any]:
+    """Format medication details for event entry."""
+    return {
+        'name': medication.name,
+        'dosage': medication.dosage,
+        'dosage_unit': medication.dosage_unit,
+        'route': medication.route
+    }
+
+
+def _initialize_care_metrics(db: Session, baby_ids: List[int]) -> Dict[str, Any]:
+    """Initialize care metrics structure with all caregivers."""
     metrics = {
         'total_activities': 0,
         'by_caregiver': {},
@@ -345,181 +947,61 @@ def get_care_metrics(db: Session, baby_ids: List[int], timeframe: str,
                     'is_primary': False
                 }
 
-    # Initialize metrics counters for each caregiver
+    # Initialize metrics for each caregiver
     for caregiver_id, caregiver_info in caregivers.items():
         metrics['by_caregiver'][caregiver_id] = {
             'caregiver': caregiver_info,
             'total': 0,
             'percentage': 0,
             'by_activity_type': {
-                'feeding': 0,
-                'sleep': 0,
-                'diaper': 0,
-                'health': 0,
-                'medication': 0,
-                'doctor_visit': 0,
-                'growth': 0,
-                'milestone': 0,
-                'photo': 0,
-                'pumping': 0
+                activity_type: 0
+                for activity_type in metrics['by_activity_type']
             }
         }
 
         for activity_type in metrics['by_activity_type']:
             metrics['by_activity_type'][activity_type]['by_caregiver'][caregiver_id] = 0
 
-    # Count feedings
-    feedings = db.query(Feeding).filter(
-        Feeding.baby_id.in_(baby_ids),
-        Feeding.start_time.between(start_date, end_date)
+    return metrics
+
+
+def _count_activities(
+        db: Session,
+        metrics: Dict[str, Any],
+        model: Any,
+        activity_type: str,
+        baby_ids: List[int],
+        time_field: str,
+        start_date: datetime,
+        end_date: datetime
+):
+    """Count activities of a specific type and update metrics."""
+    records = db.query(model).filter(
+        model.baby_id.in_(baby_ids),
+        getattr(model, time_field).between(start_date, end_date)
     ).all()
 
-    for feeding in feedings:
-        caregiver_id = feeding.recorded_by
+    for record in records:
+        caregiver_id = record.recorded_by
         metrics['total_activities'] += 1
-        metrics['by_activity_type']['feeding']['total'] += 1
+        metrics['by_activity_type'][activity_type]['total'] += 1
 
         if caregiver_id in metrics['by_caregiver']:
             metrics['by_caregiver'][caregiver_id]['total'] += 1
-            metrics['by_caregiver'][caregiver_id]['by_activity_type']['feeding'] += 1
-            metrics['by_activity_type']['feeding']['by_caregiver'][caregiver_id] += 1
-
-    # Count sleeps
-    sleeps = db.query(Sleep).filter(
-        Sleep.baby_id.in_(baby_ids),
-        Sleep.start_time.between(start_date, end_date)
-    ).all()
-
-    for sleep in sleeps:
-        caregiver_id = sleep.recorded_by
-        metrics['total_activities'] += 1
-        metrics['by_activity_type']['sleep']['total'] += 1
-
-        if caregiver_id in metrics['by_caregiver']:
-            metrics['by_caregiver'][caregiver_id]['total'] += 1
-            metrics['by_caregiver'][caregiver_id]['by_activity_type']['sleep'] += 1
-            metrics['by_activity_type']['sleep']['by_caregiver'][caregiver_id] += 1
-
-    # Count diapers
-    diapers = db.query(Diaper).filter(
-        Diaper.baby_id.in_(baby_ids),
-        Diaper.time.between(start_date, end_date)
-    ).all()
-
-    for diaper in diapers:
-        caregiver_id = diaper.recorded_by
-        metrics['total_activities'] += 1
-        metrics['by_activity_type']['diaper']['total'] += 1
-
-        if caregiver_id in metrics['by_caregiver']:
-            metrics['by_caregiver'][caregiver_id]['total'] += 1
-            metrics['by_caregiver'][caregiver_id]['by_activity_type']['diaper'] += 1
-            metrics['by_activity_type']['diaper']['by_caregiver'][caregiver_id] += 1
-
-    # Count health
-    healths = db.query(Health).filter(
-        Health.baby_id.in_(baby_ids),
-        Health.time.between(start_date, end_date)
-    ).all()
-
-    for health in healths:
-        caregiver_id = health.recorded_by
-        metrics['total_activities'] += 1
-        metrics['by_activity_type']['health']['total'] += 1
-
-        if caregiver_id in metrics['by_caregiver']:
-            metrics['by_caregiver'][caregiver_id]['total'] += 1
-            metrics['by_caregiver'][caregiver_id]['by_activity_type']['health'] += 1
-            metrics['by_activity_type']['health']['by_caregiver'][caregiver_id] += 1
-
-    # Count medication
-    medications = db.query(Medication).filter(
-        Medication.baby_id.in_(baby_ids),
-        Medication.time_given.between(start_date, end_date)
-    ).all()
-
-    for medication in medications:
-        caregiver_id = medication.recorded_by
-        metrics['total_activities'] += 1
-        metrics['by_activity_type']['medication']['total'] += 1
-
-        if caregiver_id in metrics['by_caregiver']:
-            metrics['by_caregiver'][caregiver_id]['total'] += 1
-            metrics['by_caregiver'][caregiver_id]['by_activity_type']['medication'] += 1
-            metrics['by_activity_type']['medication']['by_caregiver'][caregiver_id] += 1
+            metrics['by_caregiver'][caregiver_id]['by_activity_type'][activity_type] += 1
+            metrics['by_activity_type'][activity_type]['by_caregiver'][caregiver_id] += 1
 
 
-    # Count doctor visits
-    doctor_visits = db.query(DoctorVisit).filter(
-        DoctorVisit.baby_id.in_(baby_ids),
-        DoctorVisit.visit_date.between(start_date, end_date)
-    ).all()
-
-    for doctor_visit in doctor_visits:
-        caregiver_id = doctor_visit.recorded_by
-        metrics['total_activities'] += 1
-        metrics['by_activity_type']['doctor_visit']['total'] += 1
-
-        if caregiver_id in metrics['by_caregiver']:
-            metrics['by_caregiver'][caregiver_id]['total'] += 1
-            metrics['by_caregiver'][caregiver_id]['by_activity_type']['doctor_visit'] += 1
-            metrics['by_activity_type']['doctor_visit']['by_caregiver'][caregiver_id] += 1
-
-
-    # Count growths
-    growths = db.query(Growth).filter(
-        Growth.baby_id.in_(baby_ids),
-        Growth.measurement_date.between(start_date, end_date)
-    ).all()
-
-    for growth in growths:
-        caregiver_id = growth.recorded_by
-        metrics['total_activities'] += 1
-        metrics['by_activity_type']['growth']['total'] += 1
-
-        if caregiver_id in metrics['by_caregiver']:
-            metrics['by_caregiver'][caregiver_id]['total'] += 1
-            metrics['by_caregiver'][caregiver_id]['by_activity_type']['growth'] += 1
-            metrics['by_activity_type']['growth']['by_caregiver'][caregiver_id] += 1
-
-    # Count milestones
-    milestones = db.query(Milestone).filter(
-        Milestone.baby_id.in_(baby_ids),
-        Milestone.achieved_date.between(start_date, end_date)
-    ).all()
-
-    for milestone in milestones:
-        caregiver_id = milestone.recorded_by
-        metrics['total_activities'] += 1
-        metrics['by_activity_type']['milestone']['total'] += 1
-
-        if caregiver_id in metrics['by_caregiver']:
-            metrics['by_caregiver'][caregiver_id]['total'] += 1
-            metrics['by_caregiver'][caregiver_id]['by_activity_type']['milestone'] += 1
-            metrics['by_activity_type']['milestone']['by_caregiver'][caregiver_id] += 1
-
-    # Count photos
-    photos = db.query(Photo).filter(
-        Photo.baby_id.in_(baby_ids),
-        Photo.date_taken.between(start_date, end_date)
-    ).all()
-
-    for photo in photos:
-        caregiver_id = photo.recorded_by
-        metrics['total_activities'] += 1
-        metrics['by_activity_type']['photo']['total'] += 1
-
-        if caregiver_id in metrics['by_caregiver']:
-            metrics['by_caregiver'][caregiver_id]['total'] += 1
-            metrics['by_caregiver'][caregiver_id]['by_activity_type']['photo'] += 1
-            metrics['by_activity_type']['photo']['by_caregiver'][caregiver_id] += 1
-
-
-    # Count pumping sessions
-    # Note: pumping sessions are user activities, not baby activities
-    # So we query for pumping sessions by caregivers who have access to these babies
+def _count_pumping_sessions(
+        db: Session,
+        metrics: Dict[str, Any],
+        caregiver_ids: List[int],
+        start_date: datetime,
+        end_date: datetime
+):
+    """Count pumping sessions for caregivers."""
     pumpings = db.query(Pumping).filter(
-        Pumping.user_id.in_(list(caregivers.keys())),
+        Pumping.user_id.in_(caregiver_ids),
         Pumping.start_time.between(start_date, end_date)
     ).all()
 
@@ -533,540 +1015,12 @@ def get_care_metrics(db: Session, baby_ids: List[int], timeframe: str,
             metrics['by_caregiver'][caregiver_id]['by_activity_type']['pumping'] += 1
             metrics['by_activity_type']['pumping']['by_caregiver'][caregiver_id] += 1
 
-    # Calculate percentages
+
+def _calculate_care_percentages(metrics: Dict[str, Any]):
+    """Calculate percentage contributions for each caregiver."""
     if metrics['total_activities'] > 0:
         for caregiver_id in metrics['by_caregiver']:
             caregiver_total = metrics['by_caregiver'][caregiver_id]['total']
             metrics['by_caregiver'][caregiver_id]['percentage'] = round(
                 (caregiver_total / metrics['total_activities']) * 100, 1
             )
-
-    return metrics
-
-
-def get_dashboard_data(db: Session, user_id: int, baby_id: Optional[int] = None,
-                       timeframe: Optional[str] = None,
-                       custom_start: Optional[datetime] = None,
-                       custom_end: Optional[datetime] = None) -> Dict[str, Any]:
-
-    """Get all dashboard data based on user preferences"""
-    # Get user preferences
-    preferences = get_or_create_dashboard_preferences(db, user_id)
-
-    # If no specific timeframe is provided, use the default from preferences
-    if not timeframe:
-        timeframe = preferences.default_timeframe
-
-    # If no baby_id is specified and there's a default baby in preferences, use it
-    if not baby_id and preferences.default_baby_id:
-        baby_id = preferences.default_baby_id
-
-    # Get all babies the user has access to
-    babies = get_all_babies_for_user(db, user_id)
-
-    # Filter to specific baby if requested
-    baby_ids = [baby.id for baby in babies]
-    if baby_id and baby_id in baby_ids:
-        baby_ids = [baby_id]
-
-    # Convert babies to serializable dictionaries
-    serialized_babies = []
-    for baby in babies:
-        serialized_baby = {
-            'id': baby.id,
-            'created_at': baby.created_at,
-            'fullname': baby.fullname,
-            'birthdate': baby.birthdate,
-            'weight': baby.weight,
-            'height': baby.height,
-            'sex': baby.sex.value if baby.sex else None,
-            'picture': baby.picture,
-            'picture_url': baby.picture_url if hasattr(baby, 'picture_url') else None,
-            'parent_id': baby.parent_id
-        }
-        # Add parent info if available
-        if hasattr(baby, 'parent') and baby.parent:
-            serialized_baby['parent'] = {
-                'id': baby.parent.id,
-                'name': baby.parent.name,
-                'email': baby.parent.email,
-                'picture': baby.parent.picture
-            }
-
-        # Add coparents info if available
-        if hasattr(baby, 'coparents') and baby.coparents:
-            serialized_baby['coparents'] = []
-            for coparent in baby.coparents:
-                serialized_baby['coparents'].append({
-                    'id': coparent.id,
-                    'name': coparent.name,
-                    'email': coparent.email,
-                    'picture': coparent.picture
-                })
-
-        serialized_babies.append(serialized_baby)
-
-    # Convert preferences to serializable dictionary
-    serialized_preferences = {
-        'id': preferences.id,
-        'created_at': preferences.created_at,
-        'user_id': preferences.user_id,
-        'layout_type': preferences.layout_type,
-        'default_baby_id': preferences.default_baby_id,
-        'default_timeframe': preferences.default_timeframe,
-        'widgets_config': preferences.widgets_config
-    }
-
-    # Initialize dashboard data structure
-    dashboard_data = {
-        'babies': serialized_babies,  # Now these are dictionaries, not SQLAlchemy models
-        'preferences': serialized_preferences,  # Now this is a dictionary, not a SQLAlchemy model
-        'widgets': []
-    }
-
-    # Get enabled widgets from preferences
-    enabled_widgets = [
-        w for w in preferences.widgets_config
-        if isinstance(w, dict) and w.get('enabled', True)
-    ]
-
-    # Sort widgets by position
-    enabled_widgets.sort(key=lambda w: w.get('position', 0))
-
-
-
-    # Process each widget
-    for widget_config in enabled_widgets:
-        widget_type = widget_config.get('type')
-        widget_timeframe = widget_config.get('timeframe', timeframe)
-
-
-        widget: Dict[str, Union[str, int, None, List[Dict[str, Any]], Dict[str, Any]]] = {
-            'type': widget_type,
-            'timeframe': widget_timeframe,
-            'position': widget_config.get('position', 0),
-            'data': None
-        }
-
-        # Get widget-specific data with custom dates
-        if widget_type == WidgetType.RECENT_ACTIVITIES:
-            widget['data'] = get_recent_activities(
-                db, baby_ids, widget_timeframe,
-                custom_start=custom_start,
-                custom_end=custom_end,
-                limit=10
-            )
-
-        # Get widget-specific data
-        if widget_type == WidgetType.RECENT_ACTIVITIES:
-            widget['data'] = get_recent_activities(
-                db, baby_ids, widget_timeframe, limit=10
-            )
-        elif widget_type == WidgetType.UPCOMING_EVENTS:
-            widget['data'] = get_upcoming_events(
-                db, baby_ids, days_ahead=7
-            )
-        elif widget_type == WidgetType.CARE_METRICS:
-            widget['data'] = get_care_metrics(
-                db, baby_ids, widget_timeframe
-            )
-        elif widget_type == WidgetType.FEEDING_STATS:
-            widget['data'] = get_feeding_stats(
-                db, baby_ids, widget_timeframe
-            )
-        elif widget_type == WidgetType.SLEEP_PATTERNS:
-            widget['data'] = get_sleep_patterns(
-                db, baby_ids, widget_timeframe
-            )
-        elif widget_type == WidgetType.GROWTH_CHART:
-            widget['data'] = get_growth_data(
-                db, baby_ids, widget_timeframe
-            )
-        # Add other widget types as needed
-
-        dashboard_data['widgets'].append(widget)
-
-    return dashboard_data
-
-
-def get_feeding_stats(db: Session, baby_ids: List[int], timeframe: str,
-                      custom_start: Optional[datetime] = None,
-                      custom_end: Optional[datetime] = None) -> Dict[str, Any]:
-    """Calculate feeding statistics for dashboard widget"""
-    start_date, end_date = get_timeframe_dates(timeframe, custom_start, custom_end)
-
-    # Initialize stats structure
-    stats = {
-        'total_feedings': 0,
-        'average_per_day': 0,
-        'by_type': {
-            'breast': 0,
-            'bottle': 0,
-            'formula': 0,
-            'solids': 0,
-            'pumping': 0
-        },
-        'by_content': {
-            'breast_milk': 0,
-            'formula': 0,
-            'mixed': 0,
-            'solids': 0
-        },
-        'average_duration': 0,
-        'total_volume': 0,
-        'average_volume_per_feeding': 0,
-        'daily_trend': [],
-        'hourly_distribution': defaultdict(int)  # 0-23 hours
-    }
-
-    # Query all feedings in the timeframe
-    feedings = db.query(Feeding).filter(
-        Feeding.baby_id.in_(baby_ids),
-        Feeding.start_time.between(start_date, end_date)
-    ).order_by(Feeding.start_time).all()
-
-    if not feedings:
-        return stats
-
-    # Process statistics
-    total_duration = 0
-    duration_count = 0
-    total_volume = 0
-    volume_count = 0
-    daily_counts = defaultdict(int)
-    daily_volumes = defaultdict(float)
-
-    for feeding in feedings:
-        stats['total_feedings'] += 1
-
-        # Count by feeding type
-        if feeding.feeding_type in [FeedingType.BREAST_LEFT, FeedingType.BREAST_RIGHT, FeedingType.BREAST_BOTH]:
-            stats['by_type']['breast'] += 1
-            stats['by_content']['breast_milk'] += 1
-        elif feeding.feeding_type == FeedingType.BOTTLE:
-            stats['by_type']['bottle'] += 1
-            # Count by bottle content
-            if feeding.bottle_content_type == BottleContentType.BREAST_MILK:
-                stats['by_content']['breast_milk'] += 1
-            elif feeding.bottle_content_type == BottleContentType.FORMULA:
-                stats['by_content']['formula'] += 1
-            elif feeding.bottle_content_type == BottleContentType.MIXED:
-                stats['by_content']['mixed'] += 1
-        elif feeding.feeding_type == FeedingType.FORMULA:
-            stats['by_type']['formula'] += 1
-            stats['by_content']['formula'] += 1
-        elif feeding.feeding_type == FeedingType.SOLIDS:
-            stats['by_type']['solids'] += 1
-            stats['by_content']['solids'] += 1
-        elif feeding.feeding_type == FeedingType.PUMPING:
-            stats['by_type']['pumping'] += 1
-
-        # Calculate duration
-        if feeding.duration:
-            total_duration += feeding.duration
-            duration_count += 1
-        elif feeding.end_time and feeding.start_time:
-            # Calculate duration from start and end times
-            duration = int((feeding.end_time - feeding.start_time).total_seconds() / 60)
-            total_duration += duration
-            duration_count += 1
-
-        # Calculate volume
-        if feeding.amount:
-            total_volume += feeding.amount
-            volume_count += 1
-            daily_volumes[feeding.start_time.date()] += feeding.amount
-
-        # For pumping sessions, add pumped volumes
-        if feeding.feeding_type == FeedingType.PUMPING:
-            if feeding.pumped_volume_left:
-                total_volume += feeding.pumped_volume_left
-                volume_count += 1
-                daily_volumes[feeding.start_time.date()] += feeding.pumped_volume_left
-            if feeding.pumped_volume_right:
-                total_volume += feeding.pumped_volume_right
-                volume_count += 1
-                daily_volumes[feeding.start_time.date()] += feeding.pumped_volume_right
-
-        # Track daily counts
-        daily_counts[feeding.start_time.date()] += 1
-
-        # Track hourly distribution
-        hour = feeding.start_time.hour
-        stats['hourly_distribution'][hour] += 1
-
-    # Calculate averages
-    total_days = max(1, (end_date - start_date).days + 1)
-    stats['average_per_day'] = round(stats['total_feedings'] / total_days, 1)
-
-    if duration_count > 0:
-        stats['average_duration'] = round(total_duration / duration_count, 1)
-
-    if volume_count > 0:
-        stats['total_volume'] = round(total_volume, 1)
-        stats['average_volume_per_feeding'] = round(total_volume / volume_count, 1)
-
-    # Create daily trend data
-    current_date = start_date.date()
-    while current_date <= end_date.date():
-        stats['daily_trend'].append({
-            'date': current_date.isoformat(),
-            'count': daily_counts.get(current_date, 0),
-            'volume': round(daily_volumes.get(current_date, 0), 1)
-        })
-        current_date += timedelta(days=1)
-
-    # Convert hourly distribution to list format for charts
-    stats['hourly_distribution'] = [
-        {'hour': hour, 'count': stats['hourly_distribution'].get(hour, 0)}
-        for hour in range(24)
-    ]
-
-    return stats
-
-
-def get_sleep_patterns(db: Session, baby_ids: List[int], timeframe: str,
-                       custom_start: Optional[datetime] = None,
-                       custom_end: Optional[datetime] = None) -> Dict[str, Any]:
-    """Calculate sleep pattern data for dashboard widget"""
-    start_date, end_date = get_timeframe_dates(timeframe, custom_start, custom_end)
-
-    patterns = {
-        'total_sleep_hours': 0,
-        'average_per_day': 0,
-        'longest_stretch': 0,
-        'shortest_stretch': None,
-        'average_stretch': 0,
-        'night_vs_day': {
-            'night': 0,  # 7pm to 7am
-            'day': 0  # 7am to 7pm
-        },
-        'by_quality': {
-            'poor': 0,
-            'fair': 0,
-            'good': 0,
-            'excellent': 0,
-            'unknown': 0
-        },
-        'by_location': defaultdict(int),
-        'daily_pattern': [],
-        'weekly_average': {  # Average sleep by day of week
-            'monday': {'total': 0, 'count': 0},
-            'tuesday': {'total': 0, 'count': 0},
-            'wednesday': {'total': 0, 'count': 0},
-            'thursday': {'total': 0, 'count': 0},
-            'friday': {'total': 0, 'count': 0},
-            'saturday': {'total': 0, 'count': 0},
-            'sunday': {'total': 0, 'count': 0}
-        }
-    }
-
-    # Query all sleep records in the timeframe
-    sleeps = db.query(Sleep).filter(
-        Sleep.baby_id.in_(baby_ids),
-        Sleep.start_time.between(start_date, end_date)
-    ).order_by(Sleep.start_time).all()
-
-    if not sleeps:
-        return patterns
-
-    # Process sleep data
-    total_minutes = 0
-    sleep_durations = []
-    daily_sleep = defaultdict(lambda: {'total_minutes': 0, 'count': 0, 'night': 0, 'day': 0})
-
-    for sleep in sleeps:
-        # Calculate duration
-        duration = 0
-        if sleep.duration:
-            duration = sleep.duration
-        elif sleep.end_time and sleep.start_time:
-            duration = int((sleep.end_time - sleep.start_time).total_seconds() / 60)
-
-        if duration > 0:
-            total_minutes += duration
-            sleep_durations.append(duration)
-
-            # Track longest and shortest stretches
-            if duration > patterns['longest_stretch']:
-                patterns['longest_stretch'] = duration
-            if patterns['shortest_stretch'] is None or duration < patterns['shortest_stretch']:
-                patterns['shortest_stretch'] = duration
-
-            # Determine if night or day sleep
-            # Night: 7pm (19:00) to 7am (07:00)
-            # We'll check the midpoint of sleep to categorize it
-            if sleep.end_time:
-                midpoint = sleep.start_time + (sleep.end_time - sleep.start_time) / 2
-            else:
-                midpoint = sleep.start_time + timedelta(minutes=duration / 2)
-
-            hour = midpoint.hour
-            if hour >= 19 or hour < 7:  # Night time
-                patterns['night_vs_day']['night'] += duration
-                daily_sleep[sleep.start_time.date()]['night'] += duration
-            else:  # Day time
-                patterns['night_vs_day']['day'] += duration
-                daily_sleep[sleep.start_time.date()]['day'] += duration
-
-            # Track daily totals
-            daily_sleep[sleep.start_time.date()]['total_minutes'] += duration
-            daily_sleep[sleep.start_time.date()]['count'] += 1
-
-            # Track weekly patterns
-            day_names = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-            day_name = day_names[sleep.start_time.weekday()]
-            patterns['weekly_average'][day_name]['total'] += duration
-            patterns['weekly_average'][day_name]['count'] += 1
-
-        # Track quality
-        if sleep.quality:
-            patterns['by_quality'][sleep.quality.value] += 1
-        else:
-            patterns['by_quality']['unknown'] += 1
-
-        # Track location
-        if sleep.location:
-            patterns['by_location'][sleep.location.value] += 1
-        else:
-            patterns['by_location']['unknown'] += 1
-
-    # Calculate averages
-    patterns['total_sleep_hours'] = round(total_minutes / 60, 1)
-
-    total_days = max(1, (end_date - start_date).days + 1)
-    patterns['average_per_day'] = round(patterns['total_sleep_hours'] / total_days, 1)
-
-    if sleep_durations:
-        patterns['average_stretch'] = round(sum(sleep_durations) / len(sleep_durations), 0)
-
-    # Convert night/day from minutes to hours
-    patterns['night_vs_day']['night'] = round(patterns['night_vs_day']['night'] / 60, 1)
-    patterns['night_vs_day']['day'] = round(patterns['night_vs_day']['day'] / 60, 1)
-
-    # Create daily pattern data
-    current_date = start_date.date()
-    while current_date <= end_date.date():
-        daily_data = daily_sleep.get(current_date, {'total_minutes': 0, 'count': 0, 'night': 0, 'day': 0})
-        patterns['daily_pattern'].append({
-            'date': current_date.isoformat(),
-            'total_hours': round(daily_data['total_minutes'] / 60, 1),
-            'count': daily_data['count'],
-            'night_hours': round(daily_data['night'] / 60, 1),
-            'day_hours': round(daily_data['day'] / 60, 1)
-        })
-        current_date += timedelta(days=1)
-
-    # Calculate weekly averages
-    for day_name, data in patterns['weekly_average'].items():
-        if data['count'] > 0:
-            patterns['weekly_average'][day_name] = round(data['total'] / data['count'] / 60, 1)
-        else:
-            patterns['weekly_average'][day_name] = 0
-
-    # Convert location dict to list for charts
-    patterns['by_location'] = [
-        {'location': location, 'count': count}
-        for location, count in patterns['by_location'].items()
-    ]
-
-    # Convert durations from minutes to hours for display
-    patterns['longest_stretch'] = round(patterns['longest_stretch'] / 60, 1)
-    if patterns['shortest_stretch'] is not None:
-        patterns['shortest_stretch'] = round(patterns['shortest_stretch'] / 60, 1)
-    patterns['average_stretch'] = round(patterns['average_stretch'] / 60, 1)
-
-    return patterns
-
-
-def get_growth_data(db: Session, baby_ids: List[int], timeframe: str,
-                    custom_start: Optional[datetime] = None,
-                    custom_end: Optional[datetime] = None) -> Dict[str, Any]:
-    """Calculate growth data for dashboard widget"""
-    start_date, end_date = get_timeframe_dates(timeframe, custom_start, custom_end)
-
-    growth_data = {
-        'latest_measurements': {
-            'weight': None,
-            'height': None,
-            'measurement_date': None
-        },
-        'growth_trends': {
-            'weight_change': 0,  # change in kg over timeframe
-            'height_change': 0,  # change in cm over timeframe
-            'weight_trend': 'stable',  # 'increasing', 'decreasing', 'stable'
-            'height_trend': 'stable'
-        },
-        'measurement_counts': {
-            'total_measurements': 0,
-            'weight_measurements': 0,
-            'height_measurements': 0
-        },
-        'timeline_data': []  # For charting - list of measurements over time
-    }
-
-    # Query growth measurements within timeframe
-    growth_records = db.query(Growth).filter(
-        Growth.baby_id.in_(baby_ids),
-        Growth.measurement_date.between(start_date, end_date)
-    ).order_by(Growth.measurement_date.asc()).all()
-
-    if not growth_records:
-        return growth_data
-
-    # Calculate basic counts
-    growth_data['measurement_counts']['total_measurements'] = len(growth_records)
-    growth_data['measurement_counts']['weight_measurements'] = sum(
-        1 for record in growth_records if record.weight is not None
-    )
-    growth_data['measurement_counts']['height_measurements'] = sum(
-        1 for record in growth_records if record.height is not None
-    )
-
-    # Get latest measurements
-    latest_record = growth_records[-1]  # Records are ordered by date
-    growth_data['latest_measurements'] = {
-        'weight': latest_record.weight,
-        'height': latest_record.height,
-        'measurement_date': latest_record.measurement_date
-    }
-
-    # Calculate growth trends if we have multiple measurements
-    if len(growth_records) > 1:
-        first_record = growth_records[0]
-
-        # Weight trend calculation
-        if first_record.weight and latest_record.weight:
-            weight_change = latest_record.weight - first_record.weight
-            growth_data['growth_trends']['weight_change'] = round(weight_change, 2)
-
-            if weight_change > 0.1:  # More than 100g gain
-                growth_data['growth_trends']['weight_trend'] = 'increasing'
-            elif weight_change < -0.1:  # More than 100g loss
-                growth_data['growth_trends']['weight_trend'] = 'decreasing'
-            else:
-                growth_data['growth_trends']['weight_trend'] = 'stable'
-
-        # Height trend calculation
-        if first_record.height and latest_record.height:
-            height_change = latest_record.height - first_record.height
-            growth_data['growth_trends']['height_change'] = round(height_change, 1)
-
-            if height_change > 0.5:  # More than 0.5cm growth
-                growth_data['growth_trends']['height_trend'] = 'increasing'
-            elif height_change < -0.5:  # Unlikely but checking for data errors
-                growth_data['growth_trends']['height_trend'] = 'decreasing'
-            else:
-                growth_data['growth_trends']['height_trend'] = 'stable'
-
-    # Prepare timeline data for charting
-    for record in growth_records:
-        timeline_entry = {
-            'date': record.measurement_date.isoformat(),
-            'weight': record.weight,
-            'height': record.height,
-            'notes': record.notes
-        }
-        growth_data['timeline_data'].append(timeline_entry)
-
-    return growth_data
