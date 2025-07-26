@@ -122,6 +122,20 @@
         .modal-backdrop {
             backdrop-filter: blur(5px);
         }
+
+        /* Widget timeframe button styles */
+        .widget-timeframe-btn {
+            transition: all 0.2s ease;
+        }
+
+        .widget-timeframe-btn:hover {
+            background-color: rgba(255, 140, 105, 0.1);
+        }
+
+        .widget-timeframe-active {
+            background-color: #ff8c69;
+            color: white;
+        }
     </style>
 </head>
 <body class="bg-pastel-lightest font-sans text-pastel-text">
@@ -150,7 +164,7 @@
 
             <!-- Center Controls -->
             <div class="flex items-center space-x-4">
-                <!-- Timeframe Selector -->
+                <!-- Global Timeframe Selector -->
                 <div id="timeframeSelector" class="hidden md:flex items-center bg-pastel-lightest rounded-full p-1">
                     <button data-timeframe="today"
                             class="timeframe-btn px-4 py-1.5 rounded-full text-sm font-medium transition-all">
@@ -263,6 +277,65 @@
             <button id="customDateApply"
                     class="px-4 py-2 bg-pastel-primary text-white rounded-lg hover:bg-pastel-primaryHover transition-colors">
                 Apply
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Widget Timeframe Modal -->
+<div id="widgetTimeframeModal"
+     class="hidden fixed inset-0 bg-black bg-opacity-50 modal-backdrop z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+        <h3 class="font-serif text-xl text-pastel-heading mb-4">Widget Timeframe Settings</h3>
+        <p class="text-sm text-pastel-textLight mb-4" id="widgetTimeframeTitle">Configure timeframe for this widget</p>
+
+        <!-- Timeframe Options -->
+        <div class="space-y-2 mb-4">
+            <button data-widget-timeframe="inherit"
+                    class="widget-timeframe-opt w-full text-left px-4 py-2 rounded-lg border border-pastel-light hover:bg-pastel-lightest transition-colors">
+                <span class="font-medium">Use Global Setting</span>
+                <span class="text-xs text-pastel-textLight block">Inherits from dashboard default</span>
+            </button>
+            <button data-widget-timeframe="today"
+                    class="widget-timeframe-opt w-full text-left px-4 py-2 rounded-lg border border-pastel-light hover:bg-pastel-lightest transition-colors">
+                Today
+            </button>
+            <button data-widget-timeframe="week"
+                    class="widget-timeframe-opt w-full text-left px-4 py-2 rounded-lg border border-pastel-light hover:bg-pastel-lightest transition-colors">
+                Week
+            </button>
+            <button data-widget-timeframe="month"
+                    class="widget-timeframe-opt w-full text-left px-4 py-2 rounded-lg border border-pastel-light hover:bg-pastel-lightest transition-colors">
+                Month
+            </button>
+            <button data-widget-timeframe="custom"
+                    class="widget-timeframe-opt w-full text-left px-4 py-2 rounded-lg border border-pastel-light hover:bg-pastel-lightest transition-colors">
+                Custom Range
+            </button>
+        </div>
+
+        <!-- Custom Date Fields (shown only when custom is selected) -->
+        <div id="widgetCustomDateFields" class="hidden space-y-4 mb-4 pt-4 border-t border-pastel-light">
+            <div>
+                <label class="block text-sm font-medium text-pastel-text mb-1">Start Date</label>
+                <input type="date" id="widgetCustomStartDate"
+                       class="w-full px-3 py-2 border border-pastel-light rounded-lg focus:outline-none focus:border-pastel-primary">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-pastel-text mb-1">End Date</label>
+                <input type="date" id="widgetCustomEndDate"
+                       class="w-full px-3 py-2 border border-pastel-light rounded-lg focus:outline-none focus:border-pastel-primary">
+            </div>
+        </div>
+
+        <div class="flex justify-end space-x-3">
+            <button id="widgetTimeframeCancel"
+                    class="px-4 py-2 text-pastel-text hover:bg-pastel-lightest rounded-lg transition-colors">
+                Cancel
+            </button>
+            <button id="widgetTimeframeSave"
+                    class="px-4 py-2 bg-pastel-primary text-white rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                Save
             </button>
         </div>
     </div>
@@ -518,6 +591,20 @@
 <script src="../js/auth.js" data-auto-init="true"></script>
 
 <script>
+    /**
+     * BabyHelper Dashboard with Server-Managed Timeframe System
+     *
+     * This dashboard implements a two-level timeframe preference system:
+     * 1. Global timeframe - applies to all widgets by default
+     * 2. Per-widget timeframe - optional override for individual widgets
+     *
+     * All timeframe preferences are stored server-side and accessed via:
+     * - GET /dashboard/preferences - retrieve current settings
+     * - PUT /dashboard/preferences - update settings
+     *
+     * Widget data endpoints use the stored preferences automatically,
+     * so no timeframe parameters should be sent with data requests.
+     */
     const Dashboard = {
         state: {
             currentBaby: null,
@@ -531,43 +618,58 @@
                 start: null,
                 end: null
             },
-            widgets: []
+            widgets: [],
+            // Track current widget being configured
+            currentWidgetConfig: {
+                type: null,
+                timeframe: null,
+                customDates: null
+            }
         },
 
         widgetDefinitions: {
             'recent_activities': {
                 title: 'Recent Activities',
-                render: (data) => Dashboard.renderRecentActivities(data)
+                render: (data, widgetType) => Dashboard.renderRecentActivities(data, widgetType)
             },
             'upcoming_events': {
                 title: 'Upcoming Events',
-                render: (data) => Dashboard.renderUpcomingEvents(data)
+                render: (data, widgetType) => Dashboard.renderUpcomingEvents(data, widgetType)
             },
             'care_metrics': {
                 title: 'Care Sharing',
-                render: (data) => Dashboard.renderCareMetrics(data)
+                render: (data, widgetType) => Dashboard.renderCareMetrics(data, widgetType)
             },
             'feeding_stats': {
                 title: 'Feeding Statistics',
-                render: (data) => Dashboard.renderFeedingStats(data)
+                render: (data, widgetType) => Dashboard.renderFeedingStats(data, widgetType)
             },
             'sleep_patterns': {
                 title: 'Sleep Patterns',
-                render: (data) => Dashboard.renderSleepPatterns(data)
+                render: (data, widgetType) => Dashboard.renderSleepPatterns(data, widgetType)
             },
             'growth_chart': {
                 title: 'Growth Chart',
-                render: (data) => Dashboard.renderGrowthChart(data)
+                render: (data, widgetType) => Dashboard.renderGrowthChart(data, widgetType)
             }
         },
 
         async init() {
             try {
                 this.showLoading(true);
-                this.updateUserInterface();
+
+                // Load user profile and preferences first
+                await this.loadUserProfile();
+                await this.loadPreferences();
+
+                // Then load dashboard data
                 await this.loadDashboardData();
+
+                // Setup UI and listeners
                 this.setupEventListeners();
                 this.showLoading(false);
+
+                // Auto-refresh every 5 minutes
                 setInterval(() => this.refreshDashboard(), 300000);
             } catch (error) {
                 console.error('Dashboard initialization error:', error);
@@ -585,22 +687,61 @@
             }
         },
 
-        updateUserInterface() {
-            const user = BabyHelperAuth.auth.getCurrentUser();
+        /**
+         * Load user profile data using pre-built method
+         */
+        async loadUserProfile() {
+            try {
+                const userData = await BabyHelperAuth.api.endpoints.getUserProfile();
 
-            if (user.name) {
-                const firstName = user.name.split(' ')[0];
-                const greeting = this.getGreeting();
-                document.getElementById('welcomeMessage').textContent = `${greeting}, ${firstName}!`;
-            }
+                if (userData.name) {
+                    const firstName = userData.name.split(' ')[0];
+                    const greeting = this.getGreeting();
+                    document.getElementById('welcomeMessage').textContent = `${greeting}, ${firstName}!`;
+                }
 
-            if (user.picture) {
-                const pictureEl = document.getElementById('userPicture');
-                pictureEl.src = user.picture;
-                pictureEl.classList.remove('hidden');
+                if (userData.picture) {
+                    const pictureEl = document.getElementById('userPicture');
+                    pictureEl.src = userData.picture;
+                    pictureEl.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error loading user profile:', error);
             }
         },
 
+        /**
+         * Load dashboard preferences to understand timeframe settings
+         * NOTE: This is the central point for retrieving all timeframe configurations
+         */
+        async loadPreferences() {
+            try {
+                const response = await BabyHelperAuth.api.request('/dashboard/preferences');
+                if (response.ok) {
+                    this.state.preferences = await response.json();
+
+                    // Set initial timeframe from preferences
+                    this.state.timeframe = this.state.preferences.default_timeframe || 'week';
+
+                    // Set custom date range if available
+                    if (this.state.preferences.custom_start_date) {
+                        this.state.customDateRange.start = new Date(this.state.preferences.custom_start_date);
+                    }
+                    if (this.state.preferences.custom_end_date) {
+                        this.state.customDateRange.end = new Date(this.state.preferences.custom_end_date);
+                    }
+                } else {
+                    console.warn('Could not load preferences, using defaults');
+                }
+            } catch (error) {
+                console.error('Error loading preferences:', error);
+            }
+        },
+
+        /**
+         * Load complete dashboard data
+         * NOTE: No timeframe parameter is sent - server uses stored preferences
+         */
         async loadDashboardData() {
             try {
                 // Build query parameters
@@ -608,9 +749,8 @@
                 if (this.state.selectedBabyId) {
                     params.append('baby_id', this.state.selectedBabyId);
                 }
-                params.append('timeframe', this.state.timeframe);
 
-                // Fetch complete dashboard data
+                // Fetch dashboard data (server determines timeframe from preferences)
                 const response = await BabyHelperAuth.api.request(`/dashboard/dash?${params}`);
                 if (response.ok) {
                     this.state.dashboardData = await response.json();
@@ -626,14 +766,15 @@
                     this.updateTimeframeSelector();
                     await this.updateQuickStats();
 
-                    // Render widgets
+                    // Render widgets with their data
                     this.renderWidgets();
 
-                    // Load additional data
+                    // Load today's summary separately
                     await this.loadTodaysSummary();
 
                 } else {
-                    throw new Error('Failed to load dashboard data');
+                    const error = await BabyHelperAuth.api.parseErrorResponse(response);
+                    throw new Error(error.detail || 'Failed to load dashboard data');
                 }
 
             } catch (error) {
@@ -642,10 +783,62 @@
             }
         },
 
-        // Update timeframe selector
+        /**
+         * Refresh a specific widget's data
+         * NOTE: Server will use the stored timeframe preference for this widget
+         */
+        async refreshWidget(widgetType) {
+            try {
+                // Show loading state for the widget
+                const widgetElement = document.querySelector(`[data-widget-type="${widgetType}"]`);
+                if (widgetElement) {
+                    widgetElement.style.opacity = '0.5';
+                }
+
+                // Build params (no timeframe!)
+                const params = new URLSearchParams();
+                if (this.state.selectedBabyId) {
+                    params.append('baby_id', this.state.selectedBabyId);
+                }
+
+                // Reload entire dashboard data to get fresh widget data
+                const response = await BabyHelperAuth.api.request(`/dashboard/dash?${params}`);
+                if (response.ok) {
+                    const dashData = await response.json();
+                    this.state.widgets = dashData.widgets || [];
+
+                    // Re-render just this widget
+                    const widget = this.state.widgets.find(w => w.type === widgetType);
+                    if (widget && widget.data && this.widgetDefinitions[widgetType]) {
+                        const newHtml = this.widgetDefinitions[widgetType].render(widget.data, widgetType);
+
+                        // Replace the widget content
+                        if (widgetElement) {
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = newHtml;
+                            widgetElement.parentNode.replaceChild(tempDiv.firstElementChild, widgetElement);
+                        }
+                    }
+                }
+
+                this.showToast('Widget refreshed');
+            } catch (error) {
+                console.error('Error refreshing widget:', error);
+                this.showError('Failed to refresh widget');
+            } finally {
+                // Remove loading state
+                const widgetElement = document.querySelector(`[data-widget-type="${widgetType}"]`);
+                if (widgetElement) {
+                    widgetElement.style.opacity = '1';
+                }
+            }
+        },
+
+        /**
+         * Update timeframe selector UI to reflect current preference
+         */
         updateTimeframeSelector() {
-            // Set active timeframe button
-            const timeframe = this.state.timeframe || this.state.preferences?.default_timeframe;
+            const timeframe = this.state.preferences?.default_timeframe || 'week';
             this.state.timeframe = timeframe;
 
             // Desktop selector
@@ -661,13 +854,16 @@
             document.getElementById('timeframeSelectorMobile').value = timeframe;
         },
 
-        // Update quick stats
+        /**
+         * Update quick stats using today's activity data
+         * NOTE: The 'today' timeframe is handled by a specific endpoint parameter
+         */
         async updateQuickStats() {
             try {
-                // Get today's activities count
+                // Get today's activities (this is a special case where timeframe is part of the endpoint)
                 const todayParams = new URLSearchParams({
                     timeframe: 'today',
-                    limit: 100
+                    limit: '100'
                 });
                 if (this.state.selectedBabyId) {
                     todayParams.append('baby_id', this.state.selectedBabyId);
@@ -682,10 +878,12 @@
                     if (activities.length > 0) {
                         const lastActivity = activities[0];
                         document.getElementById('lastActivityTime').textContent = this.getTimeAgo(lastActivity.time);
+                    } else {
+                        document.getElementById('lastActivityTime').textContent = 'No activities';
                     }
                 }
 
-                // Next event
+                // Next event from widgets data
                 const upcomingWidget = this.state.widgets.find(w => w.type === 'upcoming_events');
                 if (upcomingWidget && upcomingWidget.data && upcomingWidget.data.length > 0) {
                     const nextEvent = upcomingWidget.data[0];
@@ -699,6 +897,8 @@
                         const daysUntil = Math.floor(hoursUntil / 24);
                         document.getElementById('nextEventTime').textContent = `In ${daysUntil}d`;
                     }
+                } else {
+                    document.getElementById('nextEventTime').textContent = 'None scheduled';
                 }
 
             } catch (error) {
@@ -706,7 +906,46 @@
             }
         },
 
-        // Render widgets based on preferences
+        /**
+         * Get the current timeframe setting for a widget
+         */
+        getWidgetTimeframe(widgetType) {
+            const widgetConfig = this.state.preferences?.widgets_config?.find(w => w.type === widgetType);
+            return widgetConfig?.timeframe || 'inherit';
+        },
+
+        /**
+         * Get formatted timeframe display text for a widget
+         */
+        getWidgetTimeframeDisplay(widgetType) {
+            const widgetConfig = this.state.preferences?.widgets_config?.find(w => w.type === widgetType);
+            const timeframe = widgetConfig?.timeframe;
+
+            if (!timeframe || timeframe === 'inherit') {
+                // Using global setting
+                const globalTimeframe = this.state.preferences?.default_timeframe || 'week';
+                return `Using global (${this.formatTimeframeText(globalTimeframe)})`;
+            }
+
+            return this.formatTimeframeText(timeframe);
+        },
+
+        /**
+         * Format timeframe text for display
+         */
+        formatTimeframeText(timeframe) {
+            const formats = {
+                'today': 'Today',
+                'week': 'This Week',
+                'month': 'This Month',
+                'custom': 'Custom Range'
+            };
+            return formats[timeframe] || timeframe;
+        },
+
+        /**
+         * Render widgets based on data from dashboard API
+         */
         renderWidgets() {
             const container = document.getElementById('widgetsContainer');
             container.innerHTML = '';
@@ -715,8 +954,9 @@
             const sortedWidgets = [...this.state.widgets].sort((a, b) => a.position - b.position);
 
             sortedWidgets.forEach(widget => {
+                // Only render widgets that have data and a renderer
                 if (widget.data && this.widgetDefinitions[widget.type]) {
-                    const widgetHtml = this.widgetDefinitions[widget.type].render(widget.data);
+                    const widgetHtml = this.widgetDefinitions[widget.type].render(widget.data, widget.type);
                     container.insertAdjacentHTML('beforeend', widgetHtml);
                 }
             });
@@ -734,8 +974,31 @@
             }
         },
 
-        // Render recent activities widget
-        renderRecentActivities(activities) {
+        /**
+         * Add widget header with timeframe control
+         */
+        createWidgetHeader(title, widgetType) {
+            const timeframeDisplay = this.getWidgetTimeframeDisplay(widgetType);
+
+            return `
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-serif text-lg text-pastel-heading">${title}</h3>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="Dashboard.openWidgetTimeframeModal('${widgetType}')"
+                                class="widget-timeframe-btn p-1.5 rounded hover:bg-pastel-lightest transition-colors"
+                                title="Configure timeframe">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-pastel-textLight" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </button>
+                        <span class="text-xs text-pastel-textLight">${timeframeDisplay}</span>
+                    </div>
+                </div>
+            `;
+        },
+
+        // Updated widget render methods to include timeframe controls
+        renderRecentActivities(activities, widgetType) {
             const activitiesHtml = activities.map(activity => {
                 const color = this.getActivityColor(activity.type);
                 const details = this.getActivityDetails(activity);
@@ -756,14 +1019,9 @@
             }).join('');
 
             return `
-                <section class="widget-container animate-slide-up">
+                <section class="widget-container animate-slide-up" data-widget-type="${widgetType}">
                     <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="font-serif text-lg text-pastel-heading">Recent Activities</h3>
-                            <button class="text-sm text-pastel-primary hover:text-pastel-primaryHover transition-colors">
-                                View All
-                            </button>
-                        </div>
+                        ${this.createWidgetHeader('Recent Activities', widgetType)}
                         <div class="space-y-4">
                             ${activitiesHtml || '<p class="text-center py-4 text-pastel-textLight">No recent activities</p>'}
                         </div>
@@ -772,8 +1030,7 @@
             `;
         },
 
-        // Render upcoming events widget
-        renderUpcomingEvents(events) {
+        renderUpcomingEvents(events, widgetType) {
             const eventsHtml = events.map(event => {
                 const urgency = this.getEventUrgency(event.time);
                 const icon = this.getEventIcon(event.type);
@@ -794,14 +1051,9 @@
             }).join('');
 
             return `
-                <section class="widget-container animate-slide-up">
+                <section class="widget-container animate-slide-up" data-widget-type="${widgetType}">
                     <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="font-serif text-lg text-pastel-heading">Upcoming Events</h3>
-                            <button class="text-sm text-pastel-primary hover:text-pastel-primaryHover transition-colors">
-                                Add Event
-                            </button>
-                        </div>
+                        ${this.createWidgetHeader('Upcoming Events', widgetType)}
                         <div class="space-y-3">
                             ${eventsHtml || '<p class="text-center py-4 text-pastel-textLight">No upcoming events</p>'}
                         </div>
@@ -810,8 +1062,7 @@
             `;
         },
 
-        // Render care metrics widget
-        renderCareMetrics(metrics) {
+        renderCareMetrics(metrics, widgetType) {
             const caregiversHtml = Object.values(metrics.by_caregiver).map(caregiver => {
                 const data = caregiver.caregiver;
                 return `
@@ -837,9 +1088,9 @@
             }).join('');
 
             return `
-                <section class="widget-container animate-slide-up">
+                <section class="widget-container animate-slide-up" data-widget-type="${widgetType}">
                     <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-6">
-                        <h3 class="font-serif text-lg text-pastel-heading mb-4">Care Sharing Metrics</h3>
+                        ${this.createWidgetHeader('Care Sharing Metrics', widgetType)}
                         <p class="text-sm text-pastel-textLight mb-4">Total activities: ${metrics.total_activities}</p>
                         <div class="space-y-3">
                             ${caregiversHtml}
@@ -849,46 +1100,211 @@
             `;
         },
 
-        // Placeholder renders for other widgets
-        renderFeedingStats(data) {
+        renderFeedingStats(data, widgetType) {
             return `
-                <section class="widget-container animate-slide-up">
+                <section class="widget-container animate-slide-up" data-widget-type="${widgetType}">
                     <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-6">
-                        <h3 class="font-serif text-lg text-pastel-heading mb-4">Feeding Statistics</h3>
-                        <p class="text-center py-8 text-pastel-textLight">Feeding statistics coming soon!</p>
+                        ${this.createWidgetHeader('Feeding Statistics', widgetType)}
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="text-center">
+                                <p class="text-2xl font-semibold text-pastel-primary">${data.total_feedings || 0}</p>
+                                <p class="text-xs text-pastel-textLight">Total Feedings</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-2xl font-semibold text-pastel-accent1">${data.daily_average || 0}</p>
+                                <p class="text-xs text-pastel-textLight">Daily Average</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-2xl font-semibold text-pastel-accent2">${data.average_duration || 0}m</p>
+                                <p class="text-xs text-pastel-textLight">Avg Duration</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-2xl font-semibold text-purple-600">${data.average_interval_hours || 0}h</p>
+                                <p class="text-xs text-pastel-textLight">Avg Interval</p>
+                            </div>
+                        </div>
                     </div>
                 </section>
             `;
         },
 
-        renderSleepPatterns(data) {
+        renderSleepPatterns(data, widgetType) {
             return `
-                <section class="widget-container animate-slide-up">
+                <section class="widget-container animate-slide-up" data-widget-type="${widgetType}">
                     <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-6">
-                        <h3 class="font-serif text-lg text-pastel-heading mb-4">Sleep Patterns</h3>
-                        <p class="text-center py-8 text-pastel-textLight">Sleep pattern visualization coming soon!</p>
+                        ${this.createWidgetHeader('Sleep Patterns', widgetType)}
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="text-center">
+                                <p class="text-2xl font-semibold text-pastel-primary">${data.total_sleep_sessions || 0}</p>
+                                <p class="text-xs text-pastel-textLight">Sleep Sessions</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-2xl font-semibold text-pastel-accent1">${this.formatDuration(data.average_sleep_per_day || 0)}</p>
+                                <p class="text-xs text-pastel-textLight">Daily Average</p>
+                            </div>
+                        </div>
+                        ${data.longest_sleep ? `
+                        <div class="mt-4 pt-4 border-t border-pastel-light">
+                            <p class="text-sm text-pastel-textLight">Longest sleep: ${this.formatDuration(data.longest_sleep.duration)} on ${new Date(data.longest_sleep.start_time).toLocaleDateString()}</p>
+                        </div>
+                        ` : ''}
                     </div>
                 </section>
             `;
         },
 
-        renderGrowthChart(data) {
+        renderGrowthChart(data, widgetType) {
+            const latestData = Object.values(data.by_baby || {}).find(baby => baby.latest);
+
             return `
-                <section class="widget-container animate-slide-up">
+                <section class="widget-container animate-slide-up" data-widget-type="${widgetType}">
                     <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-6">
-                        <h3 class="font-serif text-lg text-pastel-heading mb-4">Growth Chart</h3>
-                        <p class="text-center py-8 text-pastel-textLight">Growth chart coming soon!</p>
+                        ${this.createWidgetHeader('Growth Chart', widgetType)}
+                        ${latestData && latestData.latest ? `
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="text-center">
+                                <p class="text-2xl font-semibold text-pastel-primary">${latestData.latest.weight || '--'} lbs</p>
+                                <p class="text-xs text-pastel-textLight">Current Weight</p>
+                                ${latestData.weight_change ? `<p class="text-xs ${latestData.weight_change > 0 ? 'text-green-600' : 'text-red-600'}">${latestData.weight_change > 0 ? '+' : ''}${latestData.weight_change} lbs</p>` : ''}
+                            </div>
+                            <div class="text-center">
+                                <p class="text-2xl font-semibold text-pastel-accent1">${latestData.latest.height || '--'} cm</p>
+                                <p class="text-xs text-pastel-textLight">Current Height</p>
+                                ${latestData.height_change ? `<p class="text-xs ${latestData.height_change > 0 ? 'text-green-600' : 'text-red-600'}">${latestData.height_change > 0 ? '+' : ''}${latestData.height_change} cm</p>` : ''}
+                            </div>
+                        </div>
+                        ` : '<p class="text-center py-8 text-pastel-textLight">No growth data available</p>'}
                     </div>
                 </section>
             `;
         },
 
-        // Load today's summary
+        /**
+         * Open widget timeframe configuration modal
+         */
+        openWidgetTimeframeModal(widgetType) {
+            const modal = document.getElementById('widgetTimeframeModal');
+            const titleEl = document.getElementById('widgetTimeframeTitle');
+            const widgetDef = this.widgetDefinitions[widgetType];
+
+            // Store current widget being configured
+            this.state.currentWidgetConfig.type = widgetType;
+
+            // Update modal title
+            titleEl.textContent = `Configure timeframe for ${widgetDef.title}`;
+
+            // Get current widget configuration
+            const widgetConfig = this.state.preferences?.widgets_config?.find(w => w.type === widgetType);
+            const currentTimeframe = widgetConfig?.timeframe || 'inherit';
+
+            // Update selected state
+            document.querySelectorAll('.widget-timeframe-opt').forEach(btn => {
+                const timeframe = btn.dataset.widgetTimeframe;
+                if (timeframe === currentTimeframe) {
+                    btn.classList.add('widget-timeframe-active', 'bg-pastel-primary', 'text-white');
+                    btn.classList.remove('hover:bg-pastel-lightest');
+                } else {
+                    btn.classList.remove('widget-timeframe-active', 'bg-pastel-primary', 'text-white');
+                    btn.classList.add('hover:bg-pastel-lightest');
+                }
+            });
+
+            // Handle custom dates
+            const customFields = document.getElementById('widgetCustomDateFields');
+            if (currentTimeframe === 'custom' && widgetConfig?.custom_settings) {
+                customFields.classList.remove('hidden');
+
+                if (widgetConfig.custom_settings.custom_start_date) {
+                    document.getElementById('widgetCustomStartDate').value =
+                        new Date(widgetConfig.custom_settings.custom_start_date).toISOString().split('T')[0];
+                }
+                if (widgetConfig.custom_settings.custom_end_date) {
+                    document.getElementById('widgetCustomEndDate').value =
+                        new Date(widgetConfig.custom_settings.custom_end_date).toISOString().split('T')[0];
+                }
+            } else {
+                customFields.classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+        },
+
+        /**
+         * Update widget timeframe preference
+         * This saves the widget-specific timeframe to the server
+         */
+        async updateWidgetTimeframe(widgetType, timeframe, customDates = null) {
+            try {
+                // Get current preferences
+                const preferences = {...this.state.preferences};
+
+                // Find or create widget config
+                let widgetConfig = preferences.widgets_config.find(w => w.type === widgetType);
+                if (!widgetConfig) {
+                    // This shouldn't happen as widgets_config should already exist, but handle it
+                    widgetConfig = {
+                        type: widgetType,
+                        position: preferences.widgets_config.length,
+                        enabled: true
+                    };
+                    preferences.widgets_config.push(widgetConfig);
+                }
+
+                // Update timeframe
+                if (timeframe === 'inherit') {
+                    // Remove widget-specific timeframe to inherit global
+                    delete widgetConfig.timeframe;
+                    delete widgetConfig.custom_settings;
+                } else {
+                    widgetConfig.timeframe = timeframe;
+
+                    if (timeframe === 'custom' && customDates) {
+                        widgetConfig.custom_settings = {
+                            custom_start_date: customDates.start.toISOString(),
+                            custom_end_date: customDates.end.toISOString()
+                        };
+                    } else if (timeframe !== 'custom') {
+                        // Clear custom settings if not using custom timeframe
+                        delete widgetConfig.custom_settings;
+                    }
+                }
+
+                // Save to server
+                const response = await BabyHelperAuth.api.request('/dashboard/preferences', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(preferences)
+                });
+
+                if (response.ok) {
+                    // Update local state
+                    this.state.preferences = await response.json();
+
+                    // Refresh the specific widget
+                    await this.refreshWidget(widgetType);
+
+                    this.showToast('Widget timeframe updated');
+                } else {
+                    const error = await BabyHelperAuth.api.parseErrorResponse(response);
+                    throw new Error(error.detail || 'Failed to update widget timeframe');
+                }
+
+            } catch (error) {
+                console.error('Error updating widget timeframe:', error);
+                this.showError('Failed to update widget timeframe');
+            }
+        },
+
+        /**
+         * Load today's summary using activities endpoint
+         */
         async loadTodaysSummary() {
             try {
                 const params = new URLSearchParams({
                     timeframe: 'today',
-                    limit: 100
+                    limit: '100'
                 });
                 if (this.state.selectedBabyId) {
                     params.append('baby_id', this.state.selectedBabyId);
@@ -898,13 +1314,14 @@
                 if (response.ok) {
                     const activities = await response.json();
                     this.calculateAndDisplaySummary(activities);
+                } else {
+                    console.error('Failed to load today\'s summary');
                 }
             } catch (error) {
                 console.error('Error loading today\'s summary:', error);
             }
         },
 
-        // Calculate and display summary cards
         calculateAndDisplaySummary(activities) {
             const summary = {
                 feedings: 0,
@@ -1015,7 +1432,6 @@
             document.getElementById('summaryCards').innerHTML = summaryCardsHtml;
         },
 
-        // Update baby selector
         updateBabySelector() {
             const selector = document.getElementById('babySelector');
 
@@ -1044,7 +1460,6 @@
             }
         },
 
-        // Update baby status
         updateBabyStatus() {
             const statusEl = document.getElementById('babyStatus');
 
@@ -1060,22 +1475,16 @@
                     statusEl.textContent = `${baby.fullname} is ${age} old today 🎉`;
                 }
             } else {
-                // Show all babies summary
-                const names = this.state.babies.map(b => b.fullname).join(', ');
-                statusEl.textContent = `Tracking: all babies`;
+                statusEl.textContent = `Tracking: ${this.state.babies.length} ${this.state.babies.length === 1 ? 'baby' : 'babies'}`;
             }
         },
 
-        // Open customization modal
         openCustomizationModal() {
             const modal = document.getElementById('customizationModal');
             modal.classList.remove('hidden');
-
-            // Populate widget list
             this.populateWidgetList();
         },
 
-        // Populate widget list in customization modal
         populateWidgetList() {
             const widgetList = document.getElementById('widgetList');
             widgetList.innerHTML = '';
@@ -1112,7 +1521,10 @@
             });
         },
 
-        // Save customization preferences
+        /**
+         * Save dashboard customization preferences
+         * Preserves widget-specific timeframe settings
+         */
         async saveCustomizationPreferences() {
             try {
                 // Gather widget configurations
@@ -1120,11 +1532,16 @@
                 document.querySelectorAll('.widget-toggle').forEach((toggle, index) => {
                     const type = toggle.dataset.widgetType;
 
+                    // Get existing widget config to preserve timeframe settings
+                    const existingWidget = this.state.preferences?.widgets_config?.find(w => w.type === type);
+
                     widgetConfigs.push({
                         type: type,
                         position: index,
                         enabled: toggle.checked,
-                        timeframe: this.state.timeframe // Use global timeframe
+                        // Preserve existing timeframe settings
+                        timeframe: existingWidget?.timeframe,
+                        custom_settings: existingWidget?.custom_settings || {}
                     });
                 });
 
@@ -1135,6 +1552,12 @@
                     default_timeframe: this.state.timeframe,
                     widgets_config: widgetConfigs
                 };
+
+                // Include custom dates if global timeframe is custom
+                if (this.state.timeframe === 'custom' && this.state.customDateRange.start && this.state.customDateRange.end) {
+                    preferencesData.custom_start_date = this.state.customDateRange.start.toISOString();
+                    preferencesData.custom_end_date = this.state.customDateRange.end.toISOString();
+                }
 
                 // Save to backend
                 const response = await BabyHelperAuth.api.request('/dashboard/preferences', {
@@ -1157,7 +1580,8 @@
 
                     this.showToast('Dashboard preferences saved successfully!');
                 } else {
-                    throw new Error('Failed to save preferences');
+                    const error = await BabyHelperAuth.api.parseErrorResponse(response);
+                    throw new Error(error.detail || 'Failed to save preferences');
                 }
 
             } catch (error) {
@@ -1166,7 +1590,53 @@
             }
         },
 
-        // Setup event listeners
+        /**
+         * Update global timeframe preference
+         * This affects all widgets that don't have their own timeframe set
+         */
+        async updateTimeframePreference(timeframe, customStart = null, customEnd = null) {
+            try {
+                const preferencesData = {
+                    ...this.state.preferences,
+                    default_timeframe: timeframe
+                };
+
+                // Add custom dates if provided
+                if (timeframe === 'custom' && customStart && customEnd) {
+                    preferencesData.custom_start_date = customStart.toISOString();
+                    preferencesData.custom_end_date = customEnd.toISOString();
+                }
+
+                const response = await BabyHelperAuth.api.request('/dashboard/preferences', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(preferencesData)
+                });
+
+                if (response.ok) {
+                    this.state.preferences = await response.json();
+                    this.state.timeframe = timeframe;
+
+                    if (customStart && customEnd) {
+                        this.state.customDateRange.start = customStart;
+                        this.state.customDateRange.end = customEnd;
+                    }
+
+                    // Reload dashboard with new timeframe
+                    await this.loadDashboardData();
+                    this.showToast('Timeframe updated');
+                } else {
+                    throw new Error('Failed to update timeframe');
+                }
+
+            } catch (error) {
+                console.error('Error updating timeframe:', error);
+                this.showError('Failed to update timeframe preference');
+            }
+        },
+
         setupEventListeners() {
             // Settings dropdown
             const settingsButton = document.getElementById('settingsButton');
@@ -1188,16 +1658,14 @@
                 this.refreshDashboard();
             });
 
-            // Timeframe selectors
+            // Global timeframe selectors
             document.querySelectorAll('.timeframe-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const timeframe = e.target.dataset.timeframe;
                     if (timeframe === 'custom') {
                         this.openCustomDateModal();
                     } else {
-                        this.state.timeframe = timeframe;
-                        this.updateTimeframeSelector();
-                        this.refreshDashboard();
+                        this.updateTimeframePreference(timeframe);
                     }
                 });
             });
@@ -1208,14 +1676,15 @@
                 if (timeframe === 'custom') {
                     this.openCustomDateModal();
                 } else {
-                    this.state.timeframe = timeframe;
-                    this.refreshDashboard();
+                    this.updateTimeframePreference(timeframe);
                 }
             });
 
-            // Custom date modal
+            // Custom date modal for global timeframe
             document.getElementById('customDateCancel').addEventListener('click', () => {
                 document.getElementById('customDateModal').classList.add('hidden');
+                // Reset timeframe selector if custom was cancelled
+                this.updateTimeframeSelector();
             });
 
             document.getElementById('customDateApply').addEventListener('click', () => {
@@ -1223,15 +1692,86 @@
                 const endDate = document.getElementById('customEndDate').value;
 
                 if (startDate && endDate) {
-                    this.state.timeframe = 'custom';
-                    this.state.customDateRange = {
-                        start: new Date(startDate),
-                        end: new Date(endDate)
-                    };
+                    const start = new Date(startDate);
+                    const end = new Date(endDate);
+
+                    if (start >= end) {
+                        this.showError('End date must be after start date');
+                        return;
+                    }
+
                     document.getElementById('customDateModal').classList.add('hidden');
-                    this.updateTimeframeSelector();
-                    this.refreshDashboard();
+                    this.updateTimeframePreference('custom', start, end);
+                } else {
+                    this.showError('Please select both start and end dates');
                 }
+            });
+
+            // Widget timeframe modal event listeners
+            document.querySelectorAll('.widget-timeframe-opt').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const selectedTimeframe = e.currentTarget.dataset.widgetTimeframe;
+
+                    // Update visual state
+                    document.querySelectorAll('.widget-timeframe-opt').forEach(b => {
+                        b.classList.remove('widget-timeframe-active', 'bg-pastel-primary', 'text-white');
+                        b.classList.add('hover:bg-pastel-lightest');
+                    });
+                    e.currentTarget.classList.add('widget-timeframe-active', 'bg-pastel-primary', 'text-white');
+                    e.currentTarget.classList.remove('hover:bg-pastel-lightest');
+
+                    // Show/hide custom date fields
+                    const customFields = document.getElementById('widgetCustomDateFields');
+                    if (selectedTimeframe === 'custom') {
+                        customFields.classList.remove('hidden');
+                    } else {
+                        customFields.classList.add('hidden');
+                    }
+
+                    // Store selection
+                    this.state.currentWidgetConfig.timeframe = selectedTimeframe;
+                });
+            });
+
+            document.getElementById('widgetTimeframeCancel').addEventListener('click', () => {
+                document.getElementById('widgetTimeframeModal').classList.add('hidden');
+            });
+
+            document.getElementById('widgetTimeframeSave').addEventListener('click', async () => {
+                const widgetType = this.state.currentWidgetConfig.type;
+                const timeframe = this.state.currentWidgetConfig.timeframe;
+
+                if (!timeframe) {
+                    this.showError('Please select a timeframe option');
+                    return;
+                }
+
+                let customDates = null;
+                if (timeframe === 'custom') {
+                    const startDate = document.getElementById('widgetCustomStartDate').value;
+                    const endDate = document.getElementById('widgetCustomEndDate').value;
+
+                    if (!startDate || !endDate) {
+                        this.showError('Please select both start and end dates');
+                        return;
+                    }
+
+                    const start = new Date(startDate);
+                    const end = new Date(endDate);
+
+                    if (start >= end) {
+                        this.showError('End date must be after start date');
+                        return;
+                    }
+
+                    customDates = {start, end};
+                }
+
+                // Hide modal
+                document.getElementById('widgetTimeframeModal').classList.add('hidden');
+
+                // Update widget timeframe
+                await this.updateWidgetTimeframe(widgetType, timeframe, customDates);
             });
 
             // Customization button
@@ -1276,20 +1816,22 @@
             });
         },
 
-        // Open custom date modal
         openCustomDateModal() {
             const modal = document.getElementById('customDateModal');
             modal.classList.remove('hidden');
 
-            // Set default dates
-            const today = new Date();
-            const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-            document.getElementById('customStartDate').value = lastWeek.toISOString().split('T')[0];
-            document.getElementById('customEndDate').value = today.toISOString().split('T')[0];
+            // Set default dates from current custom range or last week
+            if (this.state.customDateRange.start && this.state.customDateRange.end) {
+                document.getElementById('customStartDate').value = this.state.customDateRange.start.toISOString().split('T')[0];
+                document.getElementById('customEndDate').value = this.state.customDateRange.end.toISOString().split('T')[0];
+            } else {
+                const today = new Date();
+                const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                document.getElementById('customStartDate').value = lastWeek.toISOString().split('T')[0];
+                document.getElementById('customEndDate').value = today.toISOString().split('T')[0];
+            }
         },
 
-        // Refresh dashboard
         async refreshDashboard() {
             this.showLoading(true);
             await this.loadDashboardData();
@@ -1297,7 +1839,6 @@
             this.showToast('Dashboard refreshed');
         },
 
-        // Setup quick actions
         setupQuickActions() {
             const quickActionBtns = document.querySelectorAll('.quick-action-btn');
             quickActionBtns.forEach(btn => {
@@ -1315,7 +1856,6 @@
             });
         },
 
-        // Setup chat functionality
         setupChat() {
             const chatInput = document.getElementById('chatInput');
             const chatSendButton = document.getElementById('chatSendButton');
@@ -1348,7 +1888,6 @@
             });
         },
 
-        // Send chat message
         sendChatMessage(message) {
             const chatMessages = document.getElementById('chatMessages');
             const chatInput = document.getElementById('chatInput');
@@ -1389,7 +1928,6 @@
             chatMessages.scrollTop = chatMessages.scrollHeight;
         },
 
-        // Generate AI response (placeholder)
         generateAIResponse(message) {
             const responses = {
                 'sleep': 'Based on your baby\'s age, they should be getting about 14-17 hours of sleep per day, including naps. It looks like your baby is on track with their sleep patterns.',
@@ -1409,7 +1947,6 @@
             return responses.default;
         },
 
-        // Handle quick actions
         handleQuickAction(action) {
             console.log('Quick action:', action);
 
@@ -1426,7 +1963,11 @@
 
             if (routes[action]) {
                 this.showToast(`Navigating to ${action} tracking...`);
-                window.location.href = routes[action];
+                // In production, you would use: window.location.href = routes[action];
+                // For now, just show a message
+                setTimeout(() => {
+                    this.showToast(`${action} tracker would open here`);
+                }, 1000);
             } else {
                 this.showToast(`${action} feature coming soon!`);
             }
@@ -1470,7 +2011,7 @@
 
             switch (activity.type) {
                 case 'feeding':
-                    return `${activity.details.feeding_type}, ${activity.details.amount || ''} ${activity.details.duration ? `for ${activity.details.duration} min` : ''}`;
+                    return `${activity.details.feeding_type || ''}, ${activity.details.amount || ''} ${activity.details.duration ? `for ${activity.details.duration} min` : ''}`;
                 case 'sleep':
                     return `${activity.details.duration ? `${activity.details.duration} minutes` : ''} ${activity.details.quality ? `- ${activity.details.quality} quality` : ''}`;
                 case 'diaper':
@@ -1618,12 +2159,10 @@
             return `${mins}m`;
         },
 
-        // Show error message
         showError(message) {
             this.showToast(message, 'error');
         },
 
-        // Show toast message
         showToast(message, type = 'info') {
             // Create toast element
             const toast = document.createElement('div');
