@@ -96,21 +96,8 @@ async def update_dashboard_prefs(
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    """
-    Update user's dashboard preferences.
+    """Update user's dashboard preferences with validation."""
 
-    Use this endpoint to change default timeframe, layout, or widget configurations.
-    When setting default_timeframe to "custom", you must also provide
-    custom_start_date and custom_end_date.
-
-    Example for custom timeframe:
-    {
-        "default_timeframe": "custom",
-        "custom_start_date": "2024-01-01T00:00:00",
-        "custom_end_date": "2024-01-31T23:59:59",
-        ...
-    }
-    """
     # Validate custom timeframe dates if timeframe is CUSTOM
     if preferences.default_timeframe == TimeFrame.CUSTOM:
         if not preferences.custom_start_date or not preferences.custom_end_date:
@@ -124,6 +111,28 @@ async def update_dashboard_prefs(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="custom_start_date must be before custom_end_date"
             )
+
+    # Validate widget configurations
+    for widget in preferences.widgets_config:
+        if 'type' not in widget:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Each widget must have a 'type' field"
+            )
+
+        # Ensure widget has all required fields with defaults
+        widget.setdefault('position', 0)
+        widget.setdefault('enabled', True)
+        widget.setdefault('timeframe', preferences.default_timeframe.value)
+
+        # Validate widget-specific custom timeframe
+        if widget.get('timeframe') == 'custom':
+            custom_settings = widget.get('custom_settings', {})
+            if not custom_settings.get('custom_start_date') or not custom_settings.get('custom_end_date'):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Widget {widget['type']} has custom timeframe but missing custom dates"
+                )
 
     updated_preferences = update_dashboard_preferences(db, current_user.id, preferences.model_dump())
 

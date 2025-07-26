@@ -817,15 +817,15 @@
          */
         getWidgetTimeframeDisplay(widgetType) {
             const widgetConfig = this.state.preferences?.widgets_config?.find(w => w.type === widgetType);
-            const timeframe = widgetConfig?.timeframe;
+            const widgetTimeframe = widgetConfig?.timeframe;
+            const globalTimeframe = this.state.preferences?.default_timeframe || 'week';
 
-            if (!timeframe || timeframe === 'inherit') {
-                // Using global setting
-                const globalTimeframe = this.state.preferences?.default_timeframe || 'week';
+            // Check if widget is using the same timeframe as global
+            if (!widgetTimeframe || widgetTimeframe === globalTimeframe) {
                 return `Using global (${this.formatTimeframeText(globalTimeframe)})`;
             }
 
-            return this.formatTimeframeText(timeframe);
+            return this.formatTimeframeText(widgetTimeframe);
         },
 
         /**
@@ -1133,38 +1133,155 @@
          */
         async updateWidgetTimeframe(widgetType, timeframe, customDates = null) {
             try {
-                // Get current preferences
-                const preferences = {...this.state.preferences};
+                // First, let's debug what's in the current state
+                console.log('Current preferences state:', this.state.preferences);
+                console.log('Global timeframe:', this.state.preferences?.default_timeframe);
+                console.log('Custom dates in state:', {
+                    start: this.state.preferences?.custom_start_date,
+                    end: this.state.preferences?.custom_end_date
+                });
+
+                // Deep clone the preferences to avoid mutation issues
+                const preferences = JSON.parse(JSON.stringify(this.state.preferences));
+
+                // Check if we need to fetch fresh preferences when custom dates are missing
+                if (preferences.default_timeframe === 'custom' &&
+                    (!preferences.custom_start_date || !preferences.custom_end_date)) {
+                    console.warn('Global timeframe is custom but dates are missing, fetching fresh preferences...');
+
+                    // Fetch fresh preferences from the server
+                    try {
+                        const freshResponse = await BabyHelperAuth.api.request('/dashboard/preferences', {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (freshResponse.ok) {
+                            const freshPreferences = await freshResponse.json();
+
+                            // Use the fresh preferences if they have the custom dates
+                            if (freshPreferences.custom_start_date && freshPreferences.custom_end_date) {
+                                preferences.custom_start_date = freshPreferences.custom_start_date;
+                                preferences.custom_end_date = freshPreferences.custom_end_date;
+                                // Also update the state for future use
+                                this.state.preferences.custom_start_date = freshPreferences.custom_start_date;
+                                this.state.preferences.custom_end_date = freshPreferences.custom_end_date;
+                            }
+                        }
+                    } catch (fetchError) {
+                        console.error('Failed to fetch fresh preferences:', fetchError);
+                    }
+                }
+
+                // Ensure widgets_config exists and is an array
+                if (!preferences.widgets_config || !Array.isArray(preferences.widgets_config)) {
+                    preferences.widgets_config = [];
+                }
 
                 // Find or create widget config
                 let widgetConfig = preferences.widgets_config.find(w => w.type === widgetType);
                 if (!widgetConfig) {
-                    // This shouldn't happen as widgets_config should already exist, but handle it
                     widgetConfig = {
                         type: widgetType,
                         position: preferences.widgets_config.length,
-                        enabled: true
+                        enabled: true,
+                        timeframe: preferences.default_timeframe || 'week'
                     };
                     preferences.widgets_config.push(widgetConfig);
                 }
 
-                // Update timeframe
+                // Update timeframe - always keep the field
                 if (timeframe === 'inherit') {
-                    // Remove widget-specific timeframe to inherit global
-                    delete widgetConfig.timeframe;
-                    delete widgetConfig.custom_settings;
+                    // Set to the default timeframe
+                    widgetConfig.timeframe = preferences.default_timeframe || 'week';
+
+                    // If inheriting a custom global timeframe, also inherit the custom dates
+                    if (preferences.default_timeframe === 'custom' &&
+                        preferences.custom_start_date &&
+                        preferences.custom_end_date) {
+                        widgetConfig.custom_settings = {
+                            custom_start_date: new Date(preferences.custom_start_date).toISOString(),
+                            custom_end_date: new Date(preferences.custom_end_date).toISOString()
+                        };
+                    } else {
+                        delete widgetConfig.custom_settings;
+                    }
                 } else {
                     widgetConfig.timeframe = timeframe;
 
-                    if (timeframe === 'custom' && customDates) {
-                        widgetConfig.custom_settings = {
-                            custom_start_date: customDates.start.toISOString(),
-                            custom_end_date: customDates.end.toISOString()
-                        };
-                    } else if (timeframe !== 'custom') {
-                        // Clear custom settings if not using custom timeframe
+                    // Check if we're setting the widget to the same timeframe as global
+                    const isMatchingGlobalCustom = timeframe === 'custom' &&
+                        preferences.default_timeframe === 'custom';
+
+                    if (timeframe === 'custom') {
+                        // First try to use the dates passed in
+                        let start = customDates?.start ? customDates.start : null;
+                        let end = customDates?.end ? customDates.end : null;
+
+                        // If no custom dates passed and we're matching global custom, use global dates
+                        if (!start && !end && isMatchingGlobalCustom) {
+                            start = preferences.custom_start_date ? new Date(preferences.custom_start_date) : null;
+                            end = preferences.custom_end_date ? new Date(preferences.custom_end_date) : null;
+                        } else if (!start && !end) {
+                            // Fallback to any available custom dates in preferences
+                            start = preferences.custom_start_date ? new Date(preferences.custom_start_date) : null;
+                            end = preferences.custom_end_date ? new Date(preferences.custom_end_date) : null;
+                        }
+
+                        if (start && end) {
+                            widgetConfig.custom_settings = {
+                                custom_start_date: start.toISOString(),
+                                custom_end_date: end.toISOString()
+                            };
+                        } else {
+                            throw new Error('When setting timeframe to \'custom\', both start and end dates must be provided');
+                        }
+                    } else {
                         delete widgetConfig.custom_settings;
                     }
+                }
+
+                // Ensure all widgets have required fields
+                preferences.widgets_config = preferences.widgets_config.map((widget, index) => ({
+                    type: widget.type,
+                    position: widget.position !== undefined ? widget.position : index,
+                    enabled: widget.enabled !== undefined ? widget.enabled : true,
+                    timeframe: widget.timeframe || preferences.default_timeframe || 'week',
+                    ...(widget.custom_settings ? {custom_settings: widget.custom_settings} : {})
+                }));
+
+                // Prepare the complete preferences object with all required fields
+                const preferencesData = {
+                    layout_type: preferences.layout_type || 'grid',
+                    default_baby_id: preferences.default_baby_id || null,
+                    default_timeframe: preferences.default_timeframe || 'week',
+                    widgets_config: preferences.widgets_config
+                };
+
+                // ALWAYS include custom dates if they exist in preferences
+                if (preferences.custom_start_date && preferences.custom_end_date) {
+                    preferencesData.custom_start_date = new Date(preferences.custom_start_date).toISOString();
+                    preferencesData.custom_end_date = new Date(preferences.custom_end_date).toISOString();
+                } else if (preferences.default_timeframe === 'custom') {
+                    // If we still don't have custom dates but global is custom, this is a critical error
+                    console.error('Critical: Global timeframe is custom but no custom dates available');
+                    console.error('Preferences object:', preferences);
+
+                    // As a last resort, you might want to set some default dates
+                    // For example, last 7 days:
+                    const endDate = new Date();
+                    const startDate = new Date();
+                    startDate.setDate(startDate.getDate() - 7);
+
+                    preferencesData.custom_start_date = startDate.toISOString();
+                    preferencesData.custom_end_date = endDate.toISOString();
+
+                    console.warn('Using fallback dates:', {
+                        start: preferencesData.custom_start_date,
+                        end: preferencesData.custom_end_date
+                    });
                 }
 
                 // Save to server
@@ -1173,12 +1290,13 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(preferences)
+                    body: JSON.stringify(preferencesData)
                 });
 
                 if (response.ok) {
-                    // Update local state
-                    this.state.preferences = await response.json();
+                    // Update local state with the response
+                    const updatedPreferences = await response.json();
+                    this.state.preferences = updatedPreferences;
 
                     // Refresh the specific widget
                     await this.refreshWidget(widgetType);
@@ -1186,12 +1304,13 @@
                     this.showToast('Widget timeframe updated');
                 } else {
                     const error = await BabyHelperAuth.api.parseErrorResponse(response);
+                    console.error('Server error:', error);
                     throw new Error(error.detail || 'Failed to update widget timeframe');
                 }
 
             } catch (error) {
                 console.error('Error updating widget timeframe:', error);
-                this.showError('Failed to update widget timeframe');
+                this.showError(`Failed to update widget timeframe: ${error.message}`);
             }
         },
         updateBabySelector() {
