@@ -382,44 +382,6 @@
 
 <!-- Main Dashboard Content -->
 <div id="mainContent" class="max-w-7xl mx-auto px-4 py-6">
-    <!-- Quick Stats Bar -->
-    <section id="quickStats" class="mb-6 bg-white rounded-xl shadow-pastel border border-pastel-light p-4">
-        <div class="flex items-center justify-between flex-wrap gap-4">
-            <div class="flex items-center space-x-6">
-                <div class="text-center">
-                    <p class="text-2xl font-semibold text-pastel-heading" id="totalActivitiesToday">0</p>
-                    <p class="text-xs text-pastel-textLight">Activities Today</p>
-                </div>
-                <div class="w-px h-10 bg-pastel-light"></div>
-                <div class="text-center">
-                    <p class="text-2xl font-semibold text-pastel-primary" id="lastActivityTime">--</p>
-                    <p class="text-xs text-pastel-textLight">Last Activity</p>
-                </div>
-                <div class="w-px h-10 bg-pastel-light"></div>
-                <div class="text-center">
-                    <p class="text-2xl font-semibold text-pastel-accent1" id="nextEventTime">--</p>
-                    <p class="text-xs text-pastel-textLight">Next Event</p>
-                </div>
-            </div>
-            <button id="refreshButton" class="p-2 hover:bg-pastel-lightest rounded-full transition-colors"
-                    title="Refresh Dashboard">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-text" fill="none" viewBox="0 0 24 24"
-                     stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-            </button>
-        </div>
-    </section>
-
-    <!-- Today's Summary Cards -->
-    <section class="mb-8 animate-fade-in">
-        <h2 class="font-serif text-xl text-pastel-heading mb-4">Today's Summary</h2>
-        <div id="summaryCards" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <!-- Summary cards will be dynamically populated -->
-        </div>
-    </section>
-
     <!-- Quick Actions -->
     <section class="mb-8 animate-slide-up">
         <h2 class="font-serif text-xl text-pastel-heading mb-3">Quick Actions</h2>
@@ -764,13 +726,9 @@
                     this.updateBabySelector();
                     this.updateBabyStatus();
                     this.updateTimeframeSelector();
-                    await this.updateQuickStats();
 
                     // Render widgets with their data
                     this.renderWidgets();
-
-                    // Load today's summary separately
-                    await this.loadTodaysSummary();
 
                 } else {
                     const error = await BabyHelperAuth.api.parseErrorResponse(response);
@@ -852,66 +810,6 @@
 
             // Mobile selector
             document.getElementById('timeframeSelectorMobile').value = timeframe;
-        },
-
-        /**
-         * Update quick stats using today's activity data
-         * NOTE: The 'today' timeframe is handled by a specific endpoint parameter
-         */
-        async updateQuickStats() {
-            try {
-                // Get today's activities (this is a special case where timeframe is part of the endpoint)
-                const todayParams = new URLSearchParams({
-                    timeframe: 'today',
-                    limit: '100'
-                });
-                if (this.state.selectedBabyId) {
-                    todayParams.append('baby_id', this.state.selectedBabyId);
-                }
-
-                const response = await BabyHelperAuth.api.request(`/dashboard/activities?${todayParams}`);
-                if (response.ok) {
-                    const activities = await response.json();
-                    document.getElementById('totalActivitiesToday').textContent = activities.length;
-
-                    // Last activity time
-                    if (activities.length > 0) {
-                        const lastActivity = activities[0];
-                        document.getElementById('lastActivityTime').textContent = this.getTimeAgo(lastActivity.time);
-                    } else {
-                        document.getElementById('lastActivityTime').textContent = 'No activities';
-                    }
-                }
-
-                // Next event from widgets data
-                const upcomingWidget = this.state.widgets.find(w => w.type === 'upcoming_events');
-                if (upcomingWidget && upcomingWidget.data && upcomingWidget.data.length > 0) {
-                    const nextEvent = upcomingWidget.data[0];
-                    const eventTime = new Date(nextEvent.time);
-                    const now = new Date();
-                    const hoursUntil = Math.floor((eventTime - now) / (1000 * 60 * 60));
-
-                    if (hoursUntil < 24) {
-                        document.getElementById('nextEventTime').textContent = `In ${hoursUntil}h`;
-                    } else {
-                        const daysUntil = Math.floor(hoursUntil / 24);
-                        document.getElementById('nextEventTime').textContent = `In ${daysUntil}d`;
-                    }
-                } else {
-                    document.getElementById('nextEventTime').textContent = 'None scheduled';
-                }
-
-            } catch (error) {
-                console.error('Error updating quick stats:', error);
-            }
-        },
-
-        /**
-         * Get the current timeframe setting for a widget
-         */
-        getWidgetTimeframe(widgetType) {
-            const widgetConfig = this.state.preferences?.widgets_config?.find(w => w.type === widgetType);
-            return widgetConfig?.timeframe || 'inherit';
         },
 
         /**
@@ -1296,142 +1194,6 @@
                 this.showError('Failed to update widget timeframe');
             }
         },
-
-        /**
-         * Load today's summary using activities endpoint
-         */
-        async loadTodaysSummary() {
-            try {
-                const params = new URLSearchParams({
-                    timeframe: 'today',
-                    limit: '100'
-                });
-                if (this.state.selectedBabyId) {
-                    params.append('baby_id', this.state.selectedBabyId);
-                }
-
-                const response = await BabyHelperAuth.api.request(`/dashboard/activities?${params}`);
-                if (response.ok) {
-                    const activities = await response.json();
-                    this.calculateAndDisplaySummary(activities);
-                } else {
-                    console.error('Failed to load today\'s summary');
-                }
-            } catch (error) {
-                console.error('Error loading today\'s summary:', error);
-            }
-        },
-
-        calculateAndDisplaySummary(activities) {
-            const summary = {
-                feedings: 0,
-                lastFeeding: null,
-                sleepDuration: 0,
-                lastSleep: null,
-                diaperChanges: 0,
-                lastDiaper: null,
-                medications: 0
-            };
-
-            // Process activities
-            activities.forEach(activity => {
-                switch (activity.type) {
-                    case 'feeding':
-                        summary.feedings++;
-                        if (!summary.lastFeeding || new Date(activity.time) > new Date(summary.lastFeeding)) {
-                            summary.lastFeeding = activity.time;
-                        }
-                        break;
-                    case 'sleep':
-                        if (activity.details && activity.details.duration) {
-                            summary.sleepDuration += activity.details.duration;
-                        }
-                        if (!summary.lastSleep || new Date(activity.time) > new Date(summary.lastSleep)) {
-                            summary.lastSleep = activity.time;
-                        }
-                        break;
-                    case 'diaper':
-                        summary.diaperChanges++;
-                        if (!summary.lastDiaper || new Date(activity.time) > new Date(summary.lastDiaper)) {
-                            summary.lastDiaper = activity.time;
-                        }
-                        break;
-                    case 'medication':
-                        summary.medications++;
-                        break;
-                }
-            });
-
-            // Display summary cards
-            const summaryCardsHtml = `
-                <!-- Feeding Card -->
-                <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="w-10 h-10 rounded-full bg-pastel-accent1 bg-opacity-20 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-primary" fill="none"
-                                 viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                            </svg>
-                        </div>
-                        <span class="text-xs text-pastel-textLight">${summary.lastFeeding ? this.getTimeAgo(summary.lastFeeding) : 'No data'}</span>
-                    </div>
-                    <p class="text-2xl font-semibold text-pastel-heading">${summary.feedings}</p>
-                    <p class="text-sm text-pastel-textLight">Feedings</p>
-                </div>
-
-                <!-- Sleep Card -->
-                <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="w-10 h-10 rounded-full bg-pastel-accent2 bg-opacity-20 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-accent1" fill="none"
-                                 viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
-                            </svg>
-                        </div>
-                        <span class="text-xs text-pastel-textLight">${summary.lastSleep ? this.getTimeAgo(summary.lastSleep) : 'No data'}</span>
-                    </div>
-                    <p class="text-2xl font-semibold text-pastel-heading">${this.formatDuration(summary.sleepDuration)}</p>
-                    <p class="text-sm text-pastel-textLight">Total Sleep</p>
-                </div>
-
-                <!-- Diaper Card -->
-                <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="w-10 h-10 rounded-full bg-pastel-secondary bg-opacity-50 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-primary" fill="none"
-                                 viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                            </svg>
-                        </div>
-                        <span class="text-xs text-pastel-textLight">${summary.lastDiaper ? this.getTimeAgo(summary.lastDiaper) : 'No data'}</span>
-                    </div>
-                    <p class="text-2xl font-semibold text-pastel-heading">${summary.diaperChanges}</p>
-                    <p class="text-sm text-pastel-textLight">Diaper Changes</p>
-                </div>
-
-                <!-- Medication Card -->
-                <div class="bg-white rounded-xl p-4 shadow-pastel border border-pastel-light hover:shadow-pastel-lg transition-all">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none"
-                                 viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
-                            </svg>
-                        </div>
-                        <span class="text-xs text-pastel-textLight">Today</span>
-                    </div>
-                    <p class="text-2xl font-semibold text-pastel-heading">${summary.medications}</p>
-                    <p class="text-sm text-pastel-textLight">Medications</p>
-                </div>
-            `;
-
-            document.getElementById('summaryCards').innerHTML = summaryCardsHtml;
-        },
-
         updateBabySelector() {
             const selector = document.getElementById('babySelector');
 
@@ -1792,11 +1554,6 @@
                 this.saveCustomizationPreferences();
             });
 
-            // Refresh button
-            document.getElementById('refreshButton').addEventListener('click', () => {
-                this.refreshDashboard();
-            });
-
             // Logout button
             document.getElementById('logoutButton').addEventListener('click', () => {
                 if (confirm('Are you sure you want to logout?')) {
@@ -2128,24 +1885,6 @@
             return 'Event';
         },
 
-        getTimeAgo(timeStr) {
-            if (!timeStr) return 'No data';
-
-            const date = new Date(timeStr);
-            const now = new Date();
-            const diffMs = now - date;
-            const diffMins = Math.floor(diffMs / 60000);
-
-            if (diffMins < 1) return 'Just now';
-            if (diffMins < 60) return `${diffMins}m ago`;
-            if (diffMins < 1440) {
-                const hours = Math.floor(diffMins / 60);
-                return `${hours}h ago`;
-            }
-
-            const days = Math.floor(diffMins / 1440);
-            return `${days}d ago`;
-        },
 
         formatDuration(minutes) {
             if (!minutes) return '0m';
