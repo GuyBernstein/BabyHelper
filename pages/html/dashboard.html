@@ -1132,15 +1132,29 @@
             const titleEl = document.getElementById('widgetTimeframeTitle');
             const widgetDef = this.widgetDefinitions[widgetType];
 
-            // Store current widget being configured
-            this.state.currentWidgetConfig.type = widgetType;
-
-            // Update modal title
-            titleEl.textContent = `Configure timeframe for ${widgetDef.title}`;
-
             // Get current widget configuration
             const widgetConfig = this.state.preferences?.widgets_config?.find(w => w.type === widgetType);
             const currentTimeframe = widgetConfig?.timeframe || 'inherit';
+
+            // Store current widget being configured with its current timeframe
+            this.state.currentWidgetConfig = {
+                type: widgetType,
+                timeframe: currentTimeframe,
+                customDates: null
+            };
+
+            // If current timeframe is custom, store the custom dates
+            if (currentTimeframe === 'custom' && widgetConfig?.custom_settings) {
+                this.state.currentWidgetConfig.customDates = {
+                    start: widgetConfig.custom_settings.custom_start_date ?
+                        new Date(widgetConfig.custom_settings.custom_start_date) : null,
+                    end: widgetConfig.custom_settings.custom_end_date ?
+                        new Date(widgetConfig.custom_settings.custom_end_date) : null
+                };
+            }
+
+            // Update modal title
+            titleEl.textContent = `Configure timeframe for ${widgetDef.title}`;
 
             // Update selected state
             document.querySelectorAll('.widget-timeframe-opt').forEach(btn => {
@@ -1169,6 +1183,9 @@
                 }
             } else {
                 customFields.classList.add('hidden');
+                // Clear custom date inputs
+                document.getElementById('widgetCustomStartDate').value = '';
+                document.getElementById('widgetCustomEndDate').value = '';
             }
 
             modal.classList.remove('hidden');
