@@ -1133,13 +1133,6 @@
          */
         async updateWidgetTimeframe(widgetType, timeframe, customDates = null) {
             try {
-                // First, let's debug what's in the current state
-                console.log('Current preferences state:', this.state.preferences);
-                console.log('Global timeframe:', this.state.preferences?.default_timeframe);
-                console.log('Custom dates in state:', {
-                    start: this.state.preferences?.custom_start_date,
-                    end: this.state.preferences?.custom_end_date
-                });
 
                 // Deep clone the preferences to avoid mutation issues
                 const preferences = JSON.parse(JSON.stringify(this.state.preferences));
@@ -1313,6 +1306,126 @@
                 this.showError(`Failed to update widget timeframe: ${error.message}`);
             }
         },
+
+        /**
+         * Update the default baby preference on the server
+         * @param {number|null} babyId - The ID of the selected baby, or null for "All Babies"
+         */
+        async updateDefaultBabyPreference(babyId) {
+            try {
+                // Deep clone the preferences to avoid mutation issues
+                const preferences = JSON.parse(JSON.stringify(this.state.preferences));
+
+                // Check if we need to fetch fresh preferences when custom dates are missing
+                if (preferences.default_timeframe === 'custom' &&
+                    (!preferences.custom_start_date || !preferences.custom_end_date)) {
+                    // Fetch fresh preferences from the server
+                    const freshResponse = await BabyHelperAuth.api.request('/dashboard/preferences', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (freshResponse.ok) {
+                        const freshPreferences = await freshResponse.json();
+                        if (freshPreferences.custom_start_date && freshPreferences.custom_end_date) {
+                            preferences.custom_start_date = freshPreferences.custom_start_date;
+                            preferences.custom_end_date = freshPreferences.custom_end_date;
+                        }
+                    }
+                }
+
+                // Prepare the complete preferences object matching backend expectations
+                const preferencesData = {
+                    layout_type: preferences.layout_type || 'grid',
+                    default_baby_id: babyId,
+                    default_timeframe: preferences.default_timeframe || 'week',
+                    widgets_config: preferences.widgets_config || []
+                };
+
+                // Ensure widgets_config has complete structure
+                preferencesData.widgets_config = preferencesData.widgets_config.map((widget, index) => ({
+                    type: widget.type,
+                    position: widget.position !== undefined ? widget.position : index,
+                    enabled: widget.enabled !== undefined ? widget.enabled : true,
+                    timeframe: widget.timeframe || preferences.default_timeframe || 'week',
+                    custom_settings: widget.custom_settings || {}
+                }));
+
+                // Handle custom dates based on default_timeframe
+                if (preferences.default_timeframe === 'custom') {
+                    // For custom timeframe, dates are mandatory
+                    if (preferences.custom_start_date && preferences.custom_end_date) {
+                        preferencesData.custom_start_date = preferences.custom_start_date;
+                        preferencesData.custom_end_date = preferences.custom_end_date;
+                    } else {
+                        // If dates are still missing, use a default range (last 7 days)
+                        const endDate = new Date();
+                        const startDate = new Date();
+                        startDate.setDate(startDate.getDate() - 7);
+
+                        preferencesData.custom_start_date = startDate.toISOString();
+                        preferencesData.custom_end_date = endDate.toISOString();
+
+                        console.warn('Using fallback dates for custom timeframe:', {
+                            start: preferencesData.custom_start_date,
+                            end: preferencesData.custom_end_date
+                        });
+                    }
+                } else if (preferences.custom_start_date && preferences.custom_end_date) {
+                    // Include custom dates if they exist, even if not using custom timeframe
+                    preferencesData.custom_start_date = preferences.custom_start_date;
+                    preferencesData.custom_end_date = preferences.custom_end_date;
+                }
+
+                // Save to server
+                const response = await BabyHelperAuth.api.request('/dashboard/preferences', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(preferencesData)
+                });
+
+                if (response.ok) {
+                    // Update local state with the response
+                    const updatedPreferences = await response.json();
+                    this.state.preferences = updatedPreferences;
+                    this.state.selectedBabyId = babyId;
+
+                    // Update custom date range state if present
+                    if (updatedPreferences.custom_start_date) {
+                        this.state.customDateRange.start = new Date(updatedPreferences.custom_start_date);
+                    }
+                    if (updatedPreferences.custom_end_date) {
+                        this.state.customDateRange.end = new Date(updatedPreferences.custom_end_date);
+                    }
+
+                    // Refresh dashboard with new baby selection
+                    await this.loadDashboardData();
+
+                    this.showToast(babyId ? 'Default baby updated' : 'Showing all babies');
+                } else {
+                    const error = await BabyHelperAuth.api.parseErrorResponse(response);
+                    console.error('Server error:', error);
+                    throw new Error(error.detail || 'Failed to update default baby');
+                }
+
+            } catch (error) {
+                console.error('Error updating default baby preference:', error);
+                this.showError(`Failed to update default baby: ${error.message}`);
+
+                // Revert the selector to the previous value
+                const selector = document.getElementById('babySelector');
+                if (this.state.preferences?.default_baby_id) {
+                    selector.value = this.state.preferences.default_baby_id;
+                } else {
+                    selector.value = '';
+                }
+            }
+        },
+
         updateBabySelector() {
             const selector = document.getElementById('babySelector');
 
@@ -1534,9 +1647,9 @@
             });
 
             // Baby selector
-            document.getElementById('babySelector').addEventListener('change', (e) => {
-                this.state.selectedBabyId = e.target.value ? parseInt(e.target.value) : null;
-                this.refreshDashboard();
+            document.getElementById('babySelector').addEventListener('change', async (e) => {
+                const babyId = e.target.value ? parseInt(e.target.value) : null;
+                await this.updateDefaultBabyPreference(babyId);
             });
 
             // Global timeframe selectors
