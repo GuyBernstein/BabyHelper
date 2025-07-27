@@ -136,6 +136,39 @@
             background-color: #ff8c69;
             color: white;
         }
+
+        /* Sortable widget styles */
+        .widget-config-item {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .widget-config-item.dragging {
+            opacity: 0.5;
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .widget-config-item.drag-over {
+            border-top: 2px solid #ff8c69;
+        }
+
+        .drag-handle {
+            cursor: grab;
+            opacity: 0.5;
+            transition: opacity 0.2s ease;
+        }
+
+        .drag-handle:hover {
+            opacity: 1;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .widget-config-item:hover .drag-handle {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="bg-pastel-lightest font-sans text-pastel-text">
@@ -586,7 +619,9 @@
                 type: null,
                 timeframe: null,
                 customDates: null
-            }
+            },
+            draggedWidget: null,
+            widgetOrder: []
         },
 
         widgetDefinitions: {
@@ -912,7 +947,7 @@
                     <div class="text-center py-12 bg-white rounded-xl shadow-pastel border border-pastel-light">
                         <p class="text-pastel-textLight mb-4">No widgets configured</p>
                         <button onclick="Dashboard.openCustomizationModal()" class="px-4 py-2 bg-pastel-primary text-white rounded-lg hover:bg-pastel-primaryHover transition-colors">
-                            Customize Dashboard
+                            Choose which widgets to display on your dashboard. Drag to reorder, toggle to show/hide, and configure individual timeframes.
                         </button>
                     </div>
                 `;
@@ -1204,7 +1239,6 @@
                 // Check if we need to fetch fresh preferences when custom dates are missing
                 if (preferences.default_timeframe === 'custom' &&
                     (!preferences.custom_start_date || !preferences.custom_end_date)) {
-                    console.warn('Global timeframe is custom but dates are missing, fetching fresh preferences...');
 
                     // Fetch fresh preferences from the server
                     try {
@@ -1556,28 +1590,183 @@
                 {type: 'growth_chart', name: 'Growth Chart'}
             ];
 
-            availableWidgets.forEach((widget, index) => {
+            // Sort widgets by position if available
+            const sortedWidgets = availableWidgets.sort((a, b) => {
+                const aConfig = this.state.preferences?.widgets_config?.find(w => w.type === a.type);
+                const bConfig = this.state.preferences?.widgets_config?.find(w => w.type === b.type);
+                return (aConfig?.position || 999) - (bConfig?.position || 999);
+            });
+
+            sortedWidgets.forEach((widget, index) => {
                 const widgetConfig = this.state.preferences?.widgets_config?.find(w => w.type === widget.type) || {
                     type: widget.type,
                     position: index,
                     enabled: true
                 };
 
+                const timeframeDisplay = this.getWidgetTimeframeDisplayShort(widget.type);
+
                 const widgetHtml = `
-                    <div class="flex items-center justify-between p-3 bg-pastel-lightest rounded-lg">
-                        <label class="flex items-center space-x-3 cursor-pointer">
-                            <input type="checkbox"
-                                   data-widget-type="${widget.type}"
-                                   ${widgetConfig.enabled ? 'checked' : ''}
-                                   class="widget-toggle w-4 h-4 text-pastel-primary focus:ring-pastel-primary border-pastel-light rounded">
-                            <span class="text-sm font-medium text-pastel-heading">${widget.name}</span>
-                        </label>
-                    </div>
-                `;
+            <div class="widget-config-item flex items-center justify-between p-3 bg-pastel-lightest rounded-lg"
+                 draggable="true"
+                 data-widget-type="${widget.type}"
+                 data-widget-position="${index}">
+
+                <!-- Drag Handle -->
+                <div class="drag-handle mr-3 flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-textLight" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M9 5h2v2H9V5zm0 4h2v2H9V9zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm4-12h2v2h-2V5zm0 4h2v2h-2V9zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z"/>
+                    </svg>
+                </div>
+
+                <!-- Checkbox and Name -->
+                <label class="flex items-center space-x-3 cursor-pointer flex-1">
+                    <input type="checkbox"
+                           data-widget-type="${widget.type}"
+                           ${widgetConfig.enabled ? 'checked' : ''}
+                           class="widget-toggle w-4 h-4 text-pastel-primary focus:ring-pastel-primary border-pastel-light rounded">
+                    <span class="text-sm font-medium text-pastel-heading">${widget.name}</span>
+                </label>
+
+                <!-- Configure Timeframe Button -->
+                <button onclick="Dashboard.openWidgetTimeframeModal('${widget.type}'); event.stopPropagation();"
+                        class="ml-3 p-2 rounded hover:bg-pastel-light transition-colors"
+                        title="Configure timeframe for ${widget.name}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-pastel-textLight" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </button>
+
+                <!-- Timeframe Display -->
+                <span class="ml-2 text-xs text-pastel-textLight min-w-[80px] text-right" title="${timeframeDisplay}">
+                    ${timeframeDisplay}
+                </span>
+            </div>
+        `;
 
                 widgetList.insertAdjacentHTML('beforeend', widgetHtml);
             });
+
+            // Initialize drag and drop
+            this.initializeDragAndDrop();
         },
+
+        getWidgetTimeframeDisplayShort(widgetType) {
+            const widgetConfig = this.state.preferences?.widgets_config?.find(w => w.type === widgetType);
+            const widgetTimeframe = widgetConfig?.timeframe;
+            const globalTimeframe = this.state.preferences?.default_timeframe || 'week';
+
+            if (!widgetTimeframe || widgetTimeframe === globalTimeframe) {
+                return 'Global';
+            }
+
+            const formats = {
+                'today': 'Today',
+                'week': 'Week',
+                'month': 'Month',
+                'custom': 'Custom'
+            };
+            return formats[widgetTimeframe] || widgetTimeframe;
+        },
+
+        initializeDragAndDrop() {
+            const widgetItems = document.querySelectorAll('.widget-config-item');
+
+            widgetItems.forEach(item => {
+                // Drag start
+                item.addEventListener('dragstart', (e) => {
+                    this.state.draggedWidget = {
+                        element: item,
+                        type: item.dataset.widgetType,
+                        originalPosition: parseInt(item.dataset.widgetPosition)
+                    };
+                    item.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/html', item.innerHTML);
+                });
+
+                // Drag end
+                item.addEventListener('dragend', (e) => {
+                    item.classList.remove('dragging');
+                    this.state.draggedWidget = null;
+
+                    // Remove all drag-over classes
+                    widgetItems.forEach(widget => {
+                        widget.classList.remove('drag-over');
+                    });
+                });
+
+                // Drag over
+                item.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+
+                    if (!this.state.draggedWidget || item === this.state.draggedWidget.element) {
+                        return;
+                    }
+
+                    const afterElement = this.getDragAfterElement(item.parentElement, e.clientY);
+                    if (afterElement == null) {
+                        item.parentElement.appendChild(this.state.draggedWidget.element);
+                    } else {
+                        item.parentElement.insertBefore(this.state.draggedWidget.element, afterElement);
+                    }
+                });
+
+                // Drag enter
+                item.addEventListener('dragenter', (e) => {
+                    if (!this.state.draggedWidget || item === this.state.draggedWidget.element) {
+                        return;
+                    }
+                    item.classList.add('drag-over');
+                });
+
+                // Drag leave
+                item.addEventListener('dragleave', (e) => {
+                    item.classList.remove('drag-over');
+                });
+
+                // Drop
+                item.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    item.classList.remove('drag-over');
+
+                    // Update positions after drop
+                    this.updateWidgetPositions();
+                });
+            });
+        },
+
+        getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.widget-config-item:not(.dragging)')];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+
+                if (offset < 0 && offset > closest.offset) {
+                    return {offset: offset, element: child};
+                } else {
+                    return closest;
+                }
+            }, {offset: Number.NEGATIVE_INFINITY}).element;
+        },
+
+        updateWidgetPositions() {
+            const widgetItems = document.querySelectorAll('.widget-config-item');
+            const newOrder = [];
+
+            widgetItems.forEach((item, index) => {
+                item.dataset.widgetPosition = index;
+                newOrder.push({
+                    type: item.dataset.widgetType,
+                    position: index
+                });
+            });
+
+            this.state.widgetOrder = newOrder;
+        },
+
 
         /**
          * Save dashboard customization preferences
@@ -1585,20 +1774,23 @@
          */
         async saveCustomizationPreferences() {
             try {
-                // Gather widget configurations
+                // Get current positions from DOM
+                const widgetItems = document.querySelectorAll('.widget-config-item');
                 const widgetConfigs = [];
-                document.querySelectorAll('.widget-toggle').forEach((toggle, index) => {
-                    const type = toggle.dataset.widgetType;
+
+                widgetItems.forEach((item, index) => {
+                    const toggle = item.querySelector('.widget-toggle');
+                    const type = item.dataset.widgetType;
 
                     // Get existing widget config to preserve timeframe settings
                     const existingWidget = this.state.preferences?.widgets_config?.find(w => w.type === type);
 
                     widgetConfigs.push({
                         type: type,
-                        position: index,
+                        position: index, // Use DOM order as position
                         enabled: toggle.checked,
                         // Preserve existing timeframe settings
-                        timeframe: existingWidget?.timeframe,
+                        timeframe: existingWidget?.timeframe || this.state.preferences?.default_timeframe || 'week',
                         custom_settings: existingWidget?.custom_settings || {}
                     });
                 });
@@ -1615,6 +1807,10 @@
                 if (this.state.timeframe === 'custom' && this.state.customDateRange.start && this.state.customDateRange.end) {
                     preferencesData.custom_start_date = this.state.customDateRange.start.toISOString();
                     preferencesData.custom_end_date = this.state.customDateRange.end.toISOString();
+                } else if (this.state.preferences?.custom_start_date && this.state.preferences?.custom_end_date) {
+                    // Preserve existing custom dates
+                    preferencesData.custom_start_date = this.state.preferences.custom_start_date;
+                    preferencesData.custom_end_date = this.state.preferences.custom_end_date;
                 }
 
                 // Save to backend
