@@ -820,18 +820,65 @@
             const widgetTimeframe = widgetConfig?.timeframe;
             const globalTimeframe = this.state.preferences?.default_timeframe || 'week';
 
-            // Check if widget is using the same timeframe as global
-            if (!widgetTimeframe || widgetTimeframe === globalTimeframe) {
+            // First check if widget has no specific timeframe set
+            if (!widgetTimeframe) {
+                return `Using global (${this.formatTimeframeText(globalTimeframe, this.state.preferences)})`;
+            }
+
+            // If both are custom, we need to compare the actual dates
+            if (widgetTimeframe === 'custom' && globalTimeframe === 'custom') {
+                const globalStartDate = this.state.preferences?.custom_start_date;
+                const globalEndDate = this.state.preferences?.custom_end_date;
+                const widgetStartDate = widgetConfig?.custom_settings?.custom_start_date;
+                const widgetEndDate = widgetConfig?.custom_settings?.custom_end_date;
+
+                // Check if the dates are the same
+                if (globalStartDate === widgetStartDate && globalEndDate === widgetEndDate) {
+                    return `Using global (${this.formatTimeframeText('custom', this.state.preferences)})`;
+                } else {
+                    // Widget has different custom dates
+                    return this.formatTimeframeText('custom', widgetConfig.custom_settings);
+                }
+            }
+
+            // For non-custom timeframes, simple string comparison is sufficient
+            if (widgetTimeframe === globalTimeframe) {
                 return `Using global (${this.formatTimeframeText(globalTimeframe)})`;
             }
 
-            return this.formatTimeframeText(widgetTimeframe);
+            // Widget has a different timeframe than global
+            return this.formatTimeframeText(widgetTimeframe, widgetConfig.custom_settings);
         },
 
         /**
          * Format timeframe text for display
          */
-        formatTimeframeText(timeframe) {
+        formatTimeframeText(timeframe, customSettings = null) {
+            if (timeframe === 'custom' && customSettings) {
+                const startDate = customSettings.custom_start_date;
+                const endDate = customSettings.custom_end_date;
+
+                if (startDate && endDate) {
+                    const start = new Date(startDate);
+                    const end = new Date(endDate);
+
+                    // Format dates in a concise way
+                    const formatDate = (date) => {
+                        return date.toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+                    };
+
+                    // If same year, don't repeat it
+                    if (start.getFullYear() === end.getFullYear()) {
+                        return `${formatDate(start)} - ${formatDate(end)}`;
+                    } else {
+                        const formatDateWithYear = (date) => {
+                            return date.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
+                        };
+                        return `${formatDateWithYear(start)} - ${formatDateWithYear(end)}`;
+                    }
+                }
+            }
+
             const formats = {
                 'today': 'Today',
                 'week': 'This Week',
@@ -879,20 +926,20 @@
             const timeframeDisplay = this.getWidgetTimeframeDisplay(widgetType);
 
             return `
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-serif text-lg text-pastel-heading">${title}</h3>
-                    <div class="flex items-center space-x-2">
-                        <button onclick="Dashboard.openWidgetTimeframeModal('${widgetType}')"
-                                class="widget-timeframe-btn p-1.5 rounded hover:bg-pastel-lightest transition-colors"
-                                title="Configure timeframe">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-pastel-textLight" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </button>
-                        <span class="text-xs text-pastel-textLight">${timeframeDisplay}</span>
-                    </div>
-                </div>
-            `;
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-serif text-lg text-pastel-heading">${title}</h3>
+            <div class="flex items-center space-x-2">
+                <button onclick="Dashboard.openWidgetTimeframeModal('${widgetType}')"
+                        class="widget-timeframe-btn p-1.5 rounded hover:bg-pastel-lightest transition-colors"
+                        title="Configure timeframe">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-pastel-textLight" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </button>
+                <span class="text-xs text-pastel-textLight" title="${timeframeDisplay}">${timeframeDisplay}</span>
+            </div>
+        </div>
+    `;
         },
 
         // Updated widget render methods to include timeframe controls
