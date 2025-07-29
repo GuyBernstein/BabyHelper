@@ -240,6 +240,39 @@
             color: #6d5d52;
             font-size: 0.875rem;
         }
+
+        @keyframes fade-out {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+        }
+
+        .animate-fade-out {
+            animation: fade-out 0.5s ease-out forwards;
+        }
+
+        .checklist-item {
+            transition: all 0.3s ease;
+        }
+
+        .checklist-item:hover {
+            transform: translateX(2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .checklist-checkbox:checked ~ * {
+            opacity: 0.6;
+        }
+
+        /* Loading animation for checklist */
+        .checklist-container {
+            animation: fadeIn 0.5s ease-out;
+        }
     </style>
 </head>
 <body class="bg-pastel-lightest font-sans text-pastel-text">
@@ -767,8 +800,8 @@
                 render: (data, widgetType) => Dashboard.renderRecentActivities(data, widgetType)
             },
             'upcoming_events': {
-                title: 'Upcoming Events',
-                render: (data, widgetType) => Dashboard.renderUpcomingEvents(data, widgetType)
+                title: 'Baby Care Checklist',
+                render: (data, widgetType) => Dashboard.renderBabyCareChecklist(data, widgetType)
             },
             'care_metrics': {
                 title: 'Care Sharing',
@@ -1192,36 +1225,216 @@
     `;
         },
 
-        renderUpcomingEvents(events, widgetType) {
-            const eventsHtml = events.map(event => {
-                const urgency = this.getEventUrgency(event.time);
-                const icon = this.getEventIcon(event.type);
+        renderBabyCareChecklist(checklistItems, widgetType) {
+            // Sort items by priority (highest first) and then by status
+            const sortedItems = [...checklistItems].sort((a, b) => {
+                // First sort by priority (higher number = higher priority)
+                if (b.details.priority !== a.details.priority) {
+                    return b.details.priority - a.details.priority;
+                }
+                // Then put action_required items before not_tracked
+                if (a.details.status === 'action_required' && b.details.status !== 'action_required') return -1;
+                if (b.details.status === 'action_required' && a.details.status !== 'action_required') return 1;
+                return 0;
+            });
 
-                return `
-                    <div class="flex items-center space-x-4 p-3 ${urgency.bgClass} rounded-lg ${urgency.borderClass}">
-                        <div class="w-12 h-12 rounded-full ${urgency.iconBgClass} flex items-center justify-center flex-shrink-0">
-                            ${icon}
-                        </div>
-                        <div class="flex-1">
-                            <p class="font-semibold text-pastel-heading">${this.getEventTitle(event)}</p>
-                            <p class="text-sm text-pastel-textLight">${this.formatEventTime(event.time)}</p>
-                            <p class="text-xs text-pastel-textLight">Baby: ${event.baby_name}</p>
-                        </div>
-                        ${urgency.badge ? `<span class="${urgency.badgeClass}">${urgency.badge}</span>` : ''}
+            // Check if we're showing all babies
+            const isAllBabiesView = !this.state.selectedBabyId;
+
+            let content = '';
+
+            if (isAllBabiesView && sortedItems.length > 0) {
+                // Group items by baby
+                const itemsByBaby = {};
+                sortedItems.forEach(item => {
+                    if (!itemsByBaby[item.baby_name]) {
+                        itemsByBaby[item.baby_name] = [];
+                    }
+                    itemsByBaby[item.baby_name].push(item);
+                });
+
+                // Count babies with action required items
+                const babiesNeedingAttention = Object.entries(itemsByBaby)
+                    .filter(([_, items]) => items.some(item => item.details.status === 'action_required'))
+                    .length;
+
+                // Summary for all babies view
+                if (babiesNeedingAttention > 0) {
+                    content += `
+                <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg animate-pulse-soft">
+                    <p class="text-sm font-medium text-red-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="inline h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        ${babiesNeedingAttention} ${babiesNeedingAttention === 1 ? 'baby needs' : 'babies need'} attention
+                    </p>
+                </div>
+            `;
+                }
+
+                // Render grouped items
+                Object.entries(itemsByBaby).forEach(([babyName, items]) => {
+                    const hasActionRequired = items.some(item => item.details.status === 'action_required');
+                    content += `
+                <div class="mb-4 ${hasActionRequired ? 'border-l-4 border-red-400' : ''} pl-3">
+                    <h4 class="font-medium text-pastel-heading mb-2 flex items-center">
+                        ${babyName}
+                        ${hasActionRequired ? '<span class="ml-2 text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">Needs attention</span>' : ''}
+                    </h4>
+                    <div class="space-y-2">
+                        ${items.map(item => this.renderChecklistItem(item)).join('')}
                     </div>
-                `;
-            }).join('');
+                </div>
+            `;
+                });
+            } else {
+                // Single baby view or no grouping needed
+                content = `
+            <div class="space-y-2">
+                ${sortedItems.map(item => this.renderChecklistItem(item)).join('')}
+            </div>
+        `;
+            }
+
+            // Handle empty state
+            if (sortedItems.length === 0) {
+                content = '<p class="text-center py-8 text-pastel-textLight">All caught up! Your baby\'s needs are tracked.</p>';
+            }
 
             return `
-                <section class="widget-container animate-slide-up" data-widget-type="${widgetType}">
-                    <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-6">
-                        ${this.createWidgetHeader('Upcoming Events', widgetType)}
-                        <div class="space-y-3">
-                            ${eventsHtml || '<p class="text-center py-4 text-pastel-textLight">No upcoming events</p>'}
+        <section class="widget-container animate-slide-up" data-widget-type="${widgetType}">
+            <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-serif text-lg text-pastel-heading">Baby Care Checklist</h3>
+                    <span class="text-xs text-pastel-textLight">Quick troubleshooting guide</span>
+                </div>
+                <div class="checklist-container">
+                    ${content}
+                </div>
+            </div>
+        </section>
+    `;
+        },
+
+        renderChecklistItem(item) {
+            const isActionRequired = item.details.status === 'action_required';
+            const isNotTracked = item.details.status === 'not_tracked';
+            const itemId = `checklist-${item.id}`;
+
+            // Determine icon based on item type
+            const icons = {
+                'feeding': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>',
+                'diaper': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>',
+                'sleep': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>',
+                'gas_relief': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>',
+                'comfort': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>',
+                'environment': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>'
+            };
+
+            const iconPath = icons[item.details.item_type] || '';
+            const iconColor = isActionRequired ? 'text-red-500' : (isNotTracked ? 'text-gray-400' : 'text-pastel-primary');
+
+            return `
+        <div id="${itemId}" class="checklist-item p-3 rounded-lg border ${isActionRequired ? 'border-red-200 bg-red-50' : 'border-pastel-light bg-pastel-lightest'} transition-all duration-300">
+            <div class="flex items-start space-x-3">
+                <!-- Checkbox or Icon -->
+                <div class="flex-shrink-0 mt-1">
+                    ${isNotTracked ?
+                `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ${iconColor}" fill="none" viewBox="0 0 24 24" stroke="currentColor">${iconPath}</svg>` :
+                `<input type="checkbox"
+                                class="checklist-checkbox w-5 h-5 text-pastel-primary focus:ring-pastel-primary border-gray-300 rounded cursor-pointer"
+                                onchange="Dashboard.handleChecklistComplete('${itemId}')"
+                                aria-label="Mark ${item.details.title} as complete">`
+            }
+                </div>
+
+                <!-- Content -->
+                <div class="flex-1">
+                    <h4 class="font-medium ${isActionRequired ? 'text-red-800' : 'text-pastel-heading'} text-sm mb-1">
+                        ${item.details.title}
+                    </h4>
+                    <p class="text-xs text-pastel-textLight mb-2">${item.details.description}</p>
+
+                    <!-- Action or Status -->
+                    ${isActionRequired ? `
+                        <div class="bg-white bg-opacity-60 rounded p-2 mb-2">
+                            <p class="text-xs font-medium ${isActionRequired ? 'text-red-700' : 'text-pastel-primary'}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="inline h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
+                                ${item.details.action_suggested}
+                            </p>
                         </div>
+                    ` : ''}
+
+                    <!-- Time since last -->
+                    <div class="flex items-center justify-between">
+                        <p class="text-xs text-pastel-textLight">
+                            ${item.details.last_activity_time ?
+                `<svg xmlns="http://www.w3.org/2000/svg" class="inline h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Last: ${item.details.time_since_last}` :
+                'Not tracked yet'
+            }
+                        </p>
+
+                        ${isNotTracked ? `
+                            <button onclick="Dashboard.startTrackingActivity('${item.details.item_type}', '${item.baby_name}')"
+                                    class="text-xs bg-pastel-primary text-white px-3 py-1 rounded-full hover:bg-pastel-primaryHover transition-colors">
+                                Start Tracking
+                            </button>
+                        ` : ''}
                     </div>
-                </section>
-            `;
+                </div>
+            </div>
+        </div>
+    `;
+        },
+
+        handleChecklistComplete(itemId) {
+            const item = document.getElementById(itemId);
+            if (item) {
+                // Add completion animation
+                item.classList.add('opacity-50', 'scale-95');
+
+                // Move to bottom after a short delay
+                setTimeout(() => {
+                    item.style.order = '999';
+                    item.classList.add('line-through');
+
+                    // Show completion toast
+                    this.showToast('Item marked as complete! Great job! 🎉');
+
+                    // Optionally remove after 2 seconds
+                    setTimeout(() => {
+                        item.classList.add('animate-fade-out');
+                        setTimeout(() => {
+                            item.remove();
+                        }, 500);
+                    }, 2000);
+                }, 300);
+            }
+        },
+
+        startTrackingActivity(activityType, babyName) {
+            // Route to appropriate tracking page
+            const routes = {
+                'feeding': '/feeding-tracker',
+                'diaper': '/diaper-tracker',
+                'sleep': '/sleep-tracker',
+                'gas_relief': '/feeding-tracker', // Gas relief is usually part of feeding
+                'comfort': '/activity-tracker',
+                'environment': '/activity-tracker'
+            };
+
+            const route = routes[activityType] || '/activity-tracker';
+            this.showToast(`Opening ${activityType.replace('_', ' ')} tracker for ${babyName}...`);
+
+            // In production: window.location.href = route;
+            setTimeout(() => {
+                this.showToast('Tracker would open here in production');
+            }, 1000);
         },
 
         renderCareMetrics(metrics, widgetType) {
