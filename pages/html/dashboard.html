@@ -317,7 +317,7 @@
 
 <!-- Widget Timeframe Modal -->
 <div id="widgetTimeframeModal"
-     class="hidden fixed inset-0 bg-black bg-opacity-50 modal-backdrop z-50 flex items-center justify-center">
+     class="hidden fixed inset-0 bg-black bg-opacity-50 modal-backdrop z-[60] flex items-center justify-center">
     <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
         <h3 class="font-serif text-xl text-pastel-heading mb-4">Widget Timeframe Settings</h3>
         <p class="text-sm text-pastel-textLight mb-4" id="widgetTimeframeTitle">Configure timeframe for this widget</p>
@@ -1163,6 +1163,9 @@
          * Open widget timeframe configuration modal
          */
         openWidgetTimeframeModal(widgetType) {
+            // Hide customization modal if it's open
+            this.hideCustomizationModal();
+
             const modal = document.getElementById('widgetTimeframeModal');
             const titleEl = document.getElementById('widgetTimeframeTitle');
             const widgetDef = this.widgetDefinitions[widgetType];
@@ -1224,6 +1227,7 @@
             }
 
             modal.classList.remove('hidden');
+
         },
 
         /**
@@ -1656,10 +1660,32 @@
             const widgetTimeframe = widgetConfig?.timeframe;
             const globalTimeframe = this.state.preferences?.default_timeframe || 'week';
 
-            if (!widgetTimeframe || widgetTimeframe === globalTimeframe) {
+            // First check if widget has no timeframe set
+            if (!widgetTimeframe) {
                 return 'Global';
             }
 
+            // If both are custom, compare the actual dates
+            if (widgetTimeframe === 'custom' && globalTimeframe === 'custom') {
+                const globalStartDate = this.state.preferences?.custom_start_date;
+                const globalEndDate = this.state.preferences?.custom_end_date;
+                const widgetStartDate = widgetConfig?.custom_settings?.custom_start_date;
+                const widgetEndDate = widgetConfig?.custom_settings?.custom_end_date;
+
+                // Check if the dates are the same
+                if (globalStartDate === widgetStartDate && globalEndDate === widgetEndDate) {
+                    return 'Global';
+                } else {
+                    return 'Custom';
+                }
+            }
+
+            // For non-custom timeframes, simple comparison
+            if (widgetTimeframe === globalTimeframe) {
+                return 'Global';
+            }
+
+            // Widget has a different timeframe
             const formats = {
                 'today': 'Today',
                 'week': 'Week',
@@ -1667,6 +1693,16 @@
                 'custom': 'Custom'
             };
             return formats[widgetTimeframe] || widgetTimeframe;
+        },
+
+        hideCustomizationModal() {
+            const modal = document.getElementById('customizationModal');
+            modal.style.visibility = 'hidden';
+        },
+
+        showCustomizationModal() {
+            const modal = document.getElementById('customizationModal');
+            modal.style.visibility = 'visible';
         },
 
         initializeDragAndDrop() {
@@ -1989,6 +2025,8 @@
 
             document.getElementById('widgetTimeframeCancel').addEventListener('click', () => {
                 document.getElementById('widgetTimeframeModal').classList.add('hidden');
+                // Show customization modal again if it was open
+                this.showCustomizationModal();
             });
 
             document.getElementById('widgetTimeframeSave').addEventListener('click', async () => {
@@ -2019,6 +2057,14 @@
                     }
 
                     customDates = {start, end};
+                    // Hide modal
+                    document.getElementById('widgetTimeframeModal').classList.add('hidden');
+
+                    // Show customization modal again
+                    this.showCustomizationModal();
+
+                    // Update widget timeframe
+                    await this.updateWidgetTimeframe(widgetType, timeframe, customDates);
                 }
 
                 // Hide modal
