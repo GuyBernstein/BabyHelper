@@ -1700,30 +1700,42 @@
                 {type: 'growth_chart', name: 'Growth Chart'}
             ];
 
-            // Sort widgets by position if available
-            const sortedWidgets = availableWidgets.sort((a, b) => {
-                const aConfig = this.state.preferences?.widgets_config?.find(w => w.type === a.type);
-                const bConfig = this.state.preferences?.widgets_config?.find(w => w.type === b.type);
-                return (aConfig?.position || 999) - (bConfig?.position || 999);
+            // Create a map of widget configs for O(1) lookup
+            const widgetConfigMap = new Map();
+            this.state.preferences?.widgets_config?.forEach(config => {
+                widgetConfigMap.set(config.type, config);
             });
 
-            sortedWidgets.forEach((widget, index) => {
-                const widgetConfig = this.state.preferences?.widgets_config?.find(w => w.type === widget.type) || {
-                    type: widget.type,
-                    position: index,
-                    enabled: true
+            // Enhance available widgets with their saved config
+            const enhancedWidgets = availableWidgets.map((widget, index) => {
+                const savedConfig = widgetConfigMap.get(widget.type);
+                return {
+                    ...widget,
+                    config: savedConfig || {
+                        type: widget.type,
+                        position: index + 999, // High number for unsaved widgets
+                        enabled: true
+                    }
                 };
+            });
 
+            // Sort by actual saved position
+            const sortedWidgets = enhancedWidgets.sort((a, b) => {
+                return a.config.position - b.config.position;
+            });
+
+            sortedWidgets.forEach((widget) => {
+                const widgetConfig = widget.config;
                 const timeframeDisplay = this.getWidgetTimeframeDisplayShort(widget.type);
 
                 const widgetHtml = `
             <div class="widget-config-item flex items-center justify-between p-3 bg-pastel-lightest rounded-lg"
                  draggable="true"
                  data-widget-type="${widget.type}"
-                 data-widget-position="${index}">
+                 data-widget-position="${widgetConfig.position}">
 
                 <!-- Drag Handle -->
-                <div class="drag-handle mr-3 flex-shrink-0">
+                <div class="drag-handle mr-3 flex-shrink-0 cursor-grab active:cursor-grabbing">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pastel-textLight" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M9 5h2v2H9V5zm0 4h2v2H9V9zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm4-12h2v2h-2V5zm0 4h2v2h-2V9zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z"/>
                     </svg>
