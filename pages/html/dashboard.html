@@ -456,6 +456,75 @@
         </div>
 
         <div class="space-y-4">
+            <!-- Layout Type Selector -->
+            <div class="mb-6">
+                <h4 class="text-sm font-medium text-pastel-text mb-3">Dashboard Layout</h4>
+                <div class="grid grid-cols-3 gap-3" id="layoutTypeSelector">
+                    <!-- Grid Layout Option -->
+                    <button type="button"
+                            class="layout-option relative p-4 border-2 border-pastel-light rounded-lg hover:border-pastel-primary transition-all cursor-pointer"
+                            data-layout="grid">
+                        <div class="flex flex-col items-center space-y-2">
+                            <svg class="w-8 h-8 text-pastel-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                            </svg>
+                            <span class="text-xs font-medium">Grid</span>
+                            <span class="text-xs text-pastel-textLight">2-column layout</span>
+                        </div>
+                        <div class="layout-check hidden absolute top-2 right-2 w-5 h-5 bg-pastel-primary rounded-full flex items-center justify-center">
+                            <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                      clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                    </button>
+
+                    <!-- List Layout Option -->
+                    <button type="button"
+                            class="layout-option relative p-4 border-2 border-pastel-light rounded-lg hover:border-pastel-primary transition-all cursor-pointer"
+                            data-layout="list">
+                        <div class="flex flex-col items-center space-y-2">
+                            <svg class="w-8 h-8 text-pastel-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M4 6h16M4 12h16M4 18h16"/>
+                            </svg>
+                            <span class="text-xs font-medium">List</span>
+                            <span class="text-xs text-pastel-textLight">Single column</span>
+                        </div>
+                        <div class="layout-check hidden absolute top-2 right-2 w-5 h-5 bg-pastel-primary rounded-full flex items-center justify-center">
+                            <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                      clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                    </button>
+
+                    <!-- Compact Layout Option -->
+                    <button type="button"
+                            class="layout-option relative p-4 border-2 border-pastel-light rounded-lg hover:border-pastel-primary transition-all cursor-pointer"
+                            data-layout="compact">
+                        <div class="flex flex-col items-center space-y-2">
+                            <svg class="w-8 h-8 text-pastel-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
+                            </svg>
+                            <span class="text-xs font-medium">Compact</span>
+                            <span class="text-xs text-pastel-textLight">Dense view</span>
+                        </div>
+                        <div class="layout-check hidden absolute top-2 right-2 w-5 h-5 bg-pastel-primary rounded-full flex items-center justify-center">
+                            <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                      clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
             <p class="text-sm text-pastel-textLight">Choose which widgets to display on your dashboard. You can toggle
                 widgets on or off.</p>
 
@@ -688,7 +757,8 @@
                 customDates: null
             },
             draggedWidget: null,
-            widgetOrder: []
+            widgetOrder: [],
+            selectedLayoutType: 'grid'
         },
 
         widgetDefinitions: {
@@ -725,6 +795,9 @@
                 // Load user profile and preferences first
                 await this.loadUserProfile();
                 await this.loadPreferences();
+
+                const savedLayout = this.state.preferences?.layout_type || 'grid';
+                this.applyLayoutType(savedLayout);
 
                 // Then load dashboard data
                 await this.loadDashboardData();
@@ -843,55 +916,93 @@
             }
         },
 
-        /**
-         * Refresh a specific widget's data
-         * NOTE: Server will use the stored timeframe preference for this widget
-         */
-        async refreshWidget(widgetType) {
-            try {
-                // Show loading state for the widget
-                const widgetElement = document.querySelector(`[data-widget-type="${widgetType}"]`);
-                if (widgetElement) {
-                    widgetElement.classList.add('widget-loading');
+        initializeLayoutTypeSelector() {
+            const layoutOptions = document.querySelectorAll('.layout-option');
+
+            // Set initial selected state based on preferences
+            const currentLayout = this.state.preferences?.layout_type || 'grid';
+            this.state.selectedLayoutType = currentLayout;
+            this.updateLayoutTypeUI(currentLayout);
+
+            // Add click handlers for layout options
+            layoutOptions.forEach(option => {
+                option.addEventListener('click', (e) => {
+                    const selectedLayout = option.dataset.layout;
+                    this.state.selectedLayoutType = selectedLayout;
+                    this.updateLayoutTypeUI(selectedLayout);
+
+                    // Apply layout immediately for preview
+                    this.applyLayoutType(selectedLayout);
+                });
+            });
+        },
+
+        updateLayoutTypeUI(selectedLayout) {
+            const layoutOptions = document.querySelectorAll('.layout-option');
+
+            layoutOptions.forEach(option => {
+                const check = option.querySelector('.layout-check');
+                if (option.dataset.layout === selectedLayout) {
+                    option.classList.add('border-pastel-primary', 'bg-pastel-lightest');
+                    option.classList.remove('border-pastel-light');
+                    check.classList.remove('hidden');
+                } else {
+                    option.classList.remove('border-pastel-primary', 'bg-pastel-lightest');
+                    option.classList.add('border-pastel-light');
+                    check.classList.add('hidden');
                 }
+            });
+        },
 
-                // Build params (no timeframe!)
-                const params = new URLSearchParams();
-                if (this.state.selectedBabyId) {
-                    params.append('baby_id', this.state.selectedBabyId);
-                }
+        applyLayoutType(layoutType) {
+            const container = document.getElementById('widgetsContainer');
 
-                // Reload entire dashboard data to get fresh widget data
-                const response = await BabyHelperAuth.api.request(`/dashboard/dash?${params}`);
-                if (response.ok) {
-                    const dashData = await response.json();
-                    this.state.widgets = dashData.widgets || [];
+            // Remove existing layout classes
+            container.classList.remove('grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-6', 'space-y-6', 'space-y-4');
 
-                    // Re-render just this widget
-                    const widget = this.state.widgets.find(w => w.type === widgetType);
-                    if (widget && widget.data && this.widgetDefinitions[widgetType]) {
-                        const newHtml = this.widgetDefinitions[widgetType].render(widget.data, widgetType);
-
-                        // Replace the widget content
-                        if (widgetElement) {
-                            const tempDiv = document.createElement('div');
-                            tempDiv.innerHTML = newHtml;
-                            widgetElement.parentNode.replaceChild(tempDiv.firstElementChild, widgetElement);
-                        }
-                    }
-                }
-
-                this.showToast('Widget refreshed');
-            } catch (error) {
-                console.error('Error refreshing widget:', error);
-                this.showError('Failed to refresh widget');
-            } finally {
-                // Remove loading state
-                const widgetElement = document.querySelector(`[data-widget-type="${widgetType}"]`);
-                if (widgetElement) {
-                    widgetElement.classList.remove('widget-loading');
-                }
+            // Apply new layout classes
+            switch (layoutType) {
+                case 'grid':
+                    container.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-6');
+                    break;
+                case 'list':
+                    container.classList.add('space-y-6');
+                    break;
+                case 'compact':
+                    container.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3', 'gap-4');
+                    break;
+                default:
+                    container.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-6');
             }
+
+            // Update widget styles based on layout
+            this.updateWidgetStyles(layoutType);
+        },
+
+        updateWidgetStyles(layoutType) {
+            const widgets = document.querySelectorAll('.widget-container');
+
+            widgets.forEach(widget => {
+                const content = widget.querySelector('.bg-white');
+
+                // Reset styles
+                content.classList.remove('p-6', 'p-4', 'p-3');
+
+                // Apply layout-specific styles
+                switch (layoutType) {
+                    case 'list':
+                        content.classList.add('p-6');
+                        widget.style.maxWidth = '100%';
+                        break;
+                    case 'compact':
+                        content.classList.add('p-3');
+                        widget.style.maxWidth = '';
+                        break;
+                    default: // grid
+                        content.classList.add('p-6');
+                        widget.style.maxWidth = '';
+                }
+            });
         },
 
         /**
@@ -996,6 +1107,10 @@
         renderWidgets() {
             const container = document.getElementById('widgetsContainer');
             container.innerHTML = '';
+
+            // Apply layout before rendering
+            const layoutType = this.state.preferences?.layout_type || 'grid';
+            this.applyLayoutType(layoutType);
 
             // Sort widgets by position
             const sortedWidgets = [...this.state.widgets].sort((a, b) => a.position - b.position);
@@ -1714,6 +1829,7 @@
             const modal = document.getElementById('customizationModal');
             modal.classList.remove('hidden');
             this.populateWidgetList();
+            this.initializeLayoutTypeSelector();
         },
 
         populateWidgetList() {
@@ -2035,7 +2151,7 @@
 
                 // Prepare preferences data
                 const preferencesData = {
-                    layout_type: this.state.preferences?.layout_type || 'grid',
+                    layout_type: this.state.selectedLayoutType,
                     default_baby_id: this.state.selectedBabyId,
                     default_timeframe: this.state.timeframe,
                     widgets_config: widgetConfigs
