@@ -1234,8 +1234,14 @@
          * Open widget timeframe configuration modal
          */
         openWidgetTimeframeModal(widgetType) {
+            // Track if customization modal was open
+            const customizationModal = document.getElementById('customizationModal');
+            const wasCustomizationOpen = !customizationModal.classList.contains('hidden');
+
             // Hide customization modal if it's open
-            this.hideCustomizationModal();
+            if (wasCustomizationOpen) {
+                this.hideCustomizationModal();
+            }
 
             const modal = document.getElementById('widgetTimeframeModal');
             const titleEl = document.getElementById('widgetTimeframeTitle');
@@ -1311,13 +1317,19 @@
                 const modal = document.getElementById('widgetTimeframeModal');
                 const modalContent = modal.querySelector('.bg-white');
 
+                // Clean up any existing loading overlays first
+                const existingOverlay = modalContent.querySelector('.modal-loading-overlay');
+                if (existingOverlay) {
+                    existingOverlay.remove();
+                }
+
                 // Create loading overlay
                 const loadingOverlay = document.createElement('div');
                 loadingOverlay.className = 'modal-loading-overlay';
                 loadingOverlay.innerHTML = `
-                <div class="modal-loading-spinner"></div>
-                <p class="modal-loading-text">Updating timeframe...</p>
-            `;
+                    <div class="modal-loading-spinner"></div>
+                    <p class="modal-loading-text">Updating timeframe...</p>
+                `;
                 modalContent.classList.add('modal-loading');
                 modalContent.appendChild(loadingOverlay);
 
@@ -1486,11 +1498,20 @@
                     // Reload the entire dashboard to ensure everything is in sync
                     await this.loadDashboardData();
 
+                    if (loadingOverlay && loadingOverlay.parentNode) {
+                        loadingOverlay.remove();
+                    }
+                    modalContent.classList.remove('modal-loading');
+
                     // Close modal after successful update
                     modal.classList.add('hidden');
 
                     // Show customization modal again if it was open
-                    this.showCustomizationModal();
+                    const customizationModal = document.getElementById('customizationModal');
+                    if (customizationModal.dataset.wasOpen === 'true') {
+                        delete customizationModal.dataset.wasOpen;
+                        this.showCustomizationModal();
+                    }
 
                     this.showToast('Widget timeframe updated');
                 } else {
@@ -1503,14 +1524,26 @@
                 console.error('Error updating widget timeframe:', error);
                 this.showError(`Failed to update widget timeframe: ${error.message}`);
 
-                // Remove loading overlay on error
-                const loadingOverlay = document.querySelector('.modal-loading-overlay');
+                // Clean up loading overlay on error
+                const modal = document.getElementById('widgetTimeframeModal');
+                const modalContent = modal.querySelector('.bg-white');
+                const loadingOverlay = modalContent.querySelector('.modal-loading-overlay');
                 if (loadingOverlay) {
                     loadingOverlay.remove();
                 }
-                const modalContent = document.querySelector('.modal-loading');
                 if (modalContent) {
                     modalContent.classList.remove('modal-loading');
+                }
+            } finally {
+                // Ensure loading state is always cleaned up
+                const modal = document.getElementById('widgetTimeframeModal');
+                const modalContent = modal.querySelector('.bg-white');
+                if (modalContent) {
+                    modalContent.classList.remove('modal-loading');
+                    const overlay = modalContent.querySelector('.modal-loading-overlay');
+                    if (overlay) {
+                        overlay.remove();
+                    }
                 }
             }
         },
@@ -1815,12 +1848,16 @@
 
         hideCustomizationModal() {
             const modal = document.getElementById('customizationModal');
-            modal.style.visibility = 'hidden';
+            modal.dataset.wasOpen = 'true';  // Track that it was open
+            modal.classList.add('hidden');    // Use standard hidden class
         },
 
         showCustomizationModal() {
             const modal = document.getElementById('customizationModal');
-            modal.style.visibility = 'visible';
+            modal.classList.remove('hidden'); // Remove hidden class
+            modal.style.visibility = '';      // Clear any inline visibility
+            // Re-populate the widget list to show updated state
+            this.populateWidgetList();
         },
 
         initializeDragAndDrop() {
@@ -1965,12 +2002,17 @@
                 const modal = document.getElementById('customizationModal');
                 const modalContent = modal.querySelector('.bg-white');
 
+                const existingOverlay = modalContent.querySelector('.modal-loading-overlay');
+                if (existingOverlay) {
+                    existingOverlay.remove();
+                }
+
                 const loadingOverlay = document.createElement('div');
                 loadingOverlay.className = 'modal-loading-overlay';
                 loadingOverlay.innerHTML = `
-                <div class="modal-loading-spinner"></div>
-                <p class="modal-loading-text">Saving preferences...</p>
-            `;
+                    <div class="modal-loading-spinner"></div>
+                    <p class="modal-loading-text">Saving preferences...</p>
+                `;
                 modalContent.classList.add('modal-loading');
                 modalContent.appendChild(loadingOverlay);
 
@@ -2032,6 +2074,11 @@
                     // Reload dashboard with new preferences
                     await this.loadDashboardData();
 
+                    if (loadingOverlay && loadingOverlay.parentNode) {
+                        loadingOverlay.remove();
+                    }
+                    modalContent.classList.remove('modal-loading');
+
                     // Close modal
                     modal.classList.add('hidden');
 
@@ -2045,14 +2092,26 @@
                 console.error('Error saving preferences:', error);
                 this.showError('Failed to save dashboard preferences');
 
-                // Remove loading overlay on error
-                const loadingOverlay = document.querySelector('.modal-loading-overlay');
+                // Clean up loading overlay on error
+                const modal = document.getElementById('customizationModal');
+                const modalContent = modal.querySelector('.bg-white');
+                const loadingOverlay = modalContent.querySelector('.modal-loading-overlay');
                 if (loadingOverlay) {
                     loadingOverlay.remove();
                 }
-                const modalContent = document.querySelector('.modal-loading');
                 if (modalContent) {
                     modalContent.classList.remove('modal-loading');
+                }
+            } finally {
+                // Ensure loading state is always cleaned up
+                const modal = document.getElementById('customizationModal');
+                const modalContent = modal.querySelector('.bg-white');
+                if (modalContent) {
+                    modalContent.classList.remove('modal-loading');
+                    const overlay = modalContent.querySelector('.modal-loading-overlay');
+                    if (overlay) {
+                        overlay.remove();
+                    }
                 }
             }
         },
