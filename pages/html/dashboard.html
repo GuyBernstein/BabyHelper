@@ -257,9 +257,9 @@
     <div class="max-w-7xl mx-auto px-4 py-3">
         <div class="flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-full bg-pastel-primary flex items-center justify-center text-white font-serif font-semibold text-xl">
-                    B
-                </div>
+                <!-- User Avatar -->
+                <img src="https://randomuser.me/api/portraits/women/68.jpg" id="userPicture"
+                     class="w-8 h-8 rounded-full hidden" alt="User profile">
                 <div>
                     <h1 id="welcomeMessage" class="font-serif text-lg text-pastel-heading">Welcome!</h1>
                     <p class="text-xs text-pastel-textLight" id="babyStatus">Loading...</p>
@@ -314,10 +314,6 @@
                               d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
                     </svg>
                 </button>
-
-                <!-- User Avatar -->
-                <img src="https://randomuser.me/api/portraits/women/68.jpg" id="userPicture"
-                     class="w-8 h-8 rounded-full hidden" alt="User profile">
 
                 <!-- Settings Dropdown -->
                 <div class="relative">
@@ -1706,7 +1702,7 @@
             if (this.state.selectedBabyId) {
                 const baby = this.state.babies.find(b => b.id === this.state.selectedBabyId);
                 if (baby) {
-                    const age = this.calculateAge(baby.birthdate);
+                    const age = this.calculateAge(baby.birthdate, true); // true for detailed
                     statusEl.textContent = `${baby.fullname} is ${age} old today 🎉`;
                 }
             } else {
@@ -2501,18 +2497,80 @@
             return 'Good Evening';
         },
 
-        calculateAge(birthdate) {
+        calculateAge(birthdate, detailed = true) {
             const birth = new Date(birthdate);
             const today = new Date();
-            const months = (today.getFullYear() - birth.getFullYear()) * 12 +
-                (today.getMonth() - birth.getMonth());
 
-            if (months < 1) {
-                const days = Math.floor((today - birth) / (1000 * 60 * 60 * 24));
-                return `${days} day${days !== 1 ? 's' : ''}`;
+            if (birth > today) return '0 days';
+
+            // Calculate total days for young babies
+            const totalDays = Math.floor((today - birth) / (1000 * 60 * 60 * 24));
+
+            // For babies under 1 week, show days (or hours if less than 1 day)
+            if (totalDays < 7) {
+                if (totalDays === 0) {
+                    const hours = Math.floor((today - birth) / (1000 * 60 * 60));
+                    return this.pluralize(hours, 'hour');
+                }
+                return this.pluralize(totalDays, 'day');
             }
 
-            return `${months} month${months !== 1 ? 's' : ''}`;
+            // For babies under 1 month, show weeks and days
+            if (totalDays < 30) {
+                const weeks = Math.floor(totalDays / 7);
+                const days = totalDays % 7;
+
+                if (!detailed || days === 0) {
+                    return this.pluralize(weeks, 'week');
+                }
+
+                return `${this.pluralize(weeks, 'week')} and ${this.pluralize(days, 'day')}`;
+            }
+
+            // Calculate precise years, months, and days
+            let years = today.getFullYear() - birth.getFullYear();
+            let months = today.getMonth() - birth.getMonth();
+            let days = today.getDate() - birth.getDate();
+
+            // Adjust for negative days
+            if (days < 0) {
+                months--;
+                const lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                days += lastMonth.getDate();
+            }
+
+            // Adjust for negative months
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+
+            // Build result based on age and detail level
+            const parts = [];
+
+            if (years > 0) {
+                parts.push(this.pluralize(years, 'year'));
+            }
+
+            if (months > 0) {
+                parts.push(this.pluralize(months, 'month'));
+            }
+
+            // Include days for detailed view and babies under 1 year
+            if (detailed && days > 0 && years === 0) {
+                parts.push(this.pluralize(days, 'day'));
+            }
+
+            // For non-detailed view of older babies, just show the primary unit
+            if (!detailed && parts.length > 1) {
+                return parts[0];
+            }
+
+            return parts.join(' and ');
+        },
+
+        pluralize(count, unit) {
+            return `${count} ${unit}${count !== 1 ? 's' : ''}`;
         },
 
         getActivityColor(type) {
