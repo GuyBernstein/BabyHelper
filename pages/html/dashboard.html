@@ -169,6 +169,77 @@
         .widget-config-item:hover .drag-handle {
             opacity: 1;
         }
+
+        /* Loading overlay for widgets */
+        .widget-loading {
+            position: relative;
+            pointer-events: none;
+        }
+
+        .widget-loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.75rem;
+            z-index: 10;
+        }
+
+        .widget-loading::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+            border: 3px solid #ff8c69;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+            z-index: 11;
+        }
+
+        /* Modal loading state */
+        .modal-loading {
+            position: relative;
+        }
+
+        .modal-loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.75rem;
+            z-index: 100;
+        }
+
+        .modal-loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #ffe8d9;
+            border-radius: 50%;
+            border-top-color: #ff8c69;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        .modal-loading-text {
+            color: #6d5d52;
+            font-size: 0.875rem;
+        }
     </style>
 </head>
 <body class="bg-pastel-lightest font-sans text-pastel-text">
@@ -785,7 +856,7 @@
                 // Show loading state for the widget
                 const widgetElement = document.querySelector(`[data-widget-type="${widgetType}"]`);
                 if (widgetElement) {
-                    widgetElement.style.opacity = '0.5';
+                    widgetElement.classList.add('widget-loading');
                 }
 
                 // Build params (no timeframe!)
@@ -822,7 +893,7 @@
                 // Remove loading state
                 const widgetElement = document.querySelector(`[data-widget-type="${widgetType}"]`);
                 if (widgetElement) {
-                    widgetElement.style.opacity = '1';
+                    widgetElement.classList.remove('widget-loading');
                 }
             }
         },
@@ -1236,6 +1307,19 @@
          */
         async updateWidgetTimeframe(widgetType, timeframe, customDates = null) {
             try {
+                // Show loading state in modal
+                const modal = document.getElementById('widgetTimeframeModal');
+                const modalContent = modal.querySelector('.bg-white');
+
+                // Create loading overlay
+                const loadingOverlay = document.createElement('div');
+                loadingOverlay.className = 'modal-loading-overlay';
+                loadingOverlay.innerHTML = `
+                <div class="modal-loading-spinner"></div>
+                <p class="modal-loading-text">Updating timeframe...</p>
+            `;
+                modalContent.classList.add('modal-loading');
+                modalContent.appendChild(loadingOverlay);
 
                 // Deep clone the preferences to avoid mutation issues
                 const preferences = JSON.parse(JSON.stringify(this.state.preferences));
@@ -1393,8 +1477,20 @@
                     const updatedPreferences = await response.json();
                     this.state.preferences = updatedPreferences;
 
-                    // Refresh the specific widget
-                    await this.refreshWidget(widgetType);
+                    // Update loading text
+                    const loadingText = loadingOverlay.querySelector('.modal-loading-text');
+                    if (loadingText) {
+                        loadingText.textContent = 'Refreshing dashboard...';
+                    }
+
+                    // Reload the entire dashboard to ensure everything is in sync
+                    await this.loadDashboardData();
+
+                    // Close modal after successful update
+                    modal.classList.add('hidden');
+
+                    // Show customization modal again if it was open
+                    this.showCustomizationModal();
 
                     this.showToast('Widget timeframe updated');
                 } else {
@@ -1406,6 +1502,16 @@
             } catch (error) {
                 console.error('Error updating widget timeframe:', error);
                 this.showError(`Failed to update widget timeframe: ${error.message}`);
+
+                // Remove loading overlay on error
+                const loadingOverlay = document.querySelector('.modal-loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.remove();
+                }
+                const modalContent = document.querySelector('.modal-loading');
+                if (modalContent) {
+                    modalContent.classList.remove('modal-loading');
+                }
             }
         },
 
@@ -1706,71 +1812,95 @@
         },
 
         initializeDragAndDrop() {
-            const widgetItems = document.querySelectorAll('.widget-config-item');
+            // Clear any existing listeners first
+            this.cleanupDragAndDrop();
 
-            widgetItems.forEach(item => {
-                // Drag start
-                item.addEventListener('dragstart', (e) => {
-                    this.state.draggedWidget = {
-                        element: item,
-                        type: item.dataset.widgetType,
-                        originalPosition: parseInt(item.dataset.widgetPosition)
-                    };
-                    item.classList.add('dragging');
-                    e.dataTransfer.effectAllowed = 'move';
-                    e.dataTransfer.setData('text/html', item.innerHTML);
-                });
+            const widgetList = document.getElementById('widgetList');
+            let draggedElement = null;
+            let placeholder = null;
 
-                // Drag end
-                item.addEventListener('dragend', (e) => {
-                    item.classList.remove('dragging');
-                    this.state.draggedWidget = null;
+            // Create placeholder element
+            const createPlaceholder = () => {
+                const div = document.createElement('div');
+                div.className = 'widget-config-item p-3 bg-gray-100 rounded-lg border-2 border-dashed border-pastel-primary opacity-50';
+                div.style.height = '60px';
+                return div;
+            };
 
-                    // Remove all drag-over classes
-                    widgetItems.forEach(widget => {
-                        widget.classList.remove('drag-over');
-                    });
-                });
+            // Delegate event handling to the container
+            widgetList.addEventListener('dragstart', (e) => {
+                const item = e.target.closest('.widget-config-item');
+                if (!item) return;
 
-                // Drag over
-                item.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
+                draggedElement = item;
+                placeholder = createPlaceholder();
+                item.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', item.innerHTML);
 
-                    if (!this.state.draggedWidget || item === this.state.draggedWidget.element) {
-                        return;
-                    }
-
-                    const afterElement = this.getDragAfterElement(item.parentElement, e.clientY);
-                    if (afterElement == null) {
-                        item.parentElement.appendChild(this.state.draggedWidget.element);
-                    } else {
-                        item.parentElement.insertBefore(this.state.draggedWidget.element, afterElement);
-                    }
-                });
-
-                // Drag enter
-                item.addEventListener('dragenter', (e) => {
-                    if (!this.state.draggedWidget || item === this.state.draggedWidget.element) {
-                        return;
-                    }
-                    item.classList.add('drag-over');
-                });
-
-                // Drag leave
-                item.addEventListener('dragleave', (e) => {
-                    item.classList.remove('drag-over');
-                });
-
-                // Drop
-                item.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    item.classList.remove('drag-over');
-
-                    // Update positions after drop
-                    this.updateWidgetPositions();
-                });
+                // Store the drag state
+                this.state.draggedWidget = {
+                    element: item,
+                    type: item.dataset.widgetType,
+                    originalPosition: parseInt(item.dataset.widgetPosition)
+                };
             });
+
+            widgetList.addEventListener('dragend', (e) => {
+                const item = e.target.closest('.widget-config-item');
+                if (!item) return;
+
+                item.classList.remove('dragging');
+                if (placeholder && placeholder.parentNode) {
+                    placeholder.parentNode.removeChild(placeholder);
+                }
+
+                // Update all positions after drag ends
+                this.updateWidgetPositions();
+
+                draggedElement = null;
+                placeholder = null;
+                this.state.draggedWidget = null;
+            });
+
+            widgetList.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (!draggedElement) return;
+
+                const afterElement = this.getDragAfterElement(widgetList, e.clientY);
+
+                if (afterElement == null) {
+                    widgetList.appendChild(placeholder);
+                } else {
+                    widgetList.insertBefore(placeholder, afterElement);
+                }
+            });
+
+            widgetList.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (!draggedElement || !placeholder) return;
+
+                // Replace placeholder with the dragged element
+                placeholder.parentNode.replaceChild(draggedElement, placeholder);
+
+                // Update positions immediately
+                this.updateWidgetPositions();
+            });
+
+            // Make items draggable
+            const items = widgetList.querySelectorAll('.widget-config-item');
+            items.forEach(item => {
+                item.draggable = true;
+            });
+        },
+
+        cleanupDragAndDrop() {
+            const widgetList = document.getElementById('widgetList');
+            if (widgetList) {
+                // Clone node to remove all event listeners
+                const newWidgetList = widgetList.cloneNode(true);
+                widgetList.parentNode.replaceChild(newWidgetList, widgetList);
+            }
         },
 
         getDragAfterElement(container, y) {
@@ -1789,11 +1919,19 @@
         },
 
         updateWidgetPositions() {
-            const widgetItems = document.querySelectorAll('.widget-config-item');
+            const widgetItems = document.querySelectorAll('#widgetList .widget-config-item');
             const newOrder = [];
 
             widgetItems.forEach((item, index) => {
+                // Update the data attribute
                 item.dataset.widgetPosition = index;
+
+                // Update any position display if exists
+                const positionDisplay = item.querySelector('.widget-position');
+                if (positionDisplay) {
+                    positionDisplay.textContent = `Position: ${index + 1}`;
+                }
+
                 newOrder.push({
                     type: item.dataset.widgetType,
                     position: index
@@ -1801,6 +1939,7 @@
             });
 
             this.state.widgetOrder = newOrder;
+            console.log('Updated widget order:', newOrder);
         },
 
 
@@ -1810,8 +1949,21 @@
          */
         async saveCustomizationPreferences() {
             try {
+                // Show loading state
+                const modal = document.getElementById('customizationModal');
+                const modalContent = modal.querySelector('.bg-white');
+
+                const loadingOverlay = document.createElement('div');
+                loadingOverlay.className = 'modal-loading-overlay';
+                loadingOverlay.innerHTML = `
+                <div class="modal-loading-spinner"></div>
+                <p class="modal-loading-text">Saving preferences...</p>
+            `;
+                modalContent.classList.add('modal-loading');
+                modalContent.appendChild(loadingOverlay);
+
                 // Get current positions from DOM
-                const widgetItems = document.querySelectorAll('.widget-config-item');
+                const widgetItems = document.querySelectorAll('#widgetList .widget-config-item');
                 const widgetConfigs = [];
 
                 widgetItems.forEach((item, index) => {
@@ -1862,11 +2014,14 @@
                     // Update local state
                     this.state.preferences = await response.json();
 
-                    // Close modal
-                    document.getElementById('customizationModal').classList.add('hidden');
+                    // Update loading text
+                    loadingOverlay.querySelector('.modal-loading-text').textContent = 'Refreshing dashboard...';
 
                     // Reload dashboard with new preferences
                     await this.loadDashboardData();
+
+                    // Close modal
+                    modal.classList.add('hidden');
 
                     this.showToast('Dashboard preferences saved successfully!');
                 } else {
@@ -1877,6 +2032,16 @@
             } catch (error) {
                 console.error('Error saving preferences:', error);
                 this.showError('Failed to save dashboard preferences');
+
+                // Remove loading overlay on error
+                const loadingOverlay = document.querySelector('.modal-loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.remove();
+                }
+                const modalContent = document.querySelector('.modal-loading');
+                if (modalContent) {
+                    modalContent.classList.remove('modal-loading');
+                }
             }
         },
 
@@ -2057,20 +2222,9 @@
                     }
 
                     customDates = {start, end};
-                    // Hide modal
-                    document.getElementById('widgetTimeframeModal').classList.add('hidden');
-
-                    // Show customization modal again
-                    this.showCustomizationModal();
-
-                    // Update widget timeframe
-                    await this.updateWidgetTimeframe(widgetType, timeframe, customDates);
                 }
 
-                // Hide modal
-                document.getElementById('widgetTimeframeModal').classList.add('hidden');
-
-                // Update widget timeframe
+                // Update widget timeframe (this will show loading and close modal when done)
                 await this.updateWidgetTimeframe(widgetType, timeframe, customDates);
             });
 
