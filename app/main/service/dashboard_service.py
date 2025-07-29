@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.main.model import Growth, Pumping
 from app.main.model.baby import Baby
-from app.main.model.dashboard import DashboardPreference, WidgetType, TimeFrame
+from app.main.model.dashboard import DashboardPreference, WidgetType, TimeFrame, ChecklistItemStatus, ChecklistItemType
 from app.main.model.diaper import Diaper
 from app.main.model.doctor_visit import DoctorVisit
 from app.main.model.feeding import Feeding
@@ -191,55 +191,255 @@ def get_recent_activities(
     return activities[:limit]
 
 
-def get_upcoming_events(db: Session, baby_ids: List[int], days_ahead: int = 7) -> List[Dict[str, Any]]:
+def get_baby_care_checklist(
+        db: Session, baby_ids: List[int]
+) -> List[Dict[str, Any]]:
     """
-    Get upcoming events like doctor visits and scheduled medications.
+    Generate a baby care checklist to help parents troubleshoot why their baby might be crying.
 
     Args:
         db: Database session
-        baby_ids: List of baby IDs to get events for
-        days_ahead: Number of days to look ahead
+        baby_ids: List of baby IDs to generate checklist for
 
     Returns:
-        List of upcoming events sorted by time
+        List of checklist items formatted as "events" for frontend compatibility
+    """
+    checklist_items = []
+
+    # Generate checklist for each baby
+    for baby_id in baby_ids:
+        baby = db.query(Baby).filter(Baby.id == baby_id).first()
+        if not baby:
+            continue
+
+        baby_name = baby.fullname
+
+        # 1. Feeding Check
+        last_feeding = db.query(Feeding).filter(
+            Feeding.baby_id == baby_id
+        ).order_by(desc(Feeding.start_time)).first()
+
+        feeding_item = _create_checklist_item(
+            baby_id=baby_id,
+            baby_name=baby_name,
+            item_type=ChecklistItemType.FEEDING,
+            title="When did the baby last eat?",
+            description="Babies typically need feeding every 2-4 hours. Check if it's feeding time.",
+            last_activity=last_feeding.start_time if last_feeding else None,
+            threshold_hours=3  # Suggest checking if more than 3 hours
+        )
+        checklist_items.append(feeding_item)
+
+        # 2. Diaper Check
+        last_diaper = db.query(Diaper).filter(
+            Diaper.baby_id == baby_id
+        ).order_by(desc(Diaper.time)).first()
+
+        diaper_item = _create_checklist_item(
+            baby_id=baby_id,
+            baby_name=baby_name,
+            item_type=ChecklistItemType.DIAPER,
+            title="Check if the diaper is wet or soiled",
+            description="A wet or dirty diaper can cause significant discomfort.",
+            last_activity=last_diaper.time if last_diaper else None,
+            threshold_hours=2  # Suggest checking if more than 2 hours
+        )
+        checklist_items.append(diaper_item)
+
+        # 3. Sleep Check
+        last_sleep = db.query(Sleep).filter(
+            Sleep.baby_id == baby_id
+        ).order_by(desc(Sleep.start_time)).first()
+
+        # Calculate when baby last woke up if sleep has ended
+        last_awake_time = None
+        if last_sleep and last_sleep.end_time:
+            last_awake_time = last_sleep.end_time
+
+        sleep_item = _create_checklist_item(
+            baby_id=baby_id,
+            baby_name=baby_name,
+            item_type=ChecklistItemType.SLEEP,
+            title="When did the baby last sleep?",
+            description="Overtired babies often cry more. Most babies need sleep every 1-3 hours.",
+            last_activity=last_awake_time,
+            threshold_hours=2  # Suggest sleep if awake more than 2 hours
+        )
+        checklist_items.append(sleep_item)
+
+        # 4. Gas Relief Check
+        # This is based on last feeding time as gas often occurs after feeding
+        gas_item = _create_checklist_item(
+            baby_id=baby_id,
+            baby_name=baby_name,
+            item_type=ChecklistItemType.GAS_RELIEF,
+            title="Consider if the baby needs to burp",
+            description="Try burping positions or gentle tummy massage. Gas can cause significant discomfort.",
+            last_activity=last_feeding.start_time if last_feeding else None,
+            threshold_hours=0.5  # Suggest burping within 30 minutes of feeding
+        )
+        checklist_items.append(gas_item)
+
+        # 5. Comfort Check
+        # This doesn't have a specific last activity, so we'll base priority on other factors
+        comfort_item = _create_checklist_item(
+            baby_id=baby_id,
+            baby_name=baby_name,
+            item_type=ChecklistItemType.COMFORT,
+            title="Does the baby need physical touch or holding?",
+            description="Babies need comfort and security. Try skin-to-skin contact, swaddling, or gentle rocking.",
+            last_activity=None,  # Always relevant
+            threshold_hours=0  # Always show this item
+        )
+        checklist_items.append(comfort_item)
+
+        # 6. Environmental Check
+        environment_item = _create_checklist_item(
+            baby_id=baby_id,
+            baby_name=baby_name,
+            item_type=ChecklistItemType.ENVIRONMENT,
+            title="Check for overstimulation (noise, lights, people, colors)",
+            description="Too much sensory input can overwhelm babies. Consider moving to a quiet, dimly lit space.",
+            last_activity=None,  # Always relevant
+            threshold_hours=0  # Always show this item
+        )
+        checklist_items.append(environment_item)
+
+    # Sort checklist items by priority (highest first)
+    checklist_items.sort(key=lambda x: x['details']['priority'], reverse=True)
+
+    return checklist_items
+
+
+def _create_checklist_item(
+        baby_id: int,
+        baby_name: str,
+        item_type: ChecklistItemType,
+        title: str,
+        description: str,
+        last_activity: Optional[datetime],
+        threshold_hours: float
+) -> Dict[str, Any]:
+    """
+    Create a checklist item formatted as an event for frontend compatibility.
+
+    Args:
+        baby_id: ID of the baby
+        baby_name: Name of the baby
+        item_type: Type of checklist item
+        title: Title of the checklist item
+        description: Description of what to check
+        last_activity: Time of last relevant activity (if applicable)
+        threshold_hours: Hours after which this becomes high priority
+
+    Returns:
+        Dictionary formatted as an event with checklist details
     """
     now = datetime.utcnow()
-    future_date = now + timedelta(days=days_ahead)
-    events = []
 
-    # Get upcoming doctor visits
-    doctor_visits = db.query(DoctorVisit).filter(
-        DoctorVisit.baby_id.in_(baby_ids),
-        DoctorVisit.visit_date > now,
-        DoctorVisit.visit_date <= future_date
-    ).order_by(DoctorVisit.visit_date).all()
+    # Calculate time since last activity and status
+    if last_activity:
+        time_diff = now - last_activity
+        hours_since = time_diff.total_seconds() / 3600
 
-    for visit in doctor_visits:
-        event = _create_event_entry(
-            db, visit, 'doctor_visit',
-            visit.visit_date,
-            _format_doctor_visit_details
-        )
-        events.append(event)
+        # Determine status based on threshold
+        if hours_since > threshold_hours:
+            status = ChecklistItemStatus.ACTION_REQUIRED
+            priority = 2  # High priority
+        elif hours_since > threshold_hours * 0.75:
+            status = ChecklistItemStatus.CHECK_NEEDED
+            priority = 1  # Medium priority
+        else:
+            status = ChecklistItemStatus.OK
+            priority = 0  # Low priority
 
-    # Get upcoming medications
-    medications = db.query(Medication).filter(
-        Medication.baby_id.in_(baby_ids),
-        Medication.time_given > now,
-        Medication.time_given <= future_date
-    ).order_by(Medication.time_given).all()
+        # Format time since last activity
+        if hours_since < 1:
+            time_since = f"{int(hours_since * 60)} minutes ago"
+        elif hours_since < 24:
+            time_since = f"{round(hours_since, 1)} hours ago"
+        else:
+            time_since = f"{round(hours_since / 24, 1)} days ago"
 
-    for medication in medications:
-        event = _create_event_entry(
-            db, medication, 'medication',
-            medication.time_given,
-            _format_medication_details
-        )
-        events.append(event)
+    else:
+        # No tracking data available
+        status = ChecklistItemStatus.NOT_TRACKED
+        priority = 1  # Medium priority for untracked items
+        time_since = "No recent data"
+        hours_since = float('inf')
 
-    # Sort by time ascending
-    events.sort(key=lambda x: x['time'])
-    return events
+    # Determine action suggestion based on item type and status
+    action_suggested = _get_action_suggestion(item_type, status, hours_since)
+
+    # Create the checklist item in event format for compatibility
+    return {
+        'id': f"checklist_{item_type.value}_{baby_id}",
+        'type': 'checklist_item',
+        'time': last_activity or now,  # Use current time if no last activity
+        'baby_id': baby_id,
+        'baby_name': baby_name,
+        'details': {
+            'item_type': item_type.value,
+            'status': status.value,
+            'title': title,
+            'description': description,
+            'last_activity_time': last_activity,
+            'time_since_last': time_since,
+            'action_suggested': action_suggested,
+            'priority': priority
+        }
+    }
+
+
+def _get_action_suggestion(item_type: ChecklistItemType, status: ChecklistItemStatus, hours_since: float) -> str:
+    """
+    Get specific action suggestion based on checklist item type and status.
+
+    Args:
+        item_type: Type of checklist item
+        status: Current status of the item
+        hours_since: Hours since last relevant activity
+
+    Returns:
+        Action suggestion string
+    """
+    if status == ChecklistItemStatus.NOT_TRACKED:
+        return "Start tracking this activity to get personalized suggestions"
+
+    suggestions = {
+        ChecklistItemType.FEEDING: {
+            ChecklistItemStatus.ACTION_REQUIRED: "It's been over 3 hours. Consider offering a feeding.",
+            ChecklistItemStatus.CHECK_NEEDED: "Approaching typical feeding interval. Baby may be getting hungry.",
+            ChecklistItemStatus.OK: "Recently fed. Unlikely to be hungry."
+        },
+        ChecklistItemType.DIAPER: {
+            ChecklistItemStatus.ACTION_REQUIRED: "Check diaper now - it's been over 2 hours.",
+            ChecklistItemStatus.CHECK_NEEDED: "Consider checking the diaper soon.",
+            ChecklistItemStatus.OK: "Recently changed. Diaper is likely still clean."
+        },
+        ChecklistItemType.SLEEP: {
+            ChecklistItemStatus.ACTION_REQUIRED: "Baby may be overtired. Create a calm environment for sleep.",
+            ChecklistItemStatus.CHECK_NEEDED: "Watch for tired cues. May need sleep soon.",
+            ChecklistItemStatus.OK: "Recently woke up. Baby should be well-rested."
+        },
+        ChecklistItemType.GAS_RELIEF: {
+            ChecklistItemStatus.ACTION_REQUIRED: "Try burping positions or bicycle legs to relieve gas.",
+            ChecklistItemStatus.CHECK_NEEDED: "If baby seems uncomfortable, try gentle burping.",
+            ChecklistItemStatus.OK: "Gas is less likely if baby was burped after last feeding."
+        },
+        ChecklistItemType.COMFORT: {
+            ChecklistItemStatus.ACTION_REQUIRED: "Try skin-to-skin contact or swaddling for comfort.",
+            ChecklistItemStatus.CHECK_NEEDED: "Consider if baby needs cuddles or soothing.",
+            ChecklistItemStatus.OK: "Offer comfort through holding or gentle touch."
+        },
+        ChecklistItemType.ENVIRONMENT: {
+            ChecklistItemStatus.ACTION_REQUIRED: "Move to a quiet, dim room to reduce stimulation.",
+            ChecklistItemStatus.CHECK_NEEDED: "Check if environment is too stimulating.",
+            ChecklistItemStatus.OK: "Ensure environment remains calm and soothing."
+        }
+    }
+
+    return suggestions.get(item_type, {}).get(status, "Monitor baby's cues")
 
 
 def get_care_metrics(
@@ -770,8 +970,8 @@ def _get_widget_data(
         WidgetType.RECENT_ACTIVITIES: lambda tf, cs, ce: get_recent_activities(
             db, baby_ids, tf, cs, ce, limit=10
         ),
-        WidgetType.UPCOMING_EVENTS: lambda tf, cs, ce: get_upcoming_events(
-            db, baby_ids, days_ahead=7
+        WidgetType.UPCOMING_EVENTS: lambda tf, cs, ce: get_baby_care_checklist(
+            db, baby_ids
         ),
         WidgetType.CARE_METRICS: lambda tf, cs, ce: get_care_metrics(
             db, baby_ids, tf, cs, ce

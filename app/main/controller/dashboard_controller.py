@@ -17,7 +17,7 @@ from app.main.service.dashboard_service import (
     get_or_create_dashboard_preferences,
     update_dashboard_preferences,
     get_recent_activities,
-    get_upcoming_events,
+    get_baby_care_checklist,
     get_care_metrics
 )
 from app.main.service.oauth_service import get_current_user
@@ -229,17 +229,20 @@ async def get_recent_activity_data(
 @router.get("/upcoming-events", response_model=List[Dict[str, Any]])
 async def get_upcoming_event_data(
         baby_id: Optional[int] = Query(None, description="Filter data for a specific baby"),
-        days_ahead: int = Query(7, description="Number of days to look ahead"),
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
     """
-    Get upcoming events for all babies or a specific baby.
+    Get baby care checklist items for troubleshooting why a baby might be crying.
 
-    Note: This endpoint uses days_ahead parameter instead of timeframe,
-    as future events have a different time scope than historical data.
+    The checklist includes:
+    - Last feeding time
+    - Diaper status
+    - Sleep tracking
+    - Gas relief needs
+    - Comfort requirements
+    - Environmental factors
     """
-    from app.main.service.baby_service import get_all_babies_for_user, get_baby_if_authorized
 
     # Get babies the user has access to
     all_babies = get_all_babies_for_user(db, current_user.id)
@@ -255,10 +258,11 @@ async def get_upcoming_event_data(
             )
         baby_ids = [baby_id]
 
-    events = get_upcoming_events(
-        db, baby_ids, days_ahead=days_ahead
+    # Get baby care checklist instead of upcoming events
+    checklist_items = get_baby_care_checklist(
+        db, baby_ids
     )
-    return events
+    return checklist_items
 
 
 @router.get("/care-metrics", response_model=Dict[str, Any])

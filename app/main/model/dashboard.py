@@ -27,6 +27,21 @@ class TimeFrame(str, Enum):
     MONTH = "month"
     CUSTOM = "custom"
 
+class ChecklistItemStatus(str, Enum):
+    OK = "ok"
+    CHECK_NEEDED = "check_needed"
+    ACTION_REQUIRED = "action_required"
+    NOT_TRACKED = "not_tracked"
+
+
+class ChecklistItemType(str, Enum):
+    FEEDING = "feeding"
+    DIAPER = "diaper"
+    SLEEP = "sleep"
+    GAS_RELIEF = "gas_relief"
+    COMFORT = "comfort"
+    ENVIRONMENT = "environment"
+
 
 class WidgetConfig(BaseModel):
     type: WidgetType
@@ -58,6 +73,24 @@ class DashboardPreferenceResponse(DashboardPreferenceBase):
     class Config:
         from_attributes = True
 
+
+class BabyCareChecklistItem(BaseModel):
+    id: str  # Using string ID to match expected event format
+    type: str  # Will be "checklist_item" to differentiate from events
+    time: Optional[datetime]  # Last relevant activity time
+    baby_id: int
+    baby_name: str
+    details: Dict[str, Any]  # Contains checklist-specific data
+
+class ChecklistItemDetails(BaseModel):
+    item_type: ChecklistItemType
+    status: ChecklistItemStatus
+    title: str
+    description: str
+    last_activity_time: Optional[datetime] = None
+    time_since_last: Optional[str] = None  # Human-readable time difference
+    action_suggested: Optional[str] = None
+    priority: int = 0  # 0 = low, 1 = medium, 2 = high
 
 # API Router
 router = APIRouter(
