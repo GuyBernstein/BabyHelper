@@ -338,6 +338,109 @@
         .animate-spin {
             animation: spin 1s linear infinite;
         }
+
+        /* Two-column checklist layout */
+        .checklist-columns-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .checklist-columns-container {
+                grid-template-columns: 1fr 1fr;
+                gap: 1.5rem;
+            }
+        }
+
+        .checklist-column {
+            space-y: 0.5rem;
+        }
+
+        .checklist-column-header {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #6d5d52;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #ffe8d9;
+        }
+
+        /* Baby separator for multi-baby view */
+        .baby-checklist-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background-color: #fdf6f0;
+            border-radius: 0.75rem;
+            border: 1px solid #ffe8d9;
+        }
+
+        .baby-checklist-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #ffe8d9;
+        }
+
+        /* History modal styling */
+        .history-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .history-section-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #5c4d44;
+            margin-bottom: 0.5rem;
+        }
+
+        .history-item {
+            padding: 0.75rem;
+            background-color: #fdf6f0;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid #ffe8d9;
+        }
+
+        .history-item-time {
+            font-size: 0.75rem;
+            color: #938278;
+        }
+
+        .history-insight {
+            background-color: #e8f5e9;
+            border: 1px solid #a5d6a7;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .history-empty {
+            text-align: center;
+            padding: 2rem;
+            color: #938278;
+        }
+
+        /* Loading skeleton for history */
+        .history-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+        }
+
+        .history-loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #ffe8d9;
+            border-radius: 50%;
+            border-top-color: #ff8c69;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 1rem;
+        }
     </style>
 </head>
 <body class="bg-pastel-lightest font-sans text-pastel-text">
@@ -535,6 +638,28 @@
                     class="px-4 py-2 bg-pastel-primary text-white rounded-lg hover:bg-pastel-primaryHover transition-colors">
                 Save
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- Baby Care History Modal -->
+<div id="babyCareHistoryModal"
+     class="hidden fixed inset-0 bg-black bg-opacity-50 modal-backdrop z-[60] flex items-center justify-center">
+    <div class="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 shadow-xl max-h-[80vh] overflow-hidden flex flex-col">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between mb-4 border-b border-pastel-light pb-4">
+            <h3 class="font-serif text-xl text-pastel-heading" id="historyModalTitle">Care History</h3>
+            <button id="closeHistoryModal" class="p-2 hover:bg-pastel-lightest rounded-full transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                     stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Modal Content -->
+        <div id="historyModalContent" class="flex-1 overflow-y-auto custom-scrollbar">
+            <!-- Content will be dynamically populated -->
         </div>
     </div>
 </div>
@@ -1291,21 +1416,20 @@
         },
 
         renderBabyCareChecklist(checklistItems, widgetType) {
+            // Filter out priority 0 items
+            const filteredItems = checklistItems.filter(item => item.details.priority > 0);
+
             // Sort items by priority (highest first) and then by status
-            const sortedItems = [...checklistItems].sort((a, b) => {
-                // First sort by priority (higher number = higher priority)
+            const sortedItems = [...filteredItems].sort((a, b) => {
                 if (b.details.priority !== a.details.priority) {
                     return b.details.priority - a.details.priority;
                 }
-                // Then put action_required items before not_tracked
                 if (a.details.status === 'action_required' && b.details.status !== 'action_required') return -1;
                 if (b.details.status === 'action_required' && a.details.status !== 'action_required') return 1;
                 return 0;
             });
 
-            // Check if we're showing all babies
             const isAllBabiesView = !this.state.selectedBabyId;
-
             let content = '';
 
             if (isAllBabiesView && sortedItems.length > 0) {
@@ -1318,47 +1442,28 @@
                     itemsByBaby[item.baby_name].push(item);
                 });
 
-                // Count babies with action required items
-                const babiesNeedingAttention = Object.entries(itemsByBaby)
-                    .filter(([_, items]) => items.some(item => item.details.status === 'action_required'))
-                    .length;
-
-                // Summary for all babies view
-                if (babiesNeedingAttention > 0) {
-                    content += `
-                <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg animate-pulse-soft">
-                    <p class="text-sm font-medium text-red-800">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="inline h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        ${babiesNeedingAttention} ${babiesNeedingAttention === 1 ? 'baby needs' : 'babies need'} attention
-                    </p>
-                </div>
-            `;
-                }
-
-                // Render grouped items
+                // Render each baby's checklist
                 Object.entries(itemsByBaby).forEach(([babyName, items]) => {
+                    const babyId = items[0].baby_id; // Get baby ID from first item
                     const hasActionRequired = items.some(item => item.details.status === 'action_required');
+
                     content += `
-                <div class="mb-4 ${hasActionRequired ? 'border-l-4 border-red-400' : ''} pl-3">
-                    <h4 class="font-medium text-pastel-heading mb-2 flex items-center">
-                        ${babyName}
-                        ${hasActionRequired ? '<span class="ml-2 text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">Needs attention</span>' : ''}
-                    </h4>
-                    <div class="space-y-2">
-                        ${items.map(item => this.renderChecklistItem(item)).join('')}
+                <div class="baby-checklist-section ${hasActionRequired ? 'ring-2 ring-red-400' : ''}">
+                    <div class="baby-checklist-header">
+                        <h4 class="font-medium text-pastel-heading flex items-center">
+                            ${babyName}
+                            ${hasActionRequired ? '<span class="ml-2 text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full animate-pulse">Needs attention</span>' : ''}
+                        </h4>
+                        <span class="text-xs text-pastel-textLight">${items.length} items to check</span>
                     </div>
+                    ${this.renderChecklistColumns(items, babyId)}
                 </div>
             `;
                 });
             } else {
-                // Single baby view or no grouping needed
-                content = `
-            <div class="space-y-2">
-                ${sortedItems.map(item => this.renderChecklistItem(item)).join('')}
-            </div>
-        `;
+                // Single baby view
+                const babyId = sortedItems.length > 0 ? sortedItems[0].baby_id : null;
+                content = this.renderChecklistColumns(sortedItems, babyId);
             }
 
             // Handle empty state
@@ -1381,11 +1486,43 @@
     `;
         },
 
+        renderChecklistColumns(items, babyId) {
+            // Separate items by type
+            const column1Items = items.filter(item =>
+                ['feeding', 'diaper', 'sleep'].includes(item.details.item_type)
+            );
+            const column2Items = items.filter(item =>
+                ['gas_relief', 'comfort', 'environment'].includes(item.details.item_type)
+            );
+
+            return `
+        <div class="checklist-columns-container">
+            <div class="checklist-column">
+                ${column1Items.length > 0 ? `
+                    <div class="checklist-column-header">Basic Needs</div>
+                    <div class="space-y-2">
+                        ${column1Items.map(item => this.renderChecklistItem(item)).join('')}
+                    </div>
+                ` : ''}
+            </div>
+            <div class="checklist-column">
+                ${column2Items.length > 0 ? `
+                    <div class="checklist-column-header">Comfort & Wellness</div>
+                    <div class="space-y-2">
+                        ${column2Items.map(item => this.renderChecklistItem(item)).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+        },
+
         renderChecklistItem(item) {
             const isActionRequired = item.details.status === 'action_required';
             const isNotTracked = item.details.status === 'not_tracked';
             const itemId = `checklist-${item.id}`;
             const isTrackableType = ['gas_relief', 'comfort', 'environment'].includes(item.details.item_type);
+
 
             // Determine icon based on item type
             const icons = {
@@ -1401,57 +1538,449 @@
             const iconColor = isActionRequired ? 'text-red-500' : (isNotTracked ? 'text-gray-400' : 'text-pastel-primary');
 
             return `
-            <div id="${itemId}" class="checklist-item p-3 rounded-lg border ${isActionRequired ? 'border-red-200 bg-red-50' : 'border-pastel-light bg-pastel-lightest'} transition-all duration-300">
-                <div class="flex items-start space-x-3">
-                    <!-- Checkbox or Icon -->
-                    <div class="flex-shrink-0 mt-1">
-                        ${isNotTracked && !isTrackableType ?
+        <div id="${itemId}" class="checklist-item p-3 rounded-lg border ${isActionRequired ? 'border-red-200 bg-red-50' : 'border-pastel-light bg-pastel-lightest'} transition-all duration-300">
+            <div class="flex items-start space-x-3">
+                <!-- Checkbox or Icon -->
+                <div class="flex-shrink-0 mt-1">
+                    ${isNotTracked && !isTrackableType ?
                 `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ${iconColor}" fill="none" viewBox="0 0 24 24" stroke="currentColor">${iconPath}</svg>` :
                 `<input type="checkbox"
-                                    class="checklist-checkbox w-5 h-5 text-pastel-primary focus:ring-pastel-primary border-gray-300 rounded cursor-pointer"
-                                    onchange="Dashboard.handleChecklistComplete('${itemId}')"
-                                    aria-label="Mark ${item.details.title} as complete">`
+                                class="checklist-checkbox w-5 h-5 text-pastel-primary focus:ring-pastel-primary border-gray-300 rounded cursor-pointer"
+                                onclick="Dashboard.handleChecklistCheckbox('${item.details.item_type}', ${item.baby_id}, '${item.baby_name}')"
+                                aria-label="View history for ${item.details.title}">`
             }
-                    </div>
+                </div>
 
-                    <!-- Content -->
-                    <div class="flex-1">
-                        <h4 class="font-medium ${isActionRequired ? 'text-red-800' : 'text-pastel-heading'} text-sm mb-1">
-                            ${item.details.title}
-                        </h4>
-                        <p class="text-xs text-pastel-textLight mb-2">${item.details.description}</p>
+                <!-- Content -->
+                <div class="flex-1">
+                    <h4 class="font-medium ${isActionRequired ? 'text-red-800' : 'text-pastel-heading'} text-sm mb-1">
+                        ${item.details.title}
+                    </h4>
+                    <p class="text-xs text-pastel-textLight mb-2">${item.details.description}</p>
 
-                        <!-- Action or Status -->
-                        ${isActionRequired ? `
-                            <div class="bg-white bg-opacity-60 rounded p-2 mb-2">
-                                <p class="text-xs font-medium ${isActionRequired ? 'text-red-700' : 'text-pastel-primary'}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="inline h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                    </svg>
-                                    ${item.details.action_suggested}
-                                </p>
-                            </div>
-                        ` : ''}
-
-                        <!-- Time since last -->
-                        <div class="flex items-center justify-between mb-2">
-                            <p class="text-xs text-pastel-textLight">
-                                ${item.details.last_activity_time ?
-                `<svg xmlns="http://www.w3.org/2000/svg" class="inline h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    Last: ${item.details.time_since_last}` :
-                'Not tracked yet'
-            }
+                    <!-- Action or Status -->
+                    ${isActionRequired ? `
+                        <div class="bg-white bg-opacity-60 rounded p-2 mb-2">
+                            <p class="text-xs font-medium ${isActionRequired ? 'text-red-700' : 'text-pastel-primary'}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="inline h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
+                                ${item.details.action_suggested}
                             </p>
                         </div>
+                    ` : ''}
 
-                        <!-- Interactive Tracking Interfaces -->
-                        ${this.renderTrackingInterface(item)}
+                    <!-- Time since last -->
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-xs text-pastel-textLight">
+                            ${item.details.last_activity_time ?
+                `<svg xmlns="http://www.w3.org/2000/svg" class="inline h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Last: ${item.details.time_since_last}` :
+                'Not tracked yet'
+            }
+                        </p>
                     </div>
+
+                    <!-- Interactive Tracking Interfaces -->
+                    ${this.renderTrackingInterface(item)}
+                </div>
+            </div>
+        </div>
+    `;
+        },
+
+        async handleChecklistCheckbox(itemType, babyId, babyName) {
+            // Prevent checkbox from staying checked
+            event.target.checked = false;
+
+            if (['gas_relief', 'comfort', 'environment'].includes(itemType)) {
+                // Fetch and display history
+                await this.fetchAndDisplayHistory(itemType, babyId, babyName);
+            } else {
+                // Redirect to dedicated tracking pages
+                const redirectMap = {
+                    'feeding': '/feeding-tracker',
+                    'diaper': '/diaper-tracker',
+                    'sleep': '/sleep-tracker'
+                };
+
+                if (redirectMap[itemType]) {
+                    this.showToast(`Opening ${itemType} tracker...`);
+                    window.location.href = redirectMap[itemType];
+                }
+            }
+        },
+
+        async fetchAndDisplayHistory(itemType, babyId, babyName) {
+            const modal = document.getElementById('babyCareHistoryModal');
+            const modalContent = document.getElementById('historyModalContent');
+            const modalTitle = document.getElementById('historyModalTitle');
+
+            // Show modal with loading state
+            modal.classList.remove('hidden');
+            modalContent.innerHTML = `
+        <div class="history-loading">
+            <div class="history-loading-spinner"></div>
+            <p class="text-sm text-pastel-textLight">Loading history...</p>
+        </div>
+    `;
+
+            // Set title based on item type
+            const titleMap = {
+                'gas_relief': 'Gas Relief History',
+                'comfort': 'Comfort Sessions History',
+                'environment': 'Environmental Adjustments History'
+            };
+            modalTitle.textContent = `${titleMap[itemType]} - ${babyName}`;
+
+            try {
+                const response = await BabyHelperAuth.api.request(
+                    `/dashboard/upcoming-events/history/${itemType}?baby_id=${babyId}&limit=10`,
+                    {method: 'GET'}
+                );
+
+                if (response.ok) {
+                    const historyData = await response.json();
+                    this.displayHistoryContent(historyData, itemType);
+                } else {
+                    throw new Error('Failed to load history');
+                }
+            } catch (error) {
+                console.error('Error fetching history:', error);
+                modalContent.innerHTML = `
+            <div class="history-empty">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-pastel-textLight mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="text-pastel-textLight">Unable to load history</p>
+                <p class="text-xs text-pastel-textLight mt-2">${error.message}</p>
+            </div>
+        `;
+            }
+        },
+
+        displayHistoryContent(historyData, itemType) {
+            const modalContent = document.getElementById('historyModalContent');
+
+            if (!historyData || !historyData.recent_history || historyData.recent_history.length === 0) {
+                modalContent.innerHTML = `
+            <div class="history-empty">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-pastel-textLight mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p class="text-pastel-textLight">No history available yet</p>
+                <button onclick="Dashboard.closeHistoryModal()" class="mt-4 px-4 py-2 bg-pastel-primary text-white rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                    Start Tracking
+                </button>
+            </div>
+        `;
+                return;
+            }
+
+            let content = '';
+
+            // Current Status Section
+            if (historyData.current_status) {
+                content += `
+            <div class="history-section">
+                <h4 class="history-section-title">Current Status</h4>
+                <div class="p-4 bg-pastel-primary bg-opacity-10 rounded-lg">
+                    <p class="text-sm text-pastel-heading font-medium">${this.formatStatusText(historyData.current_status)}</p>
+                    ${historyData.last_tracking ? `
+                        <p class="text-xs text-pastel-textLight mt-1">
+                            Last tracked: ${this.formatHistoryTime(historyData.last_tracking.created_at)}
+                        </p>
+                    ` : ''}
                 </div>
             </div>
         `;
+            }
+
+            // Insights Section
+            if (historyData.insights &&
+                (historyData.insights.most_common_actions?.length > 0 ||
+                    historyData.insights.recommendations?.length > 0 ||
+                    Object.keys(historyData.insights.effectiveness_patterns || {}).length > 0 ||
+                    Object.keys(historyData.insights.time_patterns || {}).length > 0)) {
+                content += `
+            <div class="history-section">
+                <h4 class="history-section-title">What Works Best</h4>
+                ${this.formatInsights(historyData.insights, itemType)}
+            </div>
+        `;
+            }
+
+            // Recent History
+            content += `
+        <div class="history-section">
+            <h4 class="history-section-title">Recent History</h4>
+            <div class="space-y-2">
+                ${historyData.recent_history.map(entry => this.formatHistoryEntry(entry, itemType)).join('')}
+            </div>
+        </div>
+    `;
+
+            modalContent.innerHTML = content;
+        },
+
+        formatStatusText(status) {
+            // Convert snake_case to Title Case
+            return status.split('_').map(word =>
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+        },
+
+        formatHistoryEntry(entry, itemType) {
+            const time = this.formatHistoryTime(entry.created_at);
+
+            switch (itemType) {
+                case 'gas_relief':
+                    return `
+                <div class="history-item">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm font-medium text-pastel-heading">
+                                ${this.formatGasReliefMethod(entry.status)}
+                            </p>
+                            ${entry.notes ? `<p class="text-xs text-pastel-textLight mt-1">${entry.notes}</p>` : ''}
+                        </div>
+                        <span class="history-item-time">${time}</span>
+                    </div>
+                </div>
+            `;
+
+                case 'comfort':
+                    return `
+                <div class="history-item">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm font-medium text-pastel-heading">
+                                ${this.formatComfortMethod(entry.status)}
+                                ${entry.duration_minutes ? ` - ${entry.duration_minutes} minutes` : ''}
+                            </p>
+                            ${entry.notes ? `<p class="text-xs text-pastel-textLight mt-1">${entry.notes}</p>` : ''}
+                        </div>
+                        <span class="history-item-time">${time}</span>
+                    </div>
+                </div>
+            `;
+
+                case 'environment':
+                    return `
+                <div class="history-item">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-sm font-medium text-pastel-heading">
+                                ${entry.factors_adjusted && entry.factors_adjusted.length > 0 ?
+                        `Adjusted: ${entry.factors_adjusted.map(f => this.formatEnvironmentFactor(f)).join(', ')}` :
+                        'Environmental check'
+                    }
+                            </p>
+                            ${entry.notes ? `<p class="text-xs text-pastel-textLight mt-1">${entry.notes}</p>` : ''}
+                        </div>
+                        <span class="history-item-time">${time}</span>
+                    </div>
+                </div>
+            `;
+
+                default:
+                    return '';
+            }
+        },
+
+        formatInsights(insights, itemType) {
+            let insightContent = '<div class="space-y-3">';
+
+            // Most Common Actions/Methods
+            if (insights.most_common_actions && insights.most_common_actions.length > 0) {
+                insightContent += '<div class="history-insight">';
+
+                if (itemType === 'gas_relief') {
+                    insightContent += `
+                <p class="text-sm text-pastel-text mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="inline h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Most used methods:
+                </p>
+                <div class="pl-5 space-y-1">
+                    ${insights.most_common_actions.map(item => `
+                        <div class="text-sm">
+                            <span class="font-medium">${this.formatStatusText(item.action)}</span>
+                            <span class="text-pastel-textLight"> - ${item.count} times</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+                } else if (itemType === 'comfort') {
+                    insightContent += `
+                <p class="text-sm text-pastel-text mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="inline h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    Comfort methods used:
+                </p>
+                <div class="pl-5 space-y-1">
+                    ${insights.most_common_actions.map(item => `
+                        <div class="text-sm">
+                            <span class="font-medium">${this.formatStatusText(item.method)}</span>
+                            <span class="text-pastel-textLight"> - ${item.count} times</span>
+                            ${item.avg_duration !== 'N/A' ? `<span class="text-pastel-textLight"> (avg ${item.avg_duration})</span>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+                } else if (itemType === 'environment') {
+                    insightContent += `
+                <p class="text-sm text-pastel-text mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="inline h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    Common adjustments:
+                </p>
+                <div class="pl-5 space-y-1">
+                    ${insights.most_common_actions.map(item => `
+                        <div class="text-sm">
+                            <span class="font-medium">${this.formatEnvironmentFactor(item.factor)}</span>
+                            <span class="text-pastel-textLight"> - ${item.count} times</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+                }
+
+                insightContent += '</div>';
+            }
+
+            // Effectiveness Patterns (for gas relief)
+            if (insights.effectiveness_patterns && Object.keys(insights.effectiveness_patterns).length > 0) {
+                insightContent += `
+            <div class="history-insight">
+                <p class="text-sm text-green-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="inline h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4" />
+                    </svg>
+                    ${insights.effectiveness_patterns.most_effective ?
+                    `Most effective: <strong>${this.formatStatusText(insights.effectiveness_patterns.most_effective)}</strong>` : ''}
+                    ${insights.effectiveness_patterns.success_rate ?
+                    ` (Success rate: ${insights.effectiveness_patterns.success_rate})` : ''}
+                </p>
+            </div>
+        `;
+            }
+
+            // Time Patterns
+            if (insights.time_patterns && insights.time_patterns.peak_hours && insights.time_patterns.peak_hours.length > 0) {
+                insightContent += `
+            <div class="history-insight">
+                <p class="text-sm text-pastel-text">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="inline h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <strong>Peak times:</strong> ${insights.time_patterns.peak_hours.join(', ')}
+                </p>
+                ${insights.time_patterns.description ?
+                    `<p class="text-xs text-pastel-textLight pl-5 mt-1">${insights.time_patterns.description}</p>` : ''}
+            </div>
+        `;
+            }
+
+            // Recommendations
+            if (insights.recommendations && insights.recommendations.length > 0) {
+                insightContent += `
+            <div class="history-insight">
+                <p class="text-sm text-blue-700 mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="inline h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    <strong>Tips:</strong>
+                </p>
+                <ul class="pl-5 space-y-1">
+                    ${insights.recommendations.map(rec => `
+                        <li class="text-sm text-pastel-text">${rec}</li>
+                    `).join('')}
+                </ul>
+            </div>
+        `;
+            }
+
+            // If no insights available
+            if (!insights.most_common_actions?.length &&
+                !insights.recommendations?.length &&
+                !Object.keys(insights.effectiveness_patterns || {}).length &&
+                !insights.time_patterns?.peak_hours?.length) {
+                insightContent += `
+            <p class="text-sm text-pastel-textLight text-center">
+                Keep tracking to see patterns and get personalized insights!
+            </p>
+        `;
+            }
+
+            insightContent += '</div>';
+            return insightContent;
+        },
+
+
+        formatHistoryTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffInHours = (now - date) / (1000 * 60 * 60);
+
+            if (diffInHours < 1) {
+                const minutes = Math.floor((now - date) / (1000 * 60));
+                return `${minutes} min ago`;
+            } else if (diffInHours < 24) {
+                const hours = Math.floor(diffInHours);
+                return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+            } else if (diffInHours < 48) {
+                return 'Yesterday';
+            } else {
+                return date.toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+            }
+        },
+
+        formatGasReliefMethod(method) {
+            const methodMap = {
+                'burped': 'Burped',
+                'bicycle_legs': 'Bicycle Legs',
+                'tummy_massage': 'Tummy Massage',
+                'upright_position': 'Upright Hold',
+                'no_action': 'No Action Needed'
+            };
+            return methodMap[method] || method;
+        },
+
+        formatComfortMethod(method) {
+            const methodMap = {
+                'swaddling': 'Swaddling',
+                'rocking': 'Rocking',
+                'holding': 'Holding',
+                'pacifier': 'Pacifier',
+                'white_noise': 'White Noise',
+                'skin_to_skin': 'Skin-to-Skin'
+            };
+            return methodMap[method] || method;
+        },
+
+        formatEnvironmentFactor(factor) {
+            const factorMap = {
+                'too_bright': 'Too Bright',
+                'too_loud': 'Too Loud',
+                'too_hot': 'Too Hot',
+                'too_cold': 'Too Cold',
+                'uncomfortable_surface': 'Uncomfortable Surface',
+                'needs_swaddle': 'Needs Swaddle',
+                'remove_swaddle': 'Remove Swaddle',
+                'adjust_clothing': 'Adjust Clothing'
+            };
+            return factorMap[factor] || this.formatStatusText(factor);
+        },
+
+        closeHistoryModal() {
+            const modal = document.getElementById('babyCareHistoryModal');
+            modal.classList.add('hidden');
         },
 
         renderTrackingInterface(item) {
@@ -2988,6 +3517,18 @@
             settingsButton.addEventListener('click', (e) => {
                 e.stopPropagation();
                 settingsDropdown.classList.toggle('hidden');
+            });
+
+            // History modal close button
+            document.getElementById('closeHistoryModal').addEventListener('click', () => {
+                this.closeHistoryModal();
+            });
+
+            // Close history modal when clicking backdrop
+            document.getElementById('babyCareHistoryModal').addEventListener('click', (e) => {
+                if (e.target.id === 'babyCareHistoryModal') {
+                    this.closeHistoryModal();
+                }
             });
 
             // Close dropdown when clicking outside
