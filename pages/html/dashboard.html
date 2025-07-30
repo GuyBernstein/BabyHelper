@@ -273,6 +273,71 @@
         .checklist-container {
             animation: fadeIn 0.5s ease-out;
         }
+
+        /* Comfort duration slider styling */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            background: #ff8c69;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            cursor: pointer;
+            margin-top: -6px;
+        }
+
+        input[type="range"]::-moz-range-track {
+            background: #ffe8d9;
+            height: 6px;
+            border-radius: 3px;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            background: #ff8c69;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        /* Interactive button states */
+        .gas-relief-btn:disabled,
+        .comfort-method-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Checkbox styling */
+        .env-factor-checkbox {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            border: 2px solid #ff8c69;
+        }
+
+        .env-factor-checkbox:checked {
+            background-color: #ff8c69;
+            border-color: #ff8c69;
+        }
+
+        /* Loading animation for buttons */
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
     </style>
 </head>
 <body class="bg-pastel-lightest font-sans text-pastel-text">
@@ -1320,6 +1385,7 @@
             const isActionRequired = item.details.status === 'action_required';
             const isNotTracked = item.details.status === 'not_tracked';
             const itemId = `checklist-${item.id}`;
+            const isTrackableType = ['gas_relief', 'comfort', 'environment'].includes(item.details.item_type);
 
             // Determine icon based on item type
             const icons = {
@@ -1335,61 +1401,487 @@
             const iconColor = isActionRequired ? 'text-red-500' : (isNotTracked ? 'text-gray-400' : 'text-pastel-primary');
 
             return `
-        <div id="${itemId}" class="checklist-item p-3 rounded-lg border ${isActionRequired ? 'border-red-200 bg-red-50' : 'border-pastel-light bg-pastel-lightest'} transition-all duration-300">
-            <div class="flex items-start space-x-3">
-                <!-- Checkbox or Icon -->
-                <div class="flex-shrink-0 mt-1">
-                    ${isNotTracked ?
+            <div id="${itemId}" class="checklist-item p-3 rounded-lg border ${isActionRequired ? 'border-red-200 bg-red-50' : 'border-pastel-light bg-pastel-lightest'} transition-all duration-300">
+                <div class="flex items-start space-x-3">
+                    <!-- Checkbox or Icon -->
+                    <div class="flex-shrink-0 mt-1">
+                        ${isNotTracked && !isTrackableType ?
                 `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ${iconColor}" fill="none" viewBox="0 0 24 24" stroke="currentColor">${iconPath}</svg>` :
                 `<input type="checkbox"
-                                class="checklist-checkbox w-5 h-5 text-pastel-primary focus:ring-pastel-primary border-gray-300 rounded cursor-pointer"
-                                onchange="Dashboard.handleChecklistComplete('${itemId}')"
-                                aria-label="Mark ${item.details.title} as complete">`
+                                    class="checklist-checkbox w-5 h-5 text-pastel-primary focus:ring-pastel-primary border-gray-300 rounded cursor-pointer"
+                                    onchange="Dashboard.handleChecklistComplete('${itemId}')"
+                                    aria-label="Mark ${item.details.title} as complete">`
             }
-                </div>
+                    </div>
 
-                <!-- Content -->
-                <div class="flex-1">
-                    <h4 class="font-medium ${isActionRequired ? 'text-red-800' : 'text-pastel-heading'} text-sm mb-1">
-                        ${item.details.title}
-                    </h4>
-                    <p class="text-xs text-pastel-textLight mb-2">${item.details.description}</p>
+                    <!-- Content -->
+                    <div class="flex-1">
+                        <h4 class="font-medium ${isActionRequired ? 'text-red-800' : 'text-pastel-heading'} text-sm mb-1">
+                            ${item.details.title}
+                        </h4>
+                        <p class="text-xs text-pastel-textLight mb-2">${item.details.description}</p>
 
-                    <!-- Action or Status -->
-                    ${isActionRequired ? `
-                        <div class="bg-white bg-opacity-60 rounded p-2 mb-2">
-                            <p class="text-xs font-medium ${isActionRequired ? 'text-red-700' : 'text-pastel-primary'}">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="inline h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                </svg>
-                                ${item.details.action_suggested}
-                            </p>
-                        </div>
-                    ` : ''}
+                        <!-- Action or Status -->
+                        ${isActionRequired ? `
+                            <div class="bg-white bg-opacity-60 rounded p-2 mb-2">
+                                <p class="text-xs font-medium ${isActionRequired ? 'text-red-700' : 'text-pastel-primary'}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="inline h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                    </svg>
+                                    ${item.details.action_suggested}
+                                </p>
+                            </div>
+                        ` : ''}
 
-                    <!-- Time since last -->
-                    <div class="flex items-center justify-between">
-                        <p class="text-xs text-pastel-textLight">
-                            ${item.details.last_activity_time ?
+                        <!-- Time since last -->
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-xs text-pastel-textLight">
+                                ${item.details.last_activity_time ?
                 `<svg xmlns="http://www.w3.org/2000/svg" class="inline h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                Last: ${item.details.time_since_last}` :
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Last: ${item.details.time_since_last}` :
                 'Not tracked yet'
             }
-                        </p>
+                            </p>
+                        </div>
 
-                        ${isNotTracked ? `
-                            <button onclick="Dashboard.startTrackingActivity('${item.details.item_type}', '${item.baby_name}')"
-                                    class="text-xs bg-pastel-primary text-white px-3 py-1 rounded-full hover:bg-pastel-primaryHover transition-colors">
-                                Start Tracking
-                            </button>
-                        ` : ''}
+                        <!-- Interactive Tracking Interfaces -->
+                        ${this.renderTrackingInterface(item)}
                     </div>
                 </div>
             </div>
+        `;
+        },
+
+        renderTrackingInterface(item) {
+            const itemType = item.details.item_type;
+            const babyId = item.baby_id;
+            const itemId = `checklist-${item.id}`;
+
+            switch (itemType) {
+                case 'gas_relief':
+                    return this.renderGasReliefTracking(itemId, babyId);
+                case 'comfort':
+                    return this.renderComfortTracking(itemId, babyId);
+                case 'environment':
+                    return this.renderEnvironmentTracking(itemId, babyId);
+                case 'feeding':
+                case 'diaper':
+                case 'sleep':
+                    // These have dedicated trackers
+                    return item.details.status === 'not_tracked' ? `
+                <button onclick="Dashboard.startTrackingActivity('${itemType}', '${item.baby_name}')"
+                        class="text-xs bg-pastel-primary text-white px-3 py-1 rounded-full hover:bg-pastel-primaryHover transition-colors">
+                    Start Tracking
+                </button>
+            ` : '';
+                default:
+                    return '';
+            }
+        },
+
+        renderGasReliefTracking(itemId, babyId) {
+            return `
+        <div class="gas-relief-tracking space-y-2 mt-3 p-3 bg-white rounded-lg">
+            <p class="text-xs font-medium text-pastel-heading mb-2">Quick track gas relief:</p>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="Dashboard.trackGasRelief('${itemId}', ${babyId}, 'burped')"
+                        class="gas-relief-btn text-xs px-3 py-2 bg-pastel-primary bg-opacity-10 text-pastel-primary rounded-lg hover:bg-opacity-20 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4" />
+                    </svg>
+                    Burped
+                </button>
+                <button onclick="Dashboard.trackGasRelief('${itemId}', ${babyId}, 'bicycle_legs')"
+                        class="gas-relief-btn text-xs px-3 py-2 bg-pastel-accent1 bg-opacity-10 text-pastel-accent1 rounded-lg hover:bg-opacity-20 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Bicycle Legs
+                </button>
+                <button onclick="Dashboard.trackGasRelief('${itemId}', ${babyId}, 'tummy_massage')"
+                        class="gas-relief-btn text-xs px-3 py-2 bg-pastel-accent2 bg-opacity-10 text-pastel-accent2 rounded-lg hover:bg-opacity-20 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Tummy Massage
+                </button>
+                <button onclick="Dashboard.trackGasRelief('${itemId}', ${babyId}, 'upright_position')"
+                        class="gas-relief-btn text-xs px-3 py-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
+                    Upright Hold
+                </button>
+            </div>
+            <button onclick="Dashboard.trackGasRelief('${itemId}', ${babyId}, 'no_action')"
+                    class="w-full text-xs px-3 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-all">
+                No action needed - gas resolved
+            </button>
+            <textarea id="gas-notes-${itemId}"
+                      placeholder="Optional notes (e.g., what worked best)"
+                      class="w-full text-xs p-2 border border-pastel-light rounded-lg resize-none"
+                      rows="2"></textarea>
         </div>
     `;
+        },
+
+        renderComfortTracking(itemId, babyId) {
+            return `
+        <div class="comfort-tracking space-y-2 mt-3 p-3 bg-white rounded-lg">
+            <p class="text-xs font-medium text-pastel-heading mb-2">Track comfort method:</p>
+
+            <!-- Method Selection -->
+            <div class="grid grid-cols-3 gap-2 mb-3">
+                <button onclick="Dashboard.selectComfortMethod('${itemId}', 'swaddling')"
+                        data-comfort-method="swaddling"
+                        class="comfort-method-btn text-xs px-2 py-2 bg-pastel-lightest text-pastel-text rounded-lg hover:bg-pastel-light transition-all">
+                    Swaddling
+                </button>
+                <button onclick="Dashboard.selectComfortMethod('${itemId}', 'rocking')"
+                        data-comfort-method="rocking"
+                        class="comfort-method-btn text-xs px-2 py-2 bg-pastel-lightest text-pastel-text rounded-lg hover:bg-pastel-light transition-all">
+                    Rocking
+                </button>
+                <button onclick="Dashboard.selectComfortMethod('${itemId}', 'holding')"
+                        data-comfort-method="holding"
+                        class="comfort-method-btn text-xs px-2 py-2 bg-pastel-lightest text-pastel-text rounded-lg hover:bg-pastel-light transition-all">
+                    Holding
+                </button>
+                <button onclick="Dashboard.selectComfortMethod('${itemId}', 'pacifier')"
+                        data-comfort-method="pacifier"
+                        class="comfort-method-btn text-xs px-2 py-2 bg-pastel-lightest text-pastel-text rounded-lg hover:bg-pastel-light transition-all">
+                    Pacifier
+                </button>
+                <button onclick="Dashboard.selectComfortMethod('${itemId}', 'white_noise')"
+                        data-comfort-method="white_noise"
+                        class="comfort-method-btn text-xs px-2 py-2 bg-pastel-lightest text-pastel-text rounded-lg hover:bg-pastel-light transition-all">
+                    White Noise
+                </button>
+                <button onclick="Dashboard.selectComfortMethod('${itemId}', 'skin_to_skin')"
+                        data-comfort-method="skin_to_skin"
+                        class="comfort-method-btn text-xs px-2 py-2 bg-pastel-lightest text-pastel-text rounded-lg hover:bg-pastel-light transition-all">
+                    Skin-to-skin
+                </button>
+            </div>
+
+            <!-- Duration Slider -->
+            <div class="duration-selector">
+                <label class="text-xs text-pastel-textLight">Duration: <span id="duration-display-${itemId}" class="font-medium">5 min</span></label>
+                <input type="range"
+                       id="comfort-duration-${itemId}"
+                       min="1"
+                       max="60"
+                       value="5"
+                       class="w-full h-2 bg-pastel-light rounded-lg appearance-none cursor-pointer"
+                       oninput="Dashboard.updateDurationDisplay('${itemId}', this.value)">
+                <div class="flex justify-between text-xs text-pastel-textLight mt-1">
+                    <span>1 min</span>
+                    <span>30 min</span>
+                    <span>60 min</span>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <textarea id="comfort-notes-${itemId}"
+                      placeholder="What helped? (optional)"
+                      class="w-full text-xs p-2 border border-pastel-light rounded-lg resize-none"
+                      rows="2"></textarea>
+
+            <!-- Submit Button -->
+            <button onclick="Dashboard.trackComfort('${itemId}', ${babyId})"
+                    id="comfort-submit-${itemId}"
+                    disabled
+                    class="w-full text-sm px-4 py-2 bg-pastel-primary text-white rounded-lg hover:bg-pastel-primaryHover transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                Track Comfort Session
+            </button>
+        </div>
+    `;
+        },
+
+        renderEnvironmentTracking(itemId, babyId) {
+            return `
+        <div class="environment-tracking space-y-2 mt-3 p-3 bg-white rounded-lg">
+            <p class="text-xs font-medium text-pastel-heading mb-2">Check environmental factors adjusted:</p>
+
+            <div class="space-y-2">
+                <label class="flex items-center space-x-2 cursor-pointer hover:bg-pastel-lightest p-2 rounded transition-colors">
+                    <input type="checkbox" value="too_bright" class="env-factor-checkbox text-pastel-primary focus:ring-pastel-primary">
+                    <span class="text-xs">🔆 Dimmed lights</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer hover:bg-pastel-lightest p-2 rounded transition-colors">
+                    <input type="checkbox" value="too_loud" class="env-factor-checkbox text-pastel-primary focus:ring-pastel-primary">
+                    <span class="text-xs">🔇 Reduced noise</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer hover:bg-pastel-lightest p-2 rounded transition-colors">
+                    <input type="checkbox" value="too_hot" class="env-factor-checkbox text-pastel-primary focus:ring-pastel-primary">
+                    <span class="text-xs">🌡️ Cooled room</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer hover:bg-pastel-lightest p-2 rounded transition-colors">
+                    <input type="checkbox" value="too_cold" class="env-factor-checkbox text-pastel-primary focus:ring-pastel-primary">
+                    <span class="text-xs">🧥 Warmed room</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer hover:bg-pastel-lightest p-2 rounded transition-colors">
+                    <input type="checkbox" value="uncomfortable_clothing" class="env-factor-checkbox text-pastel-primary focus:ring-pastel-primary">
+                    <span class="text-xs">👕 Changed clothing</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer hover:bg-pastel-lightest p-2 rounded transition-colors">
+                    <input type="checkbox" value="wet_bedding" class="env-factor-checkbox text-pastel-primary focus:ring-pastel-primary">
+                    <span class="text-xs">🛏️ Changed bedding</span>
+                </label>
+
+                <div class="border-t border-pastel-light pt-2 mt-2">
+                    <label class="flex items-center space-x-2 cursor-pointer hover:bg-green-50 p-2 rounded transition-colors">
+                        <input type="checkbox"
+                               value="optimal"
+                               id="env-optimal-${itemId}"
+                               class="env-factor-checkbox text-green-600 focus:ring-green-600"
+                               onchange="Dashboard.handleOptimalToggle('${itemId}')">
+                        <span class="text-xs font-medium text-green-700">✓ Everything is optimal</span>
+                    </label>
+                </div>
+            </div>
+
+            <textarea id="env-notes-${itemId}"
+                      placeholder="Additional notes (optional)"
+                      class="w-full text-xs p-2 border border-pastel-light rounded-lg resize-none"
+                      rows="2"></textarea>
+
+            <button onclick="Dashboard.trackEnvironment('${itemId}', ${babyId})"
+                    class="w-full text-sm px-4 py-2 bg-pastel-primary text-white rounded-lg hover:bg-pastel-primaryHover transition-all">
+                Save Environmental Adjustments
+            </button>
+        </div>
+    `;
+        },
+
+        // Gas Relief Tracking
+        async trackGasRelief(itemId, babyId, method) {
+            const notesField = document.getElementById(`gas-notes-${itemId}`);
+            const notes = notesField ? notesField.value.trim() : '';
+            const buttons = document.querySelectorAll(`#${itemId} .gas-relief-btn`);
+
+            // Disable all buttons and show loading
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+            });
+
+            // Add loading spinner to clicked button
+            const clickedBtn = event.target.closest('button');
+            const originalContent = clickedBtn.innerHTML;
+            clickedBtn.innerHTML = `<svg class="animate-spin h-4 w-4 mx-auto" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+    </svg>`;
+
+            try {
+                const response = await BabyHelperAuth.api.request('/dashboard/upcoming-events/track', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        baby_id: babyId,
+                        item_type: 'gas_relief',
+                        status: method,
+                        notes: notes
+                    })
+                });
+
+                if (response.ok) {
+                    // Success feedback
+                    this.showToast(`Gas relief tracked: ${method.replace('_', ' ')}`, 'success');
+
+                    // Update the checklist item UI
+                    const checklistItem = document.getElementById(itemId);
+                    checklistItem.classList.add('opacity-50', 'scale-95');
+
+                    // Refresh the widget data after a short delay
+                    setTimeout(() => {
+                        this.refreshDashboard();
+                    }, 1000);
+                } else {
+                    const error = await BabyHelperAuth.api.parseErrorResponse(response);
+                    throw new Error(error.detail || 'Failed to track gas relief');
+                }
+            } catch (error) {
+                console.error('Error tracking gas relief:', error);
+                this.showError(`Failed to track gas relief: ${error.message}`);
+
+                // Re-enable buttons
+                buttons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                });
+
+                // Restore button content
+                clickedBtn.innerHTML = originalContent;
+            }
+        },
+
+// Comfort Method Selection
+        selectComfortMethod(itemId, method) {
+            // Update visual state of buttons
+            const buttons = document.querySelectorAll(`#${itemId} .comfort-method-btn`);
+            buttons.forEach(btn => {
+                if (btn.dataset.comfortMethod === method) {
+                    btn.classList.remove('bg-pastel-lightest', 'text-pastel-text');
+                    btn.classList.add('bg-pastel-primary', 'text-white');
+                } else {
+                    btn.classList.remove('bg-pastel-primary', 'text-white');
+                    btn.classList.add('bg-pastel-lightest', 'text-pastel-text');
+                }
+            });
+
+            // Store selected method
+            const submitBtn = document.getElementById(`comfort-submit-${itemId}`);
+            submitBtn.dataset.selectedMethod = method;
+            submitBtn.disabled = false;
+        },
+
+// Update duration display
+        updateDurationDisplay(itemId, value) {
+            document.getElementById(`duration-display-${itemId}`).textContent = `${value} min`;
+        },
+
+// Comfort Tracking
+        async trackComfort(itemId, babyId) {
+            const submitBtn = document.getElementById(`comfort-submit-${itemId}`);
+            const selectedMethod = submitBtn.dataset.selectedMethod;
+            const duration = parseInt(document.getElementById(`comfort-duration-${itemId}`).value);
+            const notes = document.getElementById(`comfort-notes-${itemId}`).value.trim();
+
+            if (!selectedMethod) {
+                this.showError('Please select a comfort method');
+                return;
+            }
+
+            // Show loading state
+            submitBtn.disabled = true;
+            const originalText = submitBtn.textContent;
+            submitBtn.innerHTML = `<svg class="animate-spin h-4 w-4 mx-auto" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+    </svg>`;
+
+            try {
+                const response = await BabyHelperAuth.api.request('/dashboard/upcoming-events/track', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        baby_id: babyId,
+                        item_type: 'comfort',
+                        status: selectedMethod,
+                        duration_minutes: duration,
+                        notes: notes
+                    })
+                });
+
+                if (response.ok) {
+                    this.showToast(`Comfort session tracked: ${selectedMethod.replace('_', ' ')} for ${duration} minutes`, 'success');
+
+                    // Update UI
+                    const checklistItem = document.getElementById(itemId);
+                    checklistItem.classList.add('opacity-50', 'scale-95');
+
+                    setTimeout(() => {
+                        this.refreshDashboard();
+                    }, 1000);
+                } else {
+                    const error = await BabyHelperAuth.api.parseErrorResponse(response);
+                    throw new Error(error.detail || 'Failed to track comfort session');
+                }
+            } catch (error) {
+                console.error('Error tracking comfort:', error);
+                this.showError(`Failed to track comfort session: ${error.message}`);
+
+                // Restore button
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        },
+
+// Handle optimal environment toggle
+        handleOptimalToggle(itemId) {
+            const optimalCheckbox = document.getElementById(`env-optimal-${itemId}`);
+            const otherCheckboxes = document.querySelectorAll(`#${itemId} .env-factor-checkbox:not(#env-optimal-${itemId})`);
+
+            if (optimalCheckbox.checked) {
+                // Uncheck and disable other checkboxes
+                otherCheckboxes.forEach(cb => {
+                    cb.checked = false;
+                    cb.disabled = true;
+                    cb.closest('label').classList.add('opacity-50');
+                });
+            } else {
+                // Re-enable other checkboxes
+                otherCheckboxes.forEach(cb => {
+                    cb.disabled = false;
+                    cb.closest('label').classList.remove('opacity-50');
+                });
+            }
+        },
+
+// Environment Tracking
+        async trackEnvironment(itemId, babyId) {
+            const checkboxes = document.querySelectorAll(`#${itemId} .env-factor-checkbox:checked`);
+            const factors = Array.from(checkboxes).map(cb => cb.value);
+            const notes = document.getElementById(`env-notes-${itemId}`).value.trim();
+
+            if (factors.length === 0) {
+                this.showError('Please select at least one environmental factor');
+                return;
+            }
+
+            const submitBtn = event.target;
+            submitBtn.disabled = true;
+            const originalText = submitBtn.textContent;
+            submitBtn.innerHTML = `<svg class="animate-spin h-4 w-4 mx-auto" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+    </svg>`;
+
+            try {
+                const response = await BabyHelperAuth.api.request('/dashboard/upcoming-events/track', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        baby_id: babyId,
+                        item_type: 'environment',
+                        factors_adjusted: factors,
+                        notes: notes
+                    })
+                });
+
+                if (response.ok) {
+                    const factorText = factors.includes('optimal') ? 'Environment is optimal' : `Adjusted ${factors.length} factor(s)`;
+                    this.showToast(factorText, 'success');
+
+                    // Update UI
+                    const checklistItem = document.getElementById(itemId);
+                    checklistItem.classList.add('opacity-50', 'scale-95');
+
+                    setTimeout(() => {
+                        this.refreshDashboard();
+                    }, 1000);
+                } else {
+                    const error = await BabyHelperAuth.api.parseErrorResponse(response);
+                    throw new Error(error.detail || 'Failed to track environmental adjustments');
+                }
+            } catch (error) {
+                console.error('Error tracking environment:', error);
+                this.showError(`Failed to track environmental adjustments: ${error.message}`);
+
+                // Restore button
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
         },
 
         handleChecklistComplete(itemId) {
