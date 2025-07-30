@@ -9,7 +9,11 @@ from app.main.model.dashboard import (
     router,
     DashboardPreferenceUpdate,
     DashboardPreferenceResponse,
-    TimeFrame
+    TimeFrame,
+    ChecklistTrackingCreate,
+    ChecklistTrackingResponse,
+    ChecklistHistoryResponse,
+    ChecklistItemType
 )
 from app.main.model.user import User
 from app.main.service.dashboard_service import (
@@ -18,7 +22,10 @@ from app.main.service.dashboard_service import (
     update_dashboard_preferences,
     get_recent_activities,
     get_baby_care_checklist,
-    get_care_metrics
+    get_care_metrics,
+    create_checklist_tracking,
+    get_checklist_history,
+    get_checklist_insights
 )
 from app.main.service.oauth_service import get_current_user
 from app.main.service.baby_service import get_all_babies_for_user, get_baby_if_authorized
@@ -263,6 +270,127 @@ async def get_upcoming_event_data(
         db, baby_ids
     )
     return checklist_items
+
+
+@router.post("/upcoming-events/track", response_model=ChecklistTrackingResponse)
+async def track_checklist_item(
+        tracking: ChecklistTrackingCreate,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    """
+    Track a baby care checklist item action.
+
+    This endpoint is used to record when parents check or address one of the three
+    widget-exclusive tracking items:
+    - Gas relief (burping, bicycle legs, tummy massage, etc.)
+    - Comfort needs (skin-to-skin, swaddling, rocking, etc.)
+    - Environmental factors (adjusting light, sound, temperature, etc.)
+
+    The tracked data helps provide insights and patterns for future reference.
+    """
+
+    # Verify the item type is one of the three widget-exclusive tracking items
+    if tracking.item_type not in [ChecklistItemType.GAS_RELIEF, ChecklistItemType.COMFORT,
+                                  ChecklistItemType.ENVIRONMENT]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This endpoint only tracks gas relief, comfort, and environmental factors. Use existing endpoints for feeding, diaper, and sleep tracking."
+        )
+
+    # Verify user has access to the baby
+    baby = get_baby_if_authorized(db, tracking.baby_id, current_user.id)
+    if isinstance(baby, dict):  # Error response
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to track data for this baby"
+        )
+
+    # Create the tracking record
+    tracking_record = create_checklist_tracking(
+        db,
+        user_id=current_user.id,
+        tracking_data=tracking.model_dump()
+    )
+
+    # Convert to response format
+    response_data = {
+        "id": tracking_record.id,
+        "created_at": tracking_record.created_at,
+        "baby_id": tracking_record.baby_id,
+        "item_type": tracking.item_type,
+        "recorded_by": tracking_record.recorded_by,
+        "status": tracking_record.status if hasattr(tracking_record,
+                                                    'status') else tracking_record.comfort_type if hasattr(
+            tracking_record, 'comfort_type') else None,
+        "notes": tracking_record.notes if hasattr(tracking_record, 'notes') else None,
+        "duration_minutes": tracking_record.duration_minutes if hasattr(tracking_record, 'duration_minutes') else None,
+        "factors_adjusted": tracking_record.factors_adjusted if hasattr(tracking_record, 'factors_adjusted') else None
+    }
+
+    return response_data
+
+
+@router.get("/upcoming-events/history/{item_type}", response_model=ChecklistHistoryResponse)
+async def get_checklist_item_history(
+        item_type: ChecklistItemType,
+        baby_id: int = Query(..., description="Baby ID to get history for"),
+        limit: int = Query(10, description="Number of recent records to return"),
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    """
+    Get tracking history and insights for a specific checklist item.
+
+    This endpoint provides:
+    - Current status of the checklist item
+    - Recent tracking history
+    - Insights based on tracked patterns (what has worked before, frequency patterns, etc.)
+
+    Available for gas relief, comfort, and environmental factors only.
+    """
+
+    # Verify the item type is one of the three widget-exclusive tracking items
+    if item_type not in [ChecklistItemType.GAS_RELIEF, ChecklistItemType.COMFORT, ChecklistItemType.ENVIRONMENT]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="History is only available for gas relief, comfort, and environmental factors."
+        )
+
+    # Verify user has access to the baby
+    baby = get_baby_if_authorized(db, baby_id, current_user.id)
+    if isinstance(baby, dict):  # Error response
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this baby's data"
+        )
+
+    # Get the tracking history
+    history = get_checklist_history(
+        db,
+        baby_id=baby_id,
+        item_type=item_type,
+        limit=limit
+    )
+
+    # Get insights based on the history
+    insights = get_checklist_insights(
+        db,
+        baby_id=baby_id,
+        item_type=item_type
+    )
+
+    # Build response
+    response = ChecklistHistoryResponse(
+        baby_id=baby_id,
+        item_type=item_type,
+        current_status=history['current_status'],
+        last_tracking=history['last_tracking'],
+        recent_history=history['recent_history'],
+        insights=insights
+    )
+
+    return response
 
 
 @router.get("/care-metrics", response_model=Dict[str, Any])

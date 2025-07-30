@@ -196,13 +196,14 @@ def get_baby_care_checklist(
 ) -> List[Dict[str, Any]]:
     """
     Generate a baby care checklist to help parents troubleshoot why their baby might be crying.
+    Include tracking data for gas relief, comfort, and environmental items.
 
     Args:
         db: Database session
         baby_ids: List of baby IDs to generate checklist for
 
     Returns:
-        List of checklist items formatted as "events" for frontend compatibility
+        List of checklist items formatted as "events"
     """
     checklist_items = []
 
@@ -226,7 +227,8 @@ def get_baby_care_checklist(
             title="When did the baby last eat?",
             description="Babies typically need feeding every 2-4 hours. Check if it's feeding time.",
             last_activity=last_feeding.start_time if last_feeding else None,
-            threshold_hours=3  # Suggest checking if more than 3 hours
+            threshold_hours=3,  # Suggest checking if more than 3 hours
+            db=db  # Pass db for tracking data
         )
         checklist_items.append(feeding_item)
 
@@ -242,7 +244,8 @@ def get_baby_care_checklist(
             title="Check if the diaper is wet or soiled",
             description="A wet or dirty diaper can cause significant discomfort.",
             last_activity=last_diaper.time if last_diaper else None,
-            threshold_hours=2  # Suggest checking if more than 2 hours
+            threshold_hours=2,  # Suggest checking if more than 2 hours
+            db=db
         )
         checklist_items.append(diaper_item)
 
@@ -263,45 +266,47 @@ def get_baby_care_checklist(
             title="When did the baby last sleep?",
             description="Overtired babies often cry more. Most babies need sleep every 1-3 hours.",
             last_activity=last_awake_time,
-            threshold_hours=2  # Suggest sleep if awake more than 2 hours
+            threshold_hours=2,  # Suggest sleep if awake more than 2 hours
+            db=db
         )
         checklist_items.append(sleep_item)
 
-        # 4. Gas Relief Check
-        # This is based on last feeding time as gas often occurs after feeding
+        # 4. Gas Relief Check - Now includes tracking data
         gas_item = _create_checklist_item(
             baby_id=baby_id,
             baby_name=baby_name,
             item_type=ChecklistItemType.GAS_RELIEF,
             title="Consider if the baby needs to burp",
             description="Try burping positions or gentle tummy massage. Gas can cause significant discomfort.",
-            last_activity=last_feeding.start_time if last_feeding else None,
-            threshold_hours=0.5  # Suggest burping within 30 minutes of feeding
+            last_activity=None,  # Will be overridden by tracking data if available
+            threshold_hours=0.5,  # Suggest burping within 30 minutes of feeding
+            db=db
         )
         checklist_items.append(gas_item)
 
-        # 5. Comfort Check
-        # This doesn't have a specific last activity, so we'll base priority on other factors
+        # 5. Comfort Check - Now includes tracking data
         comfort_item = _create_checklist_item(
             baby_id=baby_id,
             baby_name=baby_name,
             item_type=ChecklistItemType.COMFORT,
             title="Does the baby need physical touch or holding?",
             description="Babies need comfort and security. Try skin-to-skin contact, swaddling, or gentle rocking.",
-            last_activity=None,  # Always relevant
-            threshold_hours=0  # Always show this item
+            last_activity=None,  # Will be overridden by tracking data if available
+            threshold_hours=2,  # Suggest comfort check every 2 hours
+            db=db
         )
         checklist_items.append(comfort_item)
 
-        # 6. Environmental Check
+        # 6. Environmental Check - Now includes tracking data
         environment_item = _create_checklist_item(
             baby_id=baby_id,
             baby_name=baby_name,
             item_type=ChecklistItemType.ENVIRONMENT,
             title="Check for overstimulation (noise, lights, people, colors)",
             description="Too much sensory input can overwhelm babies. Consider moving to a quiet, dimly lit space.",
-            last_activity=None,  # Always relevant
-            threshold_hours=0  # Always show this item
+            last_activity=None,  # Will be overridden by tracking data if available
+            threshold_hours=6,  # Environmental checks less frequent
+            db=db
         )
         checklist_items.append(environment_item)
 
@@ -311,6 +316,382 @@ def get_baby_care_checklist(
     return checklist_items
 
 
+def create_checklist_tracking(
+        db: Session,
+        user_id: int,
+        tracking_data: Dict[str, Any]
+) -> Any:
+    """
+    Create a tracking record for gas relief, comfort, or environmental factors.
+
+    Args:
+        db: Database session
+        user_id: ID of the user creating the tracking
+        tracking_data: Dictionary containing tracking information
+
+    Returns:
+        Created tracking record
+    """
+    from app.main.model.dashboard import (
+        GasReliefTracking, ComfortTracking, EnvironmentalTracking,
+        ChecklistItemType
+    )
+
+    item_type = tracking_data['item_type']
+    baby_id = tracking_data['baby_id']
+    notes = tracking_data.get('notes')
+
+    if item_type == ChecklistItemType.GAS_RELIEF:
+        # Create gas relief tracking
+        tracking = GasReliefTracking(
+            baby_id=baby_id,
+            recorded_by=user_id,
+            status=tracking_data.get('status', 'no_action'),
+            effective=None,  # Will be updated based on future crying episodes
+            notes=notes
+        )
+
+    elif item_type == ChecklistItemType.COMFORT:
+        # Create comfort tracking
+        tracking = ComfortTracking(
+            baby_id=baby_id,
+            recorded_by=user_id,
+            comfort_type=tracking_data.get('status', 'holding'),
+            duration_minutes=tracking_data.get('duration_minutes'),
+            effective=None,  # Will be updated based on future crying episodes
+            notes=notes
+        )
+
+    elif item_type == ChecklistItemType.ENVIRONMENT:
+        # Create environmental tracking
+        factors_adjusted = tracking_data.get('factors_adjusted', [])
+        if not factors_adjusted and tracking_data.get('status'):
+            factors_adjusted = [tracking_data['status']]
+
+        tracking = EnvironmentalTracking(
+            baby_id=baby_id,
+            recorded_by=user_id,
+            factors_checked=factors_adjusted,  # What was checked
+            factors_adjusted=factors_adjusted,  # What was adjusted
+            notes=notes
+        )
+    else:
+        raise ValueError(f"Invalid item type: {item_type}")
+
+    db.add(tracking)
+    db.commit()
+    db.refresh(tracking)
+
+    return tracking
+
+
+def get_checklist_history(
+        db: Session,
+        baby_id: int,
+        item_type: ChecklistItemType,
+        limit: int = 10
+) -> Dict[str, Any]:
+    """
+    Get tracking history for a specific checklist item.
+
+    Args:
+        db: Database session
+        baby_id: ID of the baby
+        item_type: Type of checklist item
+        limit: Maximum number of records to return
+
+    Returns:
+        Dictionary containing current status, last tracking, and recent history
+    """
+    from app.main.model.dashboard import (
+        GasReliefTracking, ComfortTracking, EnvironmentalTracking,
+        ChecklistItemStatus
+    )
+
+    # Determine which model to query based on item type
+    if item_type == ChecklistItemType.GAS_RELIEF:
+        model = GasReliefTracking
+        status_field = 'status'
+    elif item_type == ChecklistItemType.COMFORT:
+        model = ComfortTracking
+        status_field = 'comfort_type'
+    elif item_type == ChecklistItemType.ENVIRONMENT:
+        model = EnvironmentalTracking
+        status_field = 'factors_adjusted'
+    else:
+        raise ValueError(f"Invalid item type: {item_type}")
+
+    # Get recent tracking records
+    records = db.query(model).filter(
+        model.baby_id == baby_id
+    ).order_by(desc(model.created_at)).limit(limit).all()
+
+    # Get the most recent record
+    last_tracking = None
+    if records:
+        last_record = records[0]
+        last_tracking = _format_tracking_record(last_record, item_type)
+
+    # Format all records for history
+    recent_history = [_format_tracking_record(record, item_type) for record in records]
+
+    # Determine current status based on last tracking time
+    current_status = _determine_current_checklist_status(last_tracking, item_type)
+
+    return {
+        'current_status': current_status,
+        'last_tracking': last_tracking,
+        'recent_history': recent_history
+    }
+
+
+def get_checklist_insights(
+        db: Session,
+        baby_id: int,
+        item_type: ChecklistItemType
+) -> Dict[str, Any]:
+    """
+    Generate insights based on tracking history for a checklist item.
+
+    Args:
+        db: Database session
+        baby_id: ID of the baby
+        item_type: Type of checklist item
+
+    Returns:
+        Dictionary containing insights and patterns
+    """
+    from app.main.model.dashboard import (
+        GasReliefTracking, ComfortTracking, EnvironmentalTracking
+    )
+    from sqlalchemy import func
+
+    insights = {
+        'most_common_actions': [],
+        'effectiveness_patterns': {},
+        'time_patterns': {},
+        'recommendations': []
+    }
+
+    if item_type == ChecklistItemType.GAS_RELIEF:
+        # Analyze gas relief patterns
+        # Get most common actions
+        common_actions = db.query(
+            GasReliefTracking.status,
+            func.count(GasReliefTracking.id).label('count')
+        ).filter(
+            GasReliefTracking.baby_id == baby_id
+        ).group_by(GasReliefTracking.status).order_by(desc('count')).limit(3).all()
+
+        insights['most_common_actions'] = [
+            {'action': action, 'count': count} for action, count in common_actions
+        ]
+
+        # Get effectiveness data (where marked)
+        effective_actions = db.query(GasReliefTracking).filter(
+            GasReliefTracking.baby_id == baby_id,
+            GasReliefTracking.effective == True
+        ).all()
+
+        if effective_actions:
+            insights['effectiveness_patterns'] = {
+                'most_effective': _get_most_effective_action(effective_actions, 'status'),
+                'success_rate': f"{len(effective_actions) / len(common_actions) * 100:.0f}%" if common_actions else "0%"
+            }
+
+        # Recommendations based on patterns
+        if common_actions:
+            most_used = common_actions[0][0]
+            insights['recommendations'].append(
+                f"You most frequently use {most_used}. Consider trying different techniques if this isn't effective."
+            )
+
+    elif item_type == ChecklistItemType.COMFORT:
+        # Analyze comfort patterns
+        # Get most common comfort methods
+        common_methods = db.query(
+            ComfortTracking.comfort_type,
+            func.count(ComfortTracking.id).label('count'),
+            func.avg(ComfortTracking.duration_minutes).label('avg_duration')
+        ).filter(
+            ComfortTracking.baby_id == baby_id
+        ).group_by(ComfortTracking.comfort_type).order_by(desc('count')).limit(3).all()
+
+        insights['most_common_actions'] = [
+            {
+                'method': method,
+                'count': count,
+                'avg_duration': f"{avg_duration:.0f} min" if avg_duration else "N/A"
+            }
+            for method, count, avg_duration in common_methods
+        ]
+
+        # Time analysis - when comfort is most needed
+        comfort_by_hour = db.query(
+            func.extract('hour', ComfortTracking.created_at).label('hour'),
+            func.count(ComfortTracking.id).label('count')
+        ).filter(
+            ComfortTracking.baby_id == baby_id
+        ).group_by('hour').order_by(desc('count')).limit(3).all()
+
+        if comfort_by_hour:
+            insights['time_patterns'] = {
+                'peak_hours': [f"{hour}:00" for hour, _ in comfort_by_hour],
+                'description': "Times when baby most often needs comfort"
+            }
+
+        # Recommendations
+        if common_methods:
+            insights['recommendations'].append(
+                "Vary comfort techniques to prevent dependency on a single method."
+            )
+            if any(duration and duration > 30 for _, _, duration in common_methods):
+                insights['recommendations'].append(
+                    "Consider shorter comfort sessions to encourage self-soothing."
+                )
+
+    elif item_type == ChecklistItemType.ENVIRONMENT:
+        # Analyze environmental patterns
+        # Get all environmental checks
+        env_records = db.query(EnvironmentalTracking).filter(
+            EnvironmentalTracking.baby_id == baby_id
+        ).all()
+
+        if env_records:
+            # Count frequency of each factor
+            factor_counts = defaultdict(int)
+            for record in env_records:
+                for factor in record.factors_adjusted:
+                    factor_counts[factor] += 1
+
+            # Sort by frequency
+            sorted_factors = sorted(factor_counts.items(), key=lambda x: x[1], reverse=True)[:3]
+
+            insights['most_common_actions'] = [
+                {'factor': factor, 'count': count}
+                for factor, count in sorted_factors
+            ]
+
+            # Time patterns - when environmental issues occur
+            env_by_hour = db.query(
+                func.extract('hour', EnvironmentalTracking.created_at).label('hour'),
+                func.count(EnvironmentalTracking.id).label('count')
+            ).filter(
+                EnvironmentalTracking.baby_id == baby_id
+            ).group_by('hour').order_by(desc('count')).limit(3).all()
+
+            if env_by_hour:
+                insights['time_patterns'] = {
+                    'peak_hours': [f"{hour}:00" for hour, _ in env_by_hour],
+                    'description': "Times when environmental adjustments are most needed"
+                }
+
+            # Recommendations based on patterns
+            if sorted_factors:
+                most_common = sorted_factors[0][0]
+                if 'too_bright' in [f[0] for f in sorted_factors]:
+                    insights['recommendations'].append(
+                        "Light sensitivity is common. Consider blackout curtains or dimmer switches."
+                    )
+                if 'too_loud' in [f[0] for f in sorted_factors]:
+                    insights['recommendations'].append(
+                        "Noise sensitivity detected. White noise machines can help mask sudden sounds."
+                    )
+                if any('too_hot' in f[0] or 'too_cold' in f[0] for f in sorted_factors):
+                    insights['recommendations'].append(
+                        "Temperature regulation is important. Keep room between 68-72°F (20-22°C)."
+                    )
+
+    return insights
+
+
+def _format_tracking_record(record: Any, item_type: ChecklistItemType) -> Dict[str, Any]:
+    """Format a tracking record for API response."""
+    base_data = {
+        'id': record.id,
+        'created_at': record.created_at,
+        'baby_id': record.baby_id,
+        'item_type': item_type.value,
+        'recorded_by': record.recorded_by,
+        'notes': record.notes if hasattr(record, 'notes') else None
+    }
+
+    if item_type == ChecklistItemType.GAS_RELIEF:
+        base_data['status'] = record.status
+        base_data['effective'] = record.effective
+
+    elif item_type == ChecklistItemType.COMFORT:
+        base_data['status'] = record.comfort_type
+        base_data['duration_minutes'] = record.duration_minutes
+        base_data['effective'] = record.effective
+
+    elif item_type == ChecklistItemType.ENVIRONMENT:
+        base_data['factors_adjusted'] = record.factors_adjusted
+        base_data['factors_checked'] = record.factors_checked
+        base_data['room_temp'] = record.room_temp if hasattr(record, 'room_temp') else None
+        base_data['noise_level'] = record.noise_level if hasattr(record, 'noise_level') else None
+        base_data['light_level'] = record.light_level if hasattr(record, 'light_level') else None
+
+    return base_data
+
+
+def _determine_current_checklist_status(
+        last_tracking: Optional[Dict[str, Any]],
+        item_type: ChecklistItemType
+) -> ChecklistItemStatus:
+    """Determine current status based on last tracking time."""
+    if not last_tracking:
+        return ChecklistItemStatus.NOT_TRACKED
+
+    # Calculate time since last tracking
+    now = datetime.utcnow()
+    last_time = last_tracking['created_at']
+    hours_since = (now - last_time).total_seconds() / 3600
+
+    # Status thresholds vary by item type
+    if item_type == ChecklistItemType.GAS_RELIEF:
+        # Gas relief is typically needed after feeding
+        if hours_since < 1:
+            return ChecklistItemStatus.OK
+        elif hours_since < 3:
+            return ChecklistItemStatus.CHECK_NEEDED
+        else:
+            return ChecklistItemStatus.ACTION_REQUIRED
+
+    elif item_type == ChecklistItemType.COMFORT:
+        # Comfort needs are more variable
+        if hours_since < 2:
+            return ChecklistItemStatus.OK
+        elif hours_since < 4:
+            return ChecklistItemStatus.CHECK_NEEDED
+        else:
+            return ChecklistItemStatus.ACTION_REQUIRED
+
+    elif item_type == ChecklistItemType.ENVIRONMENT:
+        # Environmental factors are less time-sensitive
+        if hours_since < 6:
+            return ChecklistItemStatus.OK
+        elif hours_since < 12:
+            return ChecklistItemStatus.CHECK_NEEDED
+        else:
+            return ChecklistItemStatus.ACTION_REQUIRED
+
+    return ChecklistItemStatus.CHECK_NEEDED
+
+
+def _get_most_effective_action(records: List[Any], field_name: str) -> str:
+    """Find the most effective action from tracking records."""
+    action_counts = defaultdict(int)
+    for record in records:
+        action = getattr(record, field_name)
+        if action:
+            action_counts[action] += 1
+
+    if action_counts:
+        return max(action_counts, key=action_counts.get)
+    return "Unknown"
+
+
 def _create_checklist_item(
         baby_id: int,
         baby_name: str,
@@ -318,24 +699,23 @@ def _create_checklist_item(
         title: str,
         description: str,
         last_activity: Optional[datetime],
-        threshold_hours: float
+        threshold_hours: float,
+        db: Session = None  # Add db parameter
 ) -> Dict[str, Any]:
     """
     Create a checklist item formatted as an event for frontend compatibility.
-
-    Args:
-        baby_id: ID of the baby
-        baby_name: Name of the baby
-        item_type: Type of checklist item
-        title: Title of the checklist item
-        description: Description of what to check
-        last_activity: Time of last relevant activity (if applicable)
-        threshold_hours: Hours after which this becomes high priority
-
-    Returns:
-        Dictionary formatted as an event with checklist details
+    Enhanced to include tracking data for gas relief, comfort, and environment items.
     """
     now = datetime.utcnow()
+
+    # For tracked items, get the last tracking data
+    last_tracking_data = None
+    if db and item_type in [ChecklistItemType.GAS_RELIEF, ChecklistItemType.COMFORT, ChecklistItemType.ENVIRONMENT]:
+        history = get_checklist_history(db, baby_id, item_type, limit=1)
+        if history['last_tracking']:
+            last_tracking_data = history['last_tracking']
+            # Override last_activity with tracking time
+            last_activity = last_tracking_data['created_at']
 
     # Calculate time since last activity and status
     if last_activity:
@@ -371,6 +751,17 @@ def _create_checklist_item(
     # Determine action suggestion based on item type and status
     action_suggested = _get_action_suggestion(item_type, status, hours_since)
 
+    # Add tracking-specific information to action suggestion
+    if last_tracking_data:
+        if item_type == ChecklistItemType.GAS_RELIEF:
+            action_suggested += f" (Last action: {last_tracking_data.get('status', 'Unknown')})"
+        elif item_type == ChecklistItemType.COMFORT:
+            action_suggested += f" (Last method: {last_tracking_data.get('status', 'Unknown')})"
+        elif item_type == ChecklistItemType.ENVIRONMENT:
+            factors = last_tracking_data.get('factors_adjusted', [])
+            if factors:
+                action_suggested += f" (Last adjusted: {', '.join(factors)})"
+
     # Create the checklist item in event format for compatibility
     return {
         'id': f"checklist_{item_type.value}_{baby_id}",
@@ -386,7 +777,8 @@ def _create_checklist_item(
             'last_activity_time': last_activity,
             'time_since_last': time_since,
             'action_suggested': action_suggested,
-            'priority': priority
+            'priority': priority,
+            'last_tracking_data': last_tracking_data  # Include tracking data for frontend
         }
     }
 

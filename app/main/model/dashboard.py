@@ -1,10 +1,10 @@
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Annotated
 
 from fastapi import APIRouter
-from pydantic import BaseModel
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, JSON, Boolean
+from pydantic import BaseModel, Field
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, JSON, Boolean, Text
 from sqlalchemy.orm import relationship
 
 from app.main import Base
@@ -41,6 +41,36 @@ class ChecklistItemType(str, Enum):
     GAS_RELIEF = "gas_relief"
     COMFORT = "comfort"
     ENVIRONMENT = "environment"
+
+
+class GasReliefStatus(str, Enum):
+    BURPED = "burped"
+    BICYCLE_LEGS = "bicycle_legs"
+    TUMMY_MASSAGE = "tummy_massage"
+    UPRIGHT_POSITION = "upright_position"
+    NO_ACTION = "no_action"
+
+
+class ComfortType(str, Enum):
+    SKIN_TO_SKIN = "skin_to_skin"
+    SWADDLING = "swaddling"
+    ROCKING = "rocking"
+    HOLDING = "holding"
+    PACIFIER = "pacifier"
+    WHITE_NOISE = "white_noise"
+    SINGING = "singing"
+    OTHER = "other"
+
+
+class EnvironmentalFactor(str, Enum):
+    TOO_BRIGHT = "too_bright"
+    TOO_LOUD = "too_loud"
+    TOO_HOT = "too_hot"
+    TOO_COLD = "too_cold"
+    TOO_STIMULATING = "too_stimulating"
+    UNCOMFORTABLE_CLOTHING = "uncomfortable_clothing"
+    WET_BEDDING = "wet_bedding"
+    OPTIMAL = "optimal"
 
 
 class WidgetConfig(BaseModel):
@@ -92,6 +122,43 @@ class ChecklistItemDetails(BaseModel):
     action_suggested: Optional[str] = None
     priority: int = 0  # 0 = low, 1 = medium, 2 = high
 
+# Request/Response models for checklist tracking
+class ChecklistTrackingCreate(BaseModel):
+    baby_id: int
+    item_type: ChecklistItemType
+    status: Optional[str] = None  # Specific status based on item type
+    notes: Optional[str] = None
+    duration_minutes: Optional[int] = None  # For comfort tracking
+    factors_adjusted: Optional[List[str]] = None  # For environmental tracking
+
+
+class ChecklistTrackingResponse(BaseModel):
+    id: int
+    created_at: datetime
+    baby_id: int
+    item_type: ChecklistItemType
+    recorded_by: int
+    status: Optional[str] = None
+    notes: Optional[str] = None
+    duration_minutes: Optional[int] = None
+    factors_adjusted: Optional[List[str]] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ChecklistHistoryResponse(BaseModel):
+    baby_id: int
+    item_type: ChecklistItemType
+    current_status: ChecklistItemStatus
+    last_tracking: Optional[ChecklistTrackingResponse] = None
+    recent_history: Annotated[List[ChecklistTrackingResponse] , Field(default_factory=list)]
+    insights: Annotated[Dict[str, Any] , Field(default_factory=dict)]
+
+    model_config = {
+        "from_attributes": True
+    }
+
 # API Router
 router = APIRouter(
     prefix="/dashboard",
@@ -119,3 +186,63 @@ class DashboardPreference(Base):
 
     def __repr__(self):
         return f"<DashboardPreference for user {self.user_id}>"
+
+class GasReliefTracking(Base):
+    __tablename__ = "gas_relief_tracking"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    baby_id = Column(Integer, ForeignKey('baby.id'), nullable=False)
+    recorded_by = Column(Integer, ForeignKey('users.id'), nullable=False)
+    status = Column(String(50), nullable=False)  # GasReliefStatus enum value
+    effective = Column(Boolean, nullable=True)  # Whether the action helped
+    notes = Column(Text, nullable=True)
+
+    # Relationships
+    baby = relationship("Baby")
+    user = relationship("User")
+
+    def __repr__(self):
+        return f"<GasReliefTracking for baby {self.baby_id} at {self.created_at}>"
+
+
+class ComfortTracking(Base):
+    __tablename__ = "comfort_tracking"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    baby_id = Column(Integer, ForeignKey('baby.id'), nullable=False)
+    recorded_by = Column(Integer, ForeignKey('users.id'), nullable=False)
+    comfort_type = Column(String(50), nullable=False)  # ComfortType enum value
+    duration_minutes = Column(Integer, nullable=True)
+    effective = Column(Boolean, nullable=True)  # Whether the comfort method helped
+    notes = Column(Text, nullable=True)
+
+    # Relationships
+    baby = relationship("Baby")
+    user = relationship("User")
+
+    def __repr__(self):
+        return f"<ComfortTracking for baby {self.baby_id} at {self.created_at}>"
+
+
+class EnvironmentalTracking(Base):
+    __tablename__ = "environmental_tracking"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    baby_id = Column(Integer, ForeignKey('baby.id'), nullable=False)
+    recorded_by = Column(Integer, ForeignKey('users.id'), nullable=False)
+    factors_checked = Column(JSON, nullable=False)  # List of EnvironmentalFactor values
+    factors_adjusted = Column(JSON, nullable=True)  # List of adjustments made
+    room_temp = Column(Integer, nullable=True)  # Optional room temperature
+    noise_level = Column(String(20), nullable=True)  # quiet, moderate, loud
+    light_level = Column(String(20), nullable=True)  # dark, dim, bright
+    notes = Column(Text, nullable=True)
+
+    # Relationships
+    baby = relationship("Baby")
+    user = relationship("User")
+
+    def __repr__(self):
+        return f"<EnvironmentalTracking for baby {self.baby_id} at {self.created_at}>"
