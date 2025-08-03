@@ -1857,7 +1857,7 @@
         renderEnhancedChecklistItem(item) {
             const isActionRequired = item.details.status === 'action_required';
             const isNotTracked = item.details.status === 'not_tracked';
-            const itemId = `checklist-${item.id}`;
+            const itemId = item.id;
 
             // Determine item title based on type
             const itemTitles = {
@@ -1929,7 +1929,7 @@
         renderInlineTrackingInterface(item) {
             const itemType = item.details.item_type;
             const babyId = item.baby_id;
-            const itemId = `checklist-${item.id}`;
+            const itemId = `${item.id}`;
 
             // Only show inline tracking for gas relief, comfort, and environment
             if (!['gas_relief', 'comfort', 'environment'].includes(itemType)) {
@@ -2259,73 +2259,71 @@
                         endpoint = '/feeding';
                         const feedingType = formData.get('feedingType');
 
+                        // Send fields directly in body, not nested
                         requestBody = {
-                            feeding: {
-                                baby_id: babyId,
-                                feeding_type: feedingType,
-                                start_time: new Date(formData.get('startTime')).toISOString(),
-                                notes: formData.get('notes') || ''
-                            }
+                            baby_id: babyId,
+                            feeding_type: feedingType,
+                            start_time: new Date(formData.get('startTime')).toISOString(),
+                            notes: formData.get('notes') || ''
                         };
 
                         // Add type-specific fields
                         if (feedingType === 'breast') {
                             if (formData.get('duration')) {
-                                requestBody.feeding.duration = parseInt(formData.get('duration'));
+                                requestBody.duration = parseInt(formData.get('duration'));
                             }
                             if (formData.get('lastBreast')) {
-                                requestBody.feeding.last_breast = formData.get('lastBreast');
+                                requestBody.last_breast = formData.get('lastBreast');
                             }
                         } else if (feedingType === 'bottle') {
                             if (formData.get('amount')) {
-                                requestBody.feeding.amount = parseInt(formData.get('amount'));
+                                requestBody.amount = parseInt(formData.get('amount'));
                             }
                             if (formData.get('bottleContentType')) {
-                                requestBody.feeding.bottle_content_type = formData.get('bottleContentType');
+                                requestBody.bottle_content_type = formData.get('bottleContentType');
                             }
                         } else if (feedingType === 'solid') {
                             if (formData.get('solidFood')) {
-                                requestBody.feeding.solid_food = formData.get('solidFood');
+                                requestBody.solid_food = formData.get('solidFood');
                             }
                             if (formData.get('solidAmount')) {
-                                requestBody.feeding.amount = formData.get('solidAmount');
+                                requestBody.amount = formData.get('solidAmount');
                             }
                         } else if (feedingType === 'pumping') {
                             if (formData.get('pumpedVolumeLeft')) {
-                                requestBody.feeding.pumped_volume_left = parseInt(formData.get('pumpedVolumeLeft'));
+                                requestBody.pumped_volume_left = parseInt(formData.get('pumpedVolumeLeft'));
                             }
                             if (formData.get('pumpedVolumeRight')) {
-                                requestBody.feeding.pumped_volume_right = parseInt(formData.get('pumpedVolumeRight'));
+                                requestBody.pumped_volume_right = parseInt(formData.get('pumpedVolumeRight'));
                             }
                         }
                         break;
 
                     case 'sleep':
                         endpoint = '/sleep';
+                        // Send fields directly in body, not nested
                         requestBody = {
-                            sleep: {
-                                baby_id: babyId,
-                                start_time: new Date(formData.get('startTime')).toISOString(),
-                                location: formData.get('location'),
-                                quality: formData.get('quality') || 'fair',
-                                notes: formData.get('notes') || ''
-                            }
+                            baby_id: babyId,
+                            start_time: new Date(formData.get('startTime')).toISOString(),
+                            location: formData.get('location'),
+                            quality: formData.get('quality') || 'fair',
+                            notes: formData.get('notes') || ''
                         };
 
                         if (formData.get('endTime')) {
-                            requestBody.sleep.end_time = new Date(formData.get('endTime')).toISOString();
+                            requestBody.end_time = new Date(formData.get('endTime')).toISOString();
                         }
                         break;
 
                     case 'diaper':
                         endpoint = '/diaper';
+                        // Send fields directly in body, not nested
+                        // Map diaper_type to content as expected by backend
                         requestBody = {
-                            diaper: {
-                                baby_id: babyId,
-                                diaper_type: formData.get('diaperType'),
-                                time: new Date(formData.get('time')).toISOString(),
-                                notes: formData.get('notes') || ''
-                            }
+                            baby_id: babyId,
+                            content: formData.get('diaperType'), // Backend expects 'content' not 'diaper_type'
+                            time: new Date(formData.get('time')).toISOString(),
+                            notes: formData.get('notes') || ''
                         };
                         break;
                 }
@@ -2342,10 +2340,10 @@
                     this.showToast(`${itemType.charAt(0).toUpperCase() + itemType.slice(1)} tracked successfully!`, 'success');
                     this.closeQuickTrackingModal();
 
-                    // Refresh dashboard after a short delay
-                    setTimeout(() => {
-                        this.refreshDashboard();
-                    }, 1000);
+                    // Refresh dashboard after a longer delay to ensure backend processing
+                    setTimeout(async () => {
+                        await this.refreshDashboard();
+                    }, 1500); // Increased from 1000ms
                 } else {
                     const error = await BabyHelperAuth.api.parseErrorResponse(response);
                     throw new Error(error.detail || `Failed to track ${itemType}`);
@@ -2953,14 +2951,15 @@
                     // Success feedback
                     this.showToast(`Gas relief tracked: ${method.replace('_', ' ')}`, 'success');
 
-                    // Update the checklist item UI
+                    // Add visual feedback that will be cleared on refresh
                     const checklistItem = document.getElementById(itemId);
-                    checklistItem.classList.add('opacity-50', 'scale-95');
+                    if (checklistItem) {
+                        checklistItem.classList.add('animate-fade-out');
+                    }
 
-                    // Refresh the widget data after a short delay
-                    setTimeout(() => {
-                        this.refreshDashboard();
-                    }, 1000);
+                    setTimeout(async () => {
+                        await this.refreshDashboard();
+                    }, 1500);
                 } else {
                     const error = await BabyHelperAuth.api.parseErrorResponse(response);
                     throw new Error(error.detail || 'Failed to track gas relief');
@@ -3005,7 +3004,7 @@
             document.getElementById(`duration-display-${itemId}`).textContent = `${value} min`;
         },
 
-// Comfort Tracking
+        // Comfort Tracking
         async trackComfort(itemId, babyId) {
             const submitBtn = document.getElementById(`comfort-submit-${itemId}`);
             const selectedMethod = submitBtn.dataset.selectedMethod;
@@ -3043,13 +3042,15 @@
                 if (response.ok) {
                     this.showToast(`Comfort session tracked: ${selectedMethod.replace('_', ' ')} for ${duration} minutes`, 'success');
 
-                    // Update UI
+                    // Add visual feedback
                     const checklistItem = document.getElementById(itemId);
-                    checklistItem.classList.add('opacity-50', 'scale-95');
+                    if (checklistItem) {
+                        checklistItem.classList.add('animate-fade-out');
+                    }
 
-                    setTimeout(() => {
-                        this.refreshDashboard();
-                    }, 1000);
+                    setTimeout(async () => {
+                        await this.refreshDashboard();
+                    }, 1500);
                 } else {
                     const error = await BabyHelperAuth.api.parseErrorResponse(response);
                     throw new Error(error.detail || 'Failed to track comfort session');
@@ -3085,7 +3086,7 @@
             }
         },
 
-// Environment Tracking
+        // Environment Tracking
         async trackEnvironment(itemId, babyId) {
             const checkboxes = document.querySelectorAll(`#${itemId} .env-factor-checkbox:checked`);
             const factors = Array.from(checkboxes).map(cb => cb.value);
@@ -3122,13 +3123,15 @@
                     const factorText = factors.includes('optimal') ? 'Environment is optimal' : `Adjusted ${factors.length} factor(s)`;
                     this.showToast(factorText, 'success');
 
-                    // Update UI
+                    // Add visual feedback
                     const checklistItem = document.getElementById(itemId);
-                    checklistItem.classList.add('opacity-50', 'scale-95');
+                    if (checklistItem) {
+                        checklistItem.classList.add('animate-fade-out');
+                    }
 
-                    setTimeout(() => {
-                        this.refreshDashboard();
-                    }, 1000);
+                    setTimeout(async () => {
+                        await this.refreshDashboard();
+                    }, 1500);
                 } else {
                     const error = await BabyHelperAuth.api.parseErrorResponse(response);
                     throw new Error(error.detail || 'Failed to track environmental adjustments');
@@ -4255,6 +4258,18 @@
                 this.updateTimeframeSelector();
             });
 
+            // Quick tracking modal close button
+            document.getElementById('closeQuickTracking').addEventListener('click', () => {
+                this.closeQuickTrackingModal();
+            });
+
+            // Close quick tracking modal when clicking backdrop
+            document.getElementById('quickTrackingModal').addEventListener('click', (e) => {
+                if (e.target.id === 'quickTrackingModal') {
+                    this.closeQuickTrackingModal();
+                }
+            });
+
             document.getElementById('customDateApply').addEventListener('click', () => {
                 const startDate = document.getElementById('customStartDate').value;
                 const endDate = document.getElementById('customEndDate').value;
@@ -4395,6 +4410,11 @@
         },
 
         async refreshDashboard() {
+            // Clear any fade-out animations before refresh
+            document.querySelectorAll('.animate-fade-out').forEach(el => {
+                el.classList.remove('animate-fade-out');
+            });
+
             this.showLoading(true);
             await this.loadDashboardData();
             this.showLoading(false);

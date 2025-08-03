@@ -6,6 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
+from fastapi.exceptions import RequestValidationError
+
 
 from .main import get_db
 from .main.controller import (
@@ -366,6 +368,24 @@ def create_app():
                 "Go back to Safety"
             ),
             status_code=500
+        )
+
+    # Custom 422 handler for validation errors
+    @app.exception_handler(RequestValidationError)
+    async def custom_422_handler(request: Request, exc: RequestValidationError):
+        # Print request info for debugging
+        body = await request.body()
+        print(f"422 Error - Request path: {request.url.path}")
+        print(f"Request body: {body.decode('utf-8')}")
+        print(f"Validation errors: {exc.errors()}")
+
+        return HTMLResponse(
+            content=generate_error_html(
+                "422",
+                "Unprocessable Entity",
+                "The request data was invalid. Check your input and try again."
+            ),
+            status_code=422
         )
 
     return app
