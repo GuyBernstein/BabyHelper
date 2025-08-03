@@ -347,10 +347,6 @@
         }
 
         @media (min-width: 768px) {
-            .checklist-columns-container {
-                grid-template-columns: 1fr 1fr;
-                gap: 1.5rem;
-            }
         }
 
         .checklist-column {
@@ -440,6 +436,304 @@
             border-top-color: #ff8c69;
             animation: spin 0.8s linear infinite;
             margin-bottom: 1rem;
+        }
+
+        /* Accordion styles for checklist */
+        .checklist-accordion {
+            space-y: 0.5rem;
+        }
+
+        .accordion-section {
+            background-color: #fdf6f0;
+            border-radius: 0.75rem;
+            border: 1px solid #ffe8d9;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .accordion-section.active {
+            box-shadow: 0 4px 12px rgba(255, 140, 105, 0.1);
+        }
+
+        .accordion-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            background-color: #ffe8d9;
+            transition: background-color 0.2s ease;
+            user-select: none;
+        }
+
+        .accordion-header:hover {
+            background-color: #ffd8cc;
+        }
+
+        .accordion-header h3 {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: #5c4d44;
+            margin: 0;
+        }
+
+        .accordion-indicator {
+            width: 1.25rem;
+            height: 1.25rem;
+            transition: transform 0.3s ease;
+            color: #ff8c69;
+        }
+
+        .accordion-section.active .accordion-indicator {
+            transform: rotate(180deg);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .accordion-section.active .accordion-content {
+            max-height: 2000px;
+        }
+
+        .accordion-content-inner {
+            padding: 1rem 1.25rem;
+            space-y: 0.75rem;
+        }
+
+        /* Enhanced checklist item styles */
+        .checklist-item-enhanced {
+            background-color: white;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            border: 1px solid #ffe8d9;
+            transition: all 0.2s ease;
+        }
+
+        .checklist-item-enhanced:hover {
+            border-color: #ffb5a7;
+            box-shadow: 0 2px 8px rgba(255, 140, 105, 0.1);
+        }
+
+        .checklist-item-enhanced.action-required {
+            border-color: #fca5a5;
+            background-color: #fef2f2;
+        }
+
+        .item-header {
+            display: flex;
+            align-items: start;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .item-title {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: #5c4d44;
+            margin: 0;
+        }
+
+        .item-badge {
+            font-size: 0.625rem;
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            font-weight: 500;
+        }
+
+        .badge-urgent {
+            background-color: #fca5a5;
+            color: #7f1d1d;
+        }
+
+        .badge-normal {
+            background-color: #ddd6fe;
+            color: #5b21b6;
+        }
+
+        .item-description {
+            font-size: 0.8125rem;
+            color: #938278;
+            margin-bottom: 0.75rem;
+        }
+
+        .item-action {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            background-color: #fdf6f0;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .item-action:hover {
+            background-color: #ffe8d9;
+        }
+
+        .item-checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .item-checkbox {
+            width: 1.125rem;
+            height: 1.125rem;
+            border-radius: 0.25rem;
+            border: 2px solid #ff8c69;
+            flex-shrink: 0;
+        }
+
+        .checkbox-hint {
+            font-size: 0.8125rem;
+            color: #6d5d52;
+            font-weight: 500;
+        }
+
+        /* Quick tracking form styles */
+        .quick-track-form {
+            space-y: 1rem;
+        }
+
+        .form-group {
+            space-y: 0.25rem;
+        }
+
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #5c4d44;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #ffe8d9;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #ff8c69;
+            box-shadow: 0 0 0 3px rgba(255, 140, 105, 0.1);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #ffe8d9;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #ffe8d9;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            resize: none;
+            min-height: 4rem;
+        }
+
+        .form-radio-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .form-radio-label {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            color: #6d5d52;
+        }
+
+        .form-radio {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid #ff8c69;
+        }
+
+        .form-buttons {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn-submit {
+            flex: 1;
+            padding: 0.625rem 1rem;
+            background-color: #ff8c69;
+            color: white;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            background-color: #ff7043;
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-cancel {
+            padding: 0.625rem 1rem;
+            background-color: transparent;
+            color: #6d5d52;
+            border: 1px solid #ffe8d9;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .btn-cancel:hover {
+            background-color: #fdf6f0;
+        }
+
+        /* Mobile baby separator for accordion */
+        .baby-accordion-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .baby-accordion-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            background-color: #ff8c69;
+            color: white;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .baby-accordion-header h4 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .baby-accordion-badge {
+            font-size: 0.75rem;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
         }
     </style>
 </head>
@@ -579,6 +873,26 @@
                     class="px-4 py-2 bg-pastel-primary text-white rounded-lg hover:bg-pastel-primaryHover transition-colors">
                 Apply
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Tracking Modal -->
+<div id="quickTrackingModal"
+     class="hidden fixed inset-0 bg-black bg-opacity-50 modal-backdrop z-[60] flex items-center justify-center">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-serif text-xl text-pastel-heading" id="quickTrackingTitle">Quick Track</h3>
+            <button id="closeQuickTracking" class="p-2 hover:bg-pastel-lightest rounded-full transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                     stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <div id="quickTrackingContent">
+            <!-- Dynamic form content will be inserted here -->
         </div>
     </div>
 </div>
@@ -1444,26 +1758,25 @@
 
                 // Render each baby's checklist
                 Object.entries(itemsByBaby).forEach(([babyName, items]) => {
-                    const babyId = items[0].baby_id; // Get baby ID from first item
+                    const babyId = items[0].baby_id;
                     const hasActionRequired = items.some(item => item.details.status === 'action_required');
 
                     content += `
-                <div class="baby-checklist-section ${hasActionRequired ? 'ring-2 ring-red-400' : ''}">
-                    <div class="baby-checklist-header">
-                        <h4 class="font-medium text-pastel-heading flex items-center">
-                            ${babyName}
-                            ${hasActionRequired ? '<span class="ml-2 text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full animate-pulse">Needs attention</span>' : ''}
-                        </h4>
-                        <span class="text-xs text-pastel-textLight">${items.length} items to check</span>
+                <div class="baby-accordion-container ${hasActionRequired ? 'ring-2 ring-red-400 rounded-lg' : ''}">
+                    <div class="baby-accordion-header">
+                        <h4>${babyName}</h4>
+                        <span class="baby-accordion-badge">
+                            ${hasActionRequired ? 'Needs attention' : `${items.length} items`}
+                        </span>
                     </div>
-                    ${this.renderChecklistColumns(items, babyId)}
+                    ${this.renderChecklistAccordion(items, babyId)}
                 </div>
             `;
                 });
             } else {
                 // Single baby view
                 const babyId = sortedItems.length > 0 ? sortedItems[0].baby_id : null;
-                content = this.renderChecklistColumns(sortedItems, babyId);
+                content = this.renderChecklistAccordion(sortedItems, babyId);
             }
 
             // Handle empty state
@@ -1486,131 +1799,576 @@
     `;
         },
 
-        renderChecklistColumns(items, babyId) {
-            // Separate items by type
-            const column1Items = items.filter(item =>
+        renderChecklistAccordion(items, babyId) {
+            // Separate items by category
+            const essentialItems = items.filter(item =>
                 ['feeding', 'diaper', 'sleep'].includes(item.details.item_type)
             );
-            const column2Items = items.filter(item =>
+            const wellnessItems = items.filter(item =>
                 ['gas_relief', 'comfort', 'environment'].includes(item.details.item_type)
             );
 
-            return `
-        <div class="checklist-columns-container">
-            <div class="checklist-column">
-                ${column1Items.length > 0 ? `
-                    <div class="checklist-column-header">Basic Needs</div>
-                    <div class="space-y-2">
-                        ${column1Items.map(item => this.renderChecklistItem(item)).join('')}
+            let accordionHtml = '<div class="checklist-accordion space-y-3">';
+
+            // Essential Care Section
+            if (essentialItems.length > 0) {
+                const hasEssentialAction = essentialItems.some(item => item.details.status === 'action_required');
+                accordionHtml += `
+            <div class="accordion-section ${hasEssentialAction ? 'active' : ''}" data-category="essentials">
+                <div class="accordion-header" onclick="Dashboard.toggleAccordion('essentials')">
+                    <h3>Essential Care ${hasEssentialAction ? '🔴' : ''}</h3>
+                    <svg class="accordion-indicator" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner space-y-3">
+                        ${essentialItems.map(item => this.renderEnhancedChecklistItem(item)).join('')}
                     </div>
-                ` : ''}
+                </div>
             </div>
-            <div class="checklist-column">
-                ${column2Items.length > 0 ? `
-                    <div class="checklist-column-header">Comfort & Wellness</div>
-                    <div class="space-y-2">
-                        ${column2Items.map(item => this.renderChecklistItem(item)).join('')}
+        `;
+            }
+
+            // Comfort & Wellness Section
+            if (wellnessItems.length > 0) {
+                const hasWellnessAction = wellnessItems.some(item => item.details.status === 'action_required');
+                accordionHtml += `
+            <div class="accordion-section ${hasWellnessAction ? 'active' : ''}" data-category="wellness">
+                <div class="accordion-header" onclick="Dashboard.toggleAccordion('wellness')">
+                    <h3>Comfort & Wellness ${hasWellnessAction ? '🟡' : ''}</h3>
+                    <svg class="accordion-indicator" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-content-inner space-y-3">
+                        ${wellnessItems.map(item => this.renderEnhancedChecklistItem(item)).join('')}
                     </div>
-                ` : ''}
+                </div>
             </div>
-        </div>
-    `;
+        `;
+            }
+
+            accordionHtml += '</div>';
+            return accordionHtml;
         },
 
-        renderChecklistItem(item) {
+        renderEnhancedChecklistItem(item) {
             const isActionRequired = item.details.status === 'action_required';
             const isNotTracked = item.details.status === 'not_tracked';
             const itemId = `checklist-${item.id}`;
-            const isTrackableType = ['gas_relief', 'comfort', 'environment'].includes(item.details.item_type);
 
-
-            // Determine icon based on item type
-            const icons = {
-                'feeding': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>',
-                'diaper': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>',
-                'sleep': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>',
-                'gas_relief': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>',
-                'comfort': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>',
-                'environment': '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>'
+            // Determine item title based on type
+            const itemTitles = {
+                'feeding': 'Feeding Time',
+                'diaper': 'Diaper Check',
+                'sleep': 'Sleep Schedule',
+                'gas_relief': 'Gas Relief Check',
+                'comfort': 'Comfort Assessment',
+                'environment': 'Environment Check'
             };
 
-            const iconPath = icons[item.details.item_type] || '';
-            const iconColor = isActionRequired ? 'text-red-500' : (isNotTracked ? 'text-gray-400' : 'text-pastel-primary');
+            const itemTitle = itemTitles[item.details.item_type] || item.details.title;
+
+            // Determine checkbox action and hint
+            const isQuickTrack = ['feeding', 'diaper', 'sleep'].includes(item.details.item_type);
+            const checkboxAction = isQuickTrack ? 'quick-track' : 'view-history';
+            const checkboxHint = isQuickTrack ? 'Click to add entry' : 'Click to view history';
+
+            // Format time since last
+            let timeSinceText = '';
+            if (item.details.last_activity_time) {
+                timeSinceText = `Last: ${item.details.time_since_last}`;
+            } else {
+                timeSinceText = 'Not tracked yet';
+            }
 
             return `
-        <div id="${itemId}" class="checklist-item p-3 rounded-lg border ${isActionRequired ? 'border-red-200 bg-red-50' : 'border-pastel-light bg-pastel-lightest'} transition-all duration-300">
-            <div class="flex items-start space-x-3">
-                <!-- Checkbox or Icon -->
-                <div class="flex-shrink-0 mt-1">
-                    ${isNotTracked && !isTrackableType ?
-                `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ${iconColor}" fill="none" viewBox="0 0 24 24" stroke="currentColor">${iconPath}</svg>` :
-                `<input type="checkbox"
-                                class="checklist-checkbox w-5 h-5 text-pastel-primary focus:ring-pastel-primary border-gray-300 rounded cursor-pointer"
-                                onclick="Dashboard.handleChecklistCheckbox('${item.details.item_type}', ${item.baby_id}, '${item.baby_name}')"
-                                aria-label="View history for ${item.details.title}">`
+        <div id="${itemId}" class="checklist-item-enhanced ${isActionRequired ? 'action-required' : ''}">
+            <div class="item-header">
+                <h4 class="item-title">${itemTitle}</h4>
+                ${isActionRequired ?
+                '<span class="item-badge badge-urgent animate-pulse">Action needed</span>' :
+                (item.details.priority >= 8 ? '<span class="item-badge badge-normal">Check soon</span>' : '')
             }
-                </div>
+            </div>
 
-                <!-- Content -->
-                <div class="flex-1">
-                    <h4 class="font-medium ${isActionRequired ? 'text-red-800' : 'text-pastel-heading'} text-sm mb-1">
-                        ${item.details.title}
-                    </h4>
-                    <p class="text-xs text-pastel-textLight mb-2">${item.details.description}</p>
-
-                    <!-- Action or Status -->
-                    ${isActionRequired ? `
-                        <div class="bg-white bg-opacity-60 rounded p-2 mb-2">
-                            <p class="text-xs font-medium ${isActionRequired ? 'text-red-700' : 'text-pastel-primary'}">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="inline h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                </svg>
-                                ${item.details.action_suggested}
-                            </p>
-                        </div>
-                    ` : ''}
-
-                    <!-- Time since last -->
-                    <div class="flex items-center justify-between mb-2">
-                        <p class="text-xs text-pastel-textLight">
-                            ${item.details.last_activity_time ?
-                `<svg xmlns="http://www.w3.org/2000/svg" class="inline h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                Last: ${item.details.time_since_last}` :
-                'Not tracked yet'
+            <p class="item-description">
+                ${item.details.description}
+                ${isActionRequired && item.details.action_suggested ?
+                `<br><strong class="text-red-700">${item.details.action_suggested}</strong>` :
+                ''
             }
-                        </p>
-                    </div>
+            </p>
 
-                    <!-- Interactive Tracking Interfaces -->
-                    ${this.renderTrackingInterface(item)}
+            <div class="text-xs text-pastel-textLight mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="inline h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                ${timeSinceText}
+            </div>
+
+            <div class="item-action" onclick="Dashboard.handleEnhancedCheckbox('${item.details.item_type}', ${item.baby_id}, '${item.baby_name}')">
+                <div class="item-checkbox-wrapper">
+                    <input type="checkbox"
+                           class="item-checkbox"
+                           data-action="${checkboxAction}"
+                           data-type="${item.details.item_type}"
+                           onclick="event.stopPropagation()">
+                    <span class="checkbox-hint">${checkboxHint}</span>
                 </div>
             </div>
+
+            ${this.renderInlineTrackingInterface(item)}
         </div>
     `;
         },
 
-        async handleChecklistCheckbox(itemType, babyId, babyName) {
+        // Update the inline tracking interface for the enhanced items
+        renderInlineTrackingInterface(item) {
+            const itemType = item.details.item_type;
+            const babyId = item.baby_id;
+            const itemId = `checklist-${item.id}`;
+
+            // Only show inline tracking for gas relief, comfort, and environment
+            if (!['gas_relief', 'comfort', 'environment'].includes(itemType)) {
+                return '';
+            }
+
+            switch (itemType) {
+                case 'gas_relief':
+                    return this.renderGasReliefTracking(itemId, babyId);
+                case 'comfort':
+                    return this.renderComfortTracking(itemId, babyId);
+                case 'environment':
+                    return this.renderEnvironmentTracking(itemId, babyId);
+                default:
+                    return '';
+            }
+        },
+
+        // Add new accordion toggle function
+        toggleAccordion(category) {
+            const sections = document.querySelectorAll('.accordion-section');
+            sections.forEach(section => {
+                if (section.dataset.category === category) {
+                    section.classList.toggle('active');
+                }
+            });
+        },
+
+        // Update the checkbox handler for enhanced functionality
+        async handleEnhancedCheckbox(itemType, babyId, babyName) {
+            const checkbox = event.currentTarget.querySelector('.item-checkbox');
+            const action = checkbox.dataset.action;
+
             // Prevent checkbox from staying checked
-            event.target.checked = false;
+            checkbox.checked = false;
 
-            if (['gas_relief', 'comfort', 'environment'].includes(itemType)) {
-                // Fetch and display history
+            if (action === 'view-history') {
+                // For gas_relief, comfort, environment - show history
                 await this.fetchAndDisplayHistory(itemType, babyId, babyName);
-            } else {
-                // Redirect to dedicated tracking pages
-                const redirectMap = {
-                    'feeding': '/feeding-tracker',
-                    'diaper': '/diaper-tracker',
-                    'sleep': '/sleep-tracker'
-                };
+            } else if (action === 'quick-track') {
+                // For feeding, diaper, sleep - show quick tracking modal
+                this.displayQuickTrackingModal(itemType, babyId, babyName);
+            }
+        },
 
-                if (redirectMap[itemType]) {
-                    this.showToast(`Opening ${itemType} tracker...`);
-                    window.location.href = redirectMap[itemType];
+        // Add quick tracking modal display function
+        displayQuickTrackingModal(itemType, babyId, babyName) {
+            const modal = document.getElementById('quickTrackingModal');
+            const title = document.getElementById('quickTrackingTitle');
+            const content = document.getElementById('quickTrackingContent');
+
+            // Set title
+            const titles = {
+                'feeding': 'Quick Feeding Entry',
+                'sleep': 'Quick Sleep Entry',
+                'diaper': 'Quick Diaper Change'
+            };
+            title.textContent = titles[itemType] || 'Quick Entry';
+
+            // Generate form content
+            content.innerHTML = this.generateQuickTrackForm(itemType, babyId, babyName);
+
+            // Show modal
+            modal.classList.remove('hidden');
+
+            // Setup form submission
+            const form = content.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    await this.submitQuickTracking(itemType, form, babyId);
+                });
+            }
+        },
+
+        // Generate quick tracking forms
+        generateQuickTrackForm(itemType, babyId, babyName) {
+            const now = new Date();
+            const nowStr = now.toISOString().slice(0, 16); // Format for datetime-local input
+
+            switch (itemType) {
+                case 'feeding':
+                    return `
+                <form id="quick-feeding-form" class="quick-track-form">
+                    <p class="text-sm text-pastel-textLight mb-4">Track feeding for ${babyName}</p>
+
+                    <div class="form-group">
+                        <label class="form-label">Feeding Type</label>
+                        <select name="feedingType" class="form-select" required onchange="Dashboard.handleFeedingTypeChange(this.value)">
+                            <option value="">Select type...</option>
+                            <option value="breast">Breastfeeding</option>
+                            <option value="bottle">Bottle</option>
+                            <option value="solid">Solid Food</option>
+                            <option value="pumping">Pumping</option>
+                        </select>
+                    </div>
+
+                    <div id="breastFields" class="hidden space-y-3">
+                        <div class="form-group">
+                            <label class="form-label">Duration (minutes)</label>
+                            <input type="number" name="duration" class="form-input" placeholder="15" min="1" max="120">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Last Breast</label>
+                            <div class="form-radio-group">
+                                <label class="form-radio-label">
+                                    <input type="radio" name="lastBreast" value="left" class="form-radio">
+                                    <span>Left</span>
+                                </label>
+                                <label class="form-radio-label">
+                                    <input type="radio" name="lastBreast" value="right" class="form-radio">
+                                    <span>Right</span>
+                                </label>
+                                <label class="form-radio-label">
+                                    <input type="radio" name="lastBreast" value="both" class="form-radio">
+                                    <span>Both</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="bottleFields" class="hidden space-y-3">
+                        <div class="form-group">
+                            <label class="form-label">Amount (ml)</label>
+                            <input type="number" name="amount" class="form-input" placeholder="120" min="10" max="500" step="10">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Bottle Content</label>
+                            <select name="bottleContentType" class="form-select">
+                                <option value="breast_milk">Breast Milk</option>
+                                <option value="formula">Formula</option>
+                                <option value="mixed">Mixed</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="solidFields" class="hidden space-y-3">
+                        <div class="form-group">
+                            <label class="form-label">Food Description</label>
+                            <input type="text" name="solidFood" class="form-input" placeholder="e.g., Pureed carrots">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Amount (optional)</label>
+                            <input type="text" name="solidAmount" class="form-input" placeholder="e.g., 2 tbsp">
+                        </div>
+                    </div>
+
+                    <div id="pumpingFields" class="hidden space-y-3">
+                        <div class="form-group">
+                            <label class="form-label">Left Breast (ml)</label>
+                            <input type="number" name="pumpedVolumeLeft" class="form-input" placeholder="60" min="0" max="500">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Right Breast (ml)</label>
+                            <input type="number" name="pumpedVolumeRight" class="form-input" placeholder="60" min="0" max="500">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Time</label>
+                        <input type="datetime-local" name="startTime" class="form-input" value="${nowStr}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Notes (optional)</label>
+                        <textarea name="notes" class="form-textarea" placeholder="Any observations..."></textarea>
+                    </div>
+
+                    <div class="form-buttons">
+                        <button type="button" onclick="Dashboard.closeQuickTrackingModal()" class="btn-cancel">Cancel</button>
+                        <button type="submit" class="btn-submit">Save Feeding</button>
+                    </div>
+                </form>
+            `;
+
+                case 'sleep':
+                    return `
+                <form id="quick-sleep-form" class="quick-track-form">
+                    <p class="text-sm text-pastel-textLight mb-4">Track sleep for ${babyName}</p>
+
+                    <div class="form-group">
+                        <label class="form-label">Sleep Start Time</label>
+                        <input type="datetime-local" name="startTime" class="form-input" value="${nowStr}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Sleep End Time (optional)</label>
+                        <input type="datetime-local" name="endTime" class="form-input">
+                        <p class="text-xs text-pastel-textLight mt-1">Leave empty if baby is still sleeping</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Location</label>
+                        <select name="location" class="form-select" required>
+                            <option value="">Select location...</option>
+                            <option value="crib">Crib</option>
+                            <option value="bassinet">Bassinet</option>
+                            <option value="parents_bed">Parent's Bed</option>
+                            <option value="stroller">Stroller</option>
+                            <option value="car_seat">Car Seat</option>
+                            <option value="swing">Swing</option>
+                            <option value="carrier">Baby Carrier</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Sleep Quality</label>
+                        <div class="form-radio-group">
+                            <label class="form-radio-label">
+                                <input type="radio" name="quality" value="good" class="form-radio">
+                                <span>😊 Good</span>
+                            </label>
+                            <label class="form-radio-label">
+                                <input type="radio" name="quality" value="fair" class="form-radio" checked>
+                                <span>😐 Fair</span>
+                            </label>
+                            <label class="form-radio-label">
+                                <input type="radio" name="quality" value="poor" class="form-radio">
+                                <span>😟 Poor</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Notes (optional)</label>
+                        <textarea name="notes" class="form-textarea" placeholder="How did baby fall asleep? Any issues?"></textarea>
+                    </div>
+
+                    <div class="form-buttons">
+                        <button type="button" onclick="Dashboard.closeQuickTrackingModal()" class="btn-cancel">Cancel</button>
+                        <button type="submit" class="btn-submit">Save Sleep</button>
+                    </div>
+                </form>
+            `;
+
+                case 'diaper':
+                    return `
+                <form id="quick-diaper-form" class="quick-track-form">
+                    <p class="text-sm text-pastel-textLight mb-4">Track diaper change for ${babyName}</p>
+
+                    <div class="form-group">
+                        <label class="form-label">Diaper Type</label>
+                        <div class="form-radio-group">
+                            <label class="form-radio-label">
+                                <input type="radio" name="diaperType" value="wet" class="form-radio" required>
+                                <span>💧 Wet</span>
+                            </label>
+                            <label class="form-radio-label">
+                                <input type="radio" name="diaperType" value="dirty" class="form-radio" required>
+                                <span>💩 Dirty</span>
+                            </label>
+                            <label class="form-radio-label">
+                                <input type="radio" name="diaperType" value="both" class="form-radio" required>
+                                <span>💧💩 Both</span>
+                            </label>
+                            <label class="form-radio-label">
+                                <input type="radio" name="diaperType" value="dry" class="form-radio" required>
+                                <span>✓ Dry</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Time</label>
+                        <input type="datetime-local" name="time" class="form-input" value="${nowStr}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Notes (optional)</label>
+                        <textarea name="notes" class="form-textarea" placeholder="Color, consistency, any concerns..."></textarea>
+                    </div>
+
+                    <div class="form-buttons">
+                        <button type="button" onclick="Dashboard.closeQuickTrackingModal()" class="btn-cancel">Cancel</button>
+                        <button type="submit" class="btn-submit">Save Diaper Change</button>
+                    </div>
+                </form>
+            `;
+            }
+        },
+
+        // Handle feeding type change to show/hide relevant fields
+        handleFeedingTypeChange(feedingType) {
+            const fieldSets = ['breastFields', 'bottleFields', 'solidFields', 'pumpingFields'];
+
+            fieldSets.forEach(fieldSet => {
+                const element = document.getElementById(fieldSet);
+                if (element) {
+                    element.classList.add('hidden');
+                }
+            });
+
+            const fieldMap = {
+                'breast': 'breastFields',
+                'bottle': 'bottleFields',
+                'solid': 'solidFields',
+                'pumping': 'pumpingFields'
+            };
+
+            if (fieldMap[feedingType]) {
+                const activeFields = document.getElementById(fieldMap[feedingType]);
+                if (activeFields) {
+                    activeFields.classList.remove('hidden');
                 }
             }
+        },
+
+        // Submit quick tracking
+        async submitQuickTracking(itemType, form, babyId) {
+            const submitButton = form.querySelector('.btn-submit');
+            const originalText = submitButton.textContent;
+
+            try {
+                // Show loading state
+                submitButton.disabled = true;
+                submitButton.innerHTML = `<svg class="animate-spin h-4 w-4 mx-auto" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg>`;
+
+                const formData = new FormData(form);
+                let endpoint, requestBody;
+
+                switch (itemType) {
+                    case 'feeding':
+                        endpoint = '/feeding';
+                        const feedingType = formData.get('feedingType');
+
+                        requestBody = {
+                            feeding: {
+                                baby_id: babyId,
+                                feeding_type: feedingType,
+                                start_time: new Date(formData.get('startTime')).toISOString(),
+                                notes: formData.get('notes') || ''
+                            }
+                        };
+
+                        // Add type-specific fields
+                        if (feedingType === 'breast') {
+                            if (formData.get('duration')) {
+                                requestBody.feeding.duration = parseInt(formData.get('duration'));
+                            }
+                            if (formData.get('lastBreast')) {
+                                requestBody.feeding.last_breast = formData.get('lastBreast');
+                            }
+                        } else if (feedingType === 'bottle') {
+                            if (formData.get('amount')) {
+                                requestBody.feeding.amount = parseInt(formData.get('amount'));
+                            }
+                            if (formData.get('bottleContentType')) {
+                                requestBody.feeding.bottle_content_type = formData.get('bottleContentType');
+                            }
+                        } else if (feedingType === 'solid') {
+                            if (formData.get('solidFood')) {
+                                requestBody.feeding.solid_food = formData.get('solidFood');
+                            }
+                            if (formData.get('solidAmount')) {
+                                requestBody.feeding.amount = formData.get('solidAmount');
+                            }
+                        } else if (feedingType === 'pumping') {
+                            if (formData.get('pumpedVolumeLeft')) {
+                                requestBody.feeding.pumped_volume_left = parseInt(formData.get('pumpedVolumeLeft'));
+                            }
+                            if (formData.get('pumpedVolumeRight')) {
+                                requestBody.feeding.pumped_volume_right = parseInt(formData.get('pumpedVolumeRight'));
+                            }
+                        }
+                        break;
+
+                    case 'sleep':
+                        endpoint = '/sleep';
+                        requestBody = {
+                            sleep: {
+                                baby_id: babyId,
+                                start_time: new Date(formData.get('startTime')).toISOString(),
+                                location: formData.get('location'),
+                                quality: formData.get('quality') || 'fair',
+                                notes: formData.get('notes') || ''
+                            }
+                        };
+
+                        if (formData.get('endTime')) {
+                            requestBody.sleep.end_time = new Date(formData.get('endTime')).toISOString();
+                        }
+                        break;
+
+                    case 'diaper':
+                        endpoint = '/diaper';
+                        requestBody = {
+                            diaper: {
+                                baby_id: babyId,
+                                diaper_type: formData.get('diaperType'),
+                                time: new Date(formData.get('time')).toISOString(),
+                                notes: formData.get('notes') || ''
+                            }
+                        };
+                        break;
+                }
+
+                const response = await BabyHelperAuth.api.request(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (response.ok) {
+                    this.showToast(`${itemType.charAt(0).toUpperCase() + itemType.slice(1)} tracked successfully!`, 'success');
+                    this.closeQuickTrackingModal();
+
+                    // Refresh dashboard after a short delay
+                    setTimeout(() => {
+                        this.refreshDashboard();
+                    }, 1000);
+                } else {
+                    const error = await BabyHelperAuth.api.parseErrorResponse(response);
+                    throw new Error(error.detail || `Failed to track ${itemType}`);
+                }
+
+            } catch (error) {
+                console.error(`Error tracking ${itemType}:`, error);
+                this.showError(`Failed to track ${itemType}: ${error.message}`);
+
+                // Restore button
+                submitButton.disabled = false;
+                submitButton.textContent = originalText;
+            }
+        },
+
+        // Close quick tracking modal
+        closeQuickTrackingModal() {
+            const modal = document.getElementById('quickTrackingModal');
+            modal.classList.add('hidden');
+
+            // Clear form content
+            const content = document.getElementById('quickTrackingContent');
+            content.innerHTML = '';
         },
 
         async fetchAndDisplayHistory(itemType, babyId, babyName) {
@@ -1982,34 +2740,6 @@
             const modal = document.getElementById('babyCareHistoryModal');
             modal.classList.add('hidden');
         },
-
-        renderTrackingInterface(item) {
-            const itemType = item.details.item_type;
-            const babyId = item.baby_id;
-            const itemId = `checklist-${item.id}`;
-
-            switch (itemType) {
-                case 'gas_relief':
-                    return this.renderGasReliefTracking(itemId, babyId);
-                case 'comfort':
-                    return this.renderComfortTracking(itemId, babyId);
-                case 'environment':
-                    return this.renderEnvironmentTracking(itemId, babyId);
-                case 'feeding':
-                case 'diaper':
-                case 'sleep':
-                    // These have dedicated trackers
-                    return item.details.status === 'not_tracked' ? `
-                <button onclick="Dashboard.startTrackingActivity('${itemType}', '${item.baby_name}')"
-                        class="text-xs bg-pastel-primary text-white px-3 py-1 rounded-full hover:bg-pastel-primaryHover transition-colors">
-                    Start Tracking
-                </button>
-            ` : '';
-                default:
-                    return '';
-            }
-        },
-
         renderGasReliefTracking(itemId, babyId) {
             return `
         <div class="gas-relief-tracking space-y-2 mt-3 p-3 bg-white rounded-lg">
@@ -2412,52 +3142,6 @@
                 submitBtn.textContent = originalText;
             }
         },
-
-        handleChecklistComplete(itemId) {
-            const item = document.getElementById(itemId);
-            if (item) {
-                // Add completion animation
-                item.classList.add('opacity-50', 'scale-95');
-
-                // Move to bottom after a short delay
-                setTimeout(() => {
-                    item.style.order = '999';
-                    item.classList.add('line-through');
-
-                    // Show completion toast
-                    this.showToast('Item marked as complete! Great job! 🎉');
-
-                    // Optionally remove after 2 seconds
-                    setTimeout(() => {
-                        item.classList.add('animate-fade-out');
-                        setTimeout(() => {
-                            item.remove();
-                        }, 500);
-                    }, 2000);
-                }, 300);
-            }
-        },
-
-        startTrackingActivity(activityType, babyName) {
-            // Route to appropriate tracking page
-            const routes = {
-                'feeding': '/feeding-tracker',
-                'diaper': '/diaper-tracker',
-                'sleep': '/sleep-tracker',
-                'gas_relief': '/feeding-tracker', // Gas relief is usually part of feeding
-                'comfort': '/activity-tracker',
-                'environment': '/activity-tracker'
-            };
-
-            const route = routes[activityType] || '/activity-tracker';
-            this.showToast(`Opening ${activityType.replace('_', ' ')} tracker for ${babyName}...`);
-
-            // In production: window.location.href = route;
-            setTimeout(() => {
-                this.showToast('Tracker would open here in production');
-            }, 1000);
-        },
-
         renderCareMetrics(metrics, widgetType) {
             const caregiversHtml = Object.values(metrics.by_caregiver).map(caregiver => {
                 const data = caregiver.caregiver;
@@ -3991,86 +4675,6 @@
 
             return `${time}<br>${dateFormatted}`;
         },
-
-        formatEventTime(timeStr) {
-            const date = new Date(timeStr);
-            const now = new Date();
-            const tomorrow = new Date(now);
-            tomorrow.setDate(tomorrow.getDate() + 1);
-
-            if (date.toDateString() === now.toDateString()) {
-                return `Today at ${date.toLocaleTimeString('en-US', {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                })}`;
-            } else if (date.toDateString() === tomorrow.toDateString()) {
-                return `Tomorrow at ${date.toLocaleTimeString('en-US', {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                })}`;
-            } else {
-                return date.toLocaleDateString('en-US', {weekday: 'short', month: 'short', day: 'numeric'}) +
-                    ` at ${date.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit', hour12: true})}`;
-            }
-        },
-
-        getEventIcon(type) {
-            if (type === 'doctor_visit') {
-                return `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-pastel-primary" fill="none"
-                     viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                </svg>`;
-            } else if (type === 'medication') {
-                return `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none"
-                     viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
-                </svg>`;
-            }
-            return '';
-        },
-
-        getEventUrgency(timeStr) {
-            const eventTime = new Date(timeStr);
-            const now = new Date();
-            const hoursUntil = (eventTime - now) / (1000 * 60 * 60);
-
-            if (hoursUntil < 2) {
-                return {
-                    bgClass: 'bg-red-50',
-                    borderClass: 'border-l-4 border-red-500',
-                    iconBgClass: 'bg-red-100',
-                    badge: 'Due Soon',
-                    badgeClass: 'animate-pulse-soft text-xs bg-red-600 text-white px-2 py-1 rounded-full'
-                };
-            } else if (hoursUntil < 24) {
-                return {
-                    bgClass: 'bg-pastel-lightest',
-                    borderClass: 'border-l-4 border-pastel-primary',
-                    iconBgClass: 'bg-pastel-primary bg-opacity-10'
-                };
-            } else {
-                return {
-                    bgClass: 'bg-pastel-lightest',
-                    borderClass: '',
-                    iconBgClass: 'bg-pastel-light bg-opacity-50'
-                };
-            }
-        },
-
-        getEventTitle(event) {
-            if (event.type === 'doctor_visit') {
-                return event.details.visit_type || 'Doctor Visit';
-            } else if (event.type === 'medication') {
-                return `${event.details.name} - ${event.details.dosage}${event.details.dosage_unit}`;
-            }
-            return 'Event';
-        },
-
-
         formatDuration(minutes) {
             if (!minutes) return '0m';
 

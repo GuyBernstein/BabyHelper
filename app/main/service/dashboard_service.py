@@ -225,7 +225,7 @@ def get_baby_care_checklist(
             baby_name=baby_name,
             item_type=ChecklistItemType.FEEDING,
             title="When did the baby last eat?",
-            description="Babies typically need feeding every 2-4 hours. Check if it's feeding time.",
+            description="Babies typically need feeding every 2-4 hours.",
             last_activity=last_feeding.start_time if last_feeding else None,
             threshold_hours=3,  # Suggest checking if more than 3 hours
             db=db  # Pass db for tracking data
@@ -277,7 +277,7 @@ def get_baby_care_checklist(
             baby_name=baby_name,
             item_type=ChecklistItemType.GAS_RELIEF,
             title="Consider if the baby needs to burp",
-            description="Try burping positions or gentle tummy massage. Gas can cause significant discomfort.",
+            description="Gas can cause significant discomfort.",
             last_activity=None,  # Will be overridden by tracking data if available
             threshold_hours=0.5,  # Suggest burping within 30 minutes of feeding
             db=db
@@ -290,7 +290,7 @@ def get_baby_care_checklist(
             baby_name=baby_name,
             item_type=ChecklistItemType.COMFORT,
             title="Does the baby need physical touch or holding?",
-            description="Babies need comfort and security. Try skin-to-skin contact, swaddling, or gentle rocking.",
+            description="Babies need comfort and security.",
             last_activity=None,  # Will be overridden by tracking data if available
             threshold_hours=2,  # Suggest comfort check every 2 hours
             db=db
@@ -303,7 +303,7 @@ def get_baby_care_checklist(
             baby_name=baby_name,
             item_type=ChecklistItemType.ENVIRONMENT,
             title="Check for overstimulation (noise, lights, people, colors)",
-            description="Too much sensory input can overwhelm babies. Consider moving to a quiet, dimly lit space.",
+            description="Too much sensory input can overwhelm babies.",
             last_activity=None,  # Will be overridden by tracking data if available
             threshold_hours=6,  # Environmental checks less frequent
             db=db
@@ -800,12 +800,12 @@ def _get_action_suggestion(item_type: ChecklistItemType, status: ChecklistItemSt
 
     suggestions = {
         ChecklistItemType.FEEDING: {
-            ChecklistItemStatus.ACTION_REQUIRED: "It's been over 3 hours. Consider offering a feeding.",
-            ChecklistItemStatus.CHECK_NEEDED: "Approaching typical feeding interval. Baby may be getting hungry.",
+            ChecklistItemStatus.ACTION_REQUIRED: "Consider offering a feeding.",
+            ChecklistItemStatus.CHECK_NEEDED: "Baby may be getting hungry.",
             ChecklistItemStatus.OK: "Recently fed. Unlikely to be hungry."
         },
         ChecklistItemType.DIAPER: {
-            ChecklistItemStatus.ACTION_REQUIRED: "Check diaper now - it's been over 2 hours.",
+            ChecklistItemStatus.ACTION_REQUIRED: "Check diaper now",
             ChecklistItemStatus.CHECK_NEEDED: "Consider checking the diaper soon.",
             ChecklistItemStatus.OK: "Recently changed. Diaper is likely still clean."
         },
@@ -816,7 +816,7 @@ def _get_action_suggestion(item_type: ChecklistItemType, status: ChecklistItemSt
         },
         ChecklistItemType.GAS_RELIEF: {
             ChecklistItemStatus.ACTION_REQUIRED: "Try burping positions or bicycle legs to relieve gas.",
-            ChecklistItemStatus.CHECK_NEEDED: "If baby seems uncomfortable, try gentle burping.",
+            ChecklistItemStatus.CHECK_NEEDED: "If baby seems uncomfortable, try gentle tummy massage.",
             ChecklistItemStatus.OK: "Gas is less likely if baby was burped after last feeding."
         },
         ChecklistItemType.COMFORT: {
