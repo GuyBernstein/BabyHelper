@@ -735,6 +735,67 @@
             padding: 0.125rem 0.5rem;
             border-radius: 9999px;
         }
+
+        /* Milestone Timeline Styles */
+        .milestone-timeline {
+            position: relative;
+        }
+
+        .timeline-connector {
+            margin-left: 0.5rem;
+        }
+
+        .timeline-month {
+            position: relative;
+        }
+
+        .milestone-item {
+            transform: translateX(0);
+            transition: all 0.3s ease;
+        }
+
+        .milestone-item:hover {
+            transform: translateX(4px);
+        }
+
+        /* Photo Gallery Styles */
+        .photo-gallery-grid {
+            margin-top: 1rem;
+        }
+
+        .photo-gallery-item {
+            position: relative;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+
+        .photo-gallery-item img {
+            transition: transform 0.3s ease;
+        }
+
+        .photo-gallery-item:hover img {
+            transform: scale(1.05);
+        }
+
+        /* Photo modal styles */
+        #photoModal {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        #photoModal img {
+            animation: scaleIn 0.3s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body class="bg-pastel-lightest font-sans text-pastel-text">
@@ -1322,6 +1383,15 @@
             'growth_chart': {
                 title: 'Growth Chart',
                 render: (data, widgetType) => Dashboard.renderGrowthChart(data, widgetType)
+            },
+
+            'milestone_timeline': {
+                title: 'Milestone Timeline',
+                render: (data, widgetType) => Dashboard.renderMilestoneTimeline(data, widgetType)
+            },
+            'photo_gallery': {
+                title: 'Photo Gallery',
+                render: (data, widgetType) => Dashboard.renderPhotoGallery(data, widgetType)
             }
         },
 
@@ -3262,6 +3332,289 @@
             `;
         },
 
+        renderMilestoneTimeline(data, widgetType) {
+            if (!data || data.total_milestones === 0) {
+                return `
+            <section class="widget-container animate-slide-up" data-widget-type="${widgetType}">
+                <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-6">
+                    ${this.createWidgetHeader('Milestone Timeline', widgetType)}
+                    <div class="text-center py-8">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-pastel-textLight mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                        </svg>
+                        <p class="text-pastel-textLight">No milestones recorded yet</p>
+                        <button onclick="Dashboard.handleQuickAction('milestone')" class="mt-4 px-4 py-2 bg-pastel-primary text-white rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                            Add First Milestone
+                        </button>
+                    </div>
+                </div>
+            </section>
+        `;
+            }
+
+            // Get sorted months for timeline
+            const sortedMonths = Object.keys(data.milestones_by_month || {}).sort((a, b) => b.localeCompare(a));
+
+            // Create timeline HTML
+            let timelineHtml = '<div class="milestone-timeline space-y-6">';
+
+            sortedMonths.forEach((monthKey, index) => {
+                const milestones = data.milestones_by_month[monthKey];
+                const [year, month] = monthKey.split('-');
+                const monthName = new Date(year, month - 1).toLocaleDateString('en-US', {
+                    month: 'long',
+                    year: 'numeric'
+                });
+
+                timelineHtml += `
+            <div class="timeline-month">
+                <div class="flex items-center mb-4">
+                    <div class="timeline-marker w-4 h-4 bg-pastel-primary rounded-full"></div>
+                    <div class="timeline-line flex-1 h-0.5 bg-pastel-light ml-4"></div>
+                    <h4 class="text-sm font-semibold text-pastel-heading ml-4">${monthName}</h4>
+                </div>
+                <div class="ml-8 space-y-3">
+        `;
+
+                milestones.forEach(milestone => {
+                    const categoryColor = this.getMilestoneCategoryColor(milestone.category);
+                    const achievedDate = new Date(milestone.achieved_date);
+                    const formattedDate = achievedDate.toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+
+                    timelineHtml += `
+                <div class="milestone-item bg-pastel-lightest rounded-lg p-4 hover:shadow-pastel-lg transition-all">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="inline-block px-2 py-1 text-xs font-medium rounded-full ${categoryColor}">
+                                    ${this.formatMilestoneCategory(milestone.category)}
+                                </span>
+                                <span class="text-xs text-pastel-textLight">${formattedDate}</span>
+                                ${milestone.baby_name ? `<span class="text-xs text-pastel-textLight">• ${milestone.baby_name}</span>` : ''}
+                            </div>
+                            <h5 class="font-medium text-pastel-heading mb-1">${milestone.title}</h5>
+                            ${milestone.description ? `<p class="text-sm text-pastel-textLight">${milestone.description}</p>` : ''}
+                            ${milestone.notes ? `<p class="text-xs text-pastel-textLight mt-2 italic">"${milestone.notes}"</p>` : ''}
+                        </div>
+                        ${milestone.photo_url ? `
+                            <img src="${milestone.photo_url}" alt="${milestone.title}"
+                                 class="w-16 h-16 rounded-lg object-cover ml-4 cursor-pointer hover:opacity-80 transition-opacity"
+                                 onclick="Dashboard.showPhotoModal('${milestone.photo_url}', '${milestone.title}')">
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+                });
+
+                timelineHtml += `
+                </div>
+            </div>
+        `;
+
+                // Add connector line between months (except for last month)
+                if (index < sortedMonths.length - 1) {
+                    timelineHtml += '<div class="timeline-connector w-0.5 h-8 bg-pastel-light ml-2"></div>';
+                }
+            });
+
+            timelineHtml += '</div>';
+
+            // Category summary
+            let categorySummary = '';
+            if (data.by_category && Object.keys(data.by_category).length > 0) {
+                categorySummary = '<div class="mt-6 pt-6 border-t border-pastel-light"><div class="grid grid-cols-3 sm:grid-cols-6 gap-2">';
+                Object.entries(data.by_category).forEach(([category, count]) => {
+                    const color = this.getMilestoneCategoryColor(category);
+                    categorySummary += `
+                <div class="text-center">
+                    <div class="text-lg font-semibold text-pastel-heading">${count}</div>
+                    <div class="text-xs ${color.replace('bg-', 'text-').replace('-100', '-600')}">${this.formatMilestoneCategory(category)}</div>
+                </div>
+            `;
+                });
+                categorySummary += '</div></div>';
+            }
+
+            return `
+        <section class="widget-container animate-slide-up" data-widget-type="${widgetType}">
+            <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-6">
+                ${this.createWidgetHeader('Milestone Timeline', widgetType)}
+                <div class="mb-4 flex items-center justify-between">
+                    <p class="text-sm text-pastel-textLight">Total milestones: ${data.total_milestones}</p>
+                    <button onclick="Dashboard.handleQuickAction('milestone')"
+                            class="text-sm px-3 py-1 bg-pastel-primary text-white rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                        Add Milestone
+                    </button>
+                </div>
+                ${timelineHtml}
+                ${categorySummary}
+            </div>
+        </section>
+    `;
+        },
+
+        renderPhotoGallery(data, widgetType) {
+            if (!data || data.total_photos === 0) {
+                return `
+            <section class="widget-container animate-slide-up" data-widget-type="${widgetType}">
+                <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-6">
+                    ${this.createWidgetHeader('Photo Gallery', widgetType)}
+                    <div class="text-center py-8">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-pastel-textLight mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p class="text-pastel-textLight">No photos uploaded yet</p>
+                        <button onclick="Dashboard.showToast('Photo upload feature coming soon!')"
+                                class="mt-4 px-4 py-2 bg-pastel-primary text-white rounded-lg hover:bg-pastel-primaryHover transition-colors">
+                            Upload First Photo
+                        </button>
+                    </div>
+                </div>
+            </section>
+        `;
+            }
+
+            // Create photo grid
+            let photoGrid = '<div class="photo-gallery-grid grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">';
+
+            const photosToShow = data.recent_photos || [];
+            photosToShow.forEach(photo => {
+                const photoDate = new Date(photo.date_taken || photo.created_at);
+                const formattedDate = photoDate.toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+                const photoType = photo.photo_type || 'other';
+                const typeColor = this.getPhotoTypeColor(photoType);
+
+                photoGrid += `
+            <div class="photo-gallery-item relative group cursor-pointer"
+                 onclick="Dashboard.showPhotoModal('${photo.url || photo.photo_url}', '${photo.caption || ''}')">
+                <div class="aspect-square overflow-hidden rounded-lg bg-pastel-lightest">
+                    <img src="${photo.url || photo.photo_url}"
+                         alt="${photo.caption || 'Baby photo'}"
+                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                         loading="lazy">
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg">
+                    <div class="absolute bottom-0 left-0 right-0 p-2 text-white">
+                        <p class="text-xs font-medium truncate">${photo.baby_name || ''}</p>
+                        <p class="text-xs opacity-90">${formattedDate}</p>
+                    </div>
+                </div>
+                <span class="absolute top-2 right-2 px-2 py-0.5 text-xs font-medium rounded-full ${typeColor} opacity-90">
+                    ${this.formatPhotoType(photoType)}
+                </span>
+            </div>
+        `;
+            });
+
+            photoGrid += '</div>';
+
+            // Type summary
+            let typeSummary = '';
+            if (data.by_type && Object.keys(data.by_type).length > 0) {
+                typeSummary = '<div class="mt-6 pt-6 border-t border-pastel-light"><div class="flex flex-wrap gap-2">';
+                Object.entries(data.by_type).forEach(([type, count]) => {
+                    const color = this.getPhotoTypeColor(type);
+                    typeSummary += `
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${color}">
+                    ${this.formatPhotoType(type)}: ${count}
+                </span>
+            `;
+                });
+                typeSummary += '</div></div>';
+            }
+
+            // Summary stats
+            let summaryStats = '';
+            if (data.summary) {
+                summaryStats = `
+            <div class="mt-4 grid grid-cols-2 gap-4 text-center">
+                <div>
+                    <p class="text-2xl font-semibold text-pastel-primary">${data.total_photos}</p>
+                    <p class="text-xs text-pastel-textLight">Total Photos</p>
+                </div>
+                <div>
+                    <p class="text-2xl font-semibold text-pastel-accent1">${data.summary.average_per_baby}</p>
+                    <p class="text-xs text-pastel-textLight">Avg per Baby</p>
+                </div>
+            </div>
+        `;
+            }
+
+            return `
+        <section class="widget-container animate-slide-up" data-widget-type="${widgetType}">
+            <div class="bg-white rounded-xl shadow-pastel border border-pastel-light p-6">
+                ${this.createWidgetHeader('Photo Gallery', widgetType)}
+                ${summaryStats}
+                <div class="mt-4">
+                    ${photoGrid}
+                </div>
+                ${typeSummary}
+            </div>
+        </section>
+    `;
+        },
+
+        getMilestoneCategoryColor(category) {
+            const colors = {
+                'physical': 'bg-blue-100 text-blue-700',
+                'cognitive': 'bg-purple-100 text-purple-700',
+                'social': 'bg-pink-100 text-pink-700',
+                'language': 'bg-green-100 text-green-700',
+                'emotional': 'bg-yellow-100 text-yellow-700',
+                'other': 'bg-gray-100 text-gray-700'
+            };
+            return colors[category] || colors['other'];
+        },
+
+        formatMilestoneCategory(category) {
+            const formatted = category.charAt(0).toUpperCase() + category.slice(1);
+            return formatted.replace('_', ' ');
+        },
+
+        getPhotoTypeColor(type) {
+            const colors = {
+                'milestone': 'bg-pastel-primary text-white',
+                'daily': 'bg-pastel-accent1 text-white',
+                'special': 'bg-pastel-accent2 text-white',
+                'medical': 'bg-green-500 text-white',
+                'other': 'bg-gray-400 text-white'
+            };
+            return colors[type] || colors['other'];
+        },
+
+        formatPhotoType(type) {
+            const formatted = type.charAt(0).toUpperCase() + type.slice(1);
+            return formatted.replace('_', ' ');
+        },
+
+        showPhotoModal(photoUrl, caption) {
+            // Create and show photo modal
+            const modalHtml = `
+        <div id="photoModal" class="fixed inset-0 bg-black bg-opacity-90 z-[70] flex items-center justify-center p-4"
+             onclick="Dashboard.closePhotoModal()">
+            <div class="relative max-w-4xl max-h-[90vh]">
+                <img src="${photoUrl}" alt="${caption}" class="max-w-full max-h-[90vh] object-contain">
+                ${caption ? `<p class="absolute bottom-4 left-4 right-4 text-white text-center bg-black bg-opacity-50 p-2 rounded">${caption}</p>` : ''}
+                <button onclick="Dashboard.closePhotoModal()"
+                        class="absolute top-4 right-4 p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-70 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        },
+
+        closePhotoModal() {
+            const modal = document.getElementById('photoModal');
+            if (modal) {
+                modal.remove();
+            }
+        },
+
         /**
          * Open widget timeframe configuration modal
          */
@@ -3763,7 +4116,9 @@
                 {type: 'care_metrics', name: 'Care Sharing Metrics'},
                 {type: 'feeding_stats', name: 'Feeding Statistics'},
                 {type: 'sleep_patterns', name: 'Sleep Patterns'},
-                {type: 'growth_chart', name: 'Growth Chart'}
+                {type: 'growth_chart', name: 'Growth Chart'},
+                {type: 'milestone_timeline', name: 'Milestone Timeline'},
+                {type: 'photo_gallery', name: 'Photo Gallery'}
             ];
 
             // Create a map of widget configs for O(1) lookup

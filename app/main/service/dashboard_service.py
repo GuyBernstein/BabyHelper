@@ -1376,6 +1376,12 @@ def _get_widget_data(
         ),
         WidgetType.GROWTH_CHART: lambda tf, cs, ce: get_growth_data(
             db, baby_ids, tf, cs, ce
+        ),
+        WidgetType.MILESTONE_TIMELINE: lambda tf, cs, ce: get_milestone_timeline(
+            db, baby_ids, tf, cs, ce
+        ),
+        WidgetType.PHOTO_GALLERY: lambda tf, cs, ce: get_photo_gallery(
+            db, baby_ids, tf, cs, ce
         )
     }
 
@@ -1645,3 +1651,217 @@ def _calculate_care_percentages(metrics: Dict[str, Any]):
             metrics['by_caregiver'][caregiver_id]['percentage'] = round(
                 (caregiver_total / metrics['total_activities']) * 100, 1
             )
+
+
+def get_milestone_timeline(
+        db: Session,
+        baby_ids: List[int],
+        timeframe: str,
+        custom_start: Optional[datetime] = None,
+        custom_end: Optional[datetime] = None
+) -> Dict[str, Any]:
+    """
+    Get milestone timeline data for specified babies.
+
+    Args:
+        db: Database session
+        baby_ids: List of baby IDs to get milestones for
+        timeframe: Time period to query
+        custom_start: Optional custom start date
+        custom_end: Optional custom end date
+
+    Returns:
+        Dictionary containing milestone timeline data
+    """
+    from app.main.service.milestone_service import get_milestones_for_baby
+
+    start_date, end_date = get_timeframe_dates(timeframe, custom_start, custom_end)
+
+    # Initialize timeline structure
+    timeline_data = {
+        'total_milestones': 0,
+        'by_baby': defaultdict(lambda: {
+            'milestones': [],
+            'by_category': defaultdict(int),
+            'recent_milestone': None
+        }),
+        'by_category': defaultdict(int),
+        'milestones_by_month': defaultdict(list)
+    }
+
+    # Get milestones for each baby
+    for baby_id in baby_ids:
+        # Get the first user as the current user ID (from the caregivers)
+        baby = db.query(Baby).filter(Baby.id == baby_id).first()
+        if not baby:
+            continue
+
+        user_id = baby.parent_id
+
+        # Get milestones using the existing service
+        milestones = get_milestones_for_baby(
+            db, baby_id, user_id,
+            skip=0, limit=100,
+            start_date=start_date,
+            end_date=end_date
+        )
+
+        # Skip if error response
+        if isinstance(milestones, dict):
+            continue
+
+        baby_data = timeline_data['by_baby'][baby_id]
+
+        for milestone in milestones:
+            # Format milestone for timeline
+            milestone_dict = {
+                'id': milestone.id,
+                'title': milestone.title,
+                'category': milestone.category,
+                'achieved_date': milestone.achieved_date,
+                'description': milestone.description,
+                'notes': milestone.notes,
+                'photo_url': milestone.photo_url,
+                'baby_id': baby_id,
+                'baby_name': baby.fullname,
+                'caregiver_name': getattr(milestone, 'caregiver_name', None)
+            }
+
+            baby_data['milestones'].append(milestone_dict)
+            timeline_data['total_milestones'] += 1
+
+            # Count by category
+            category = milestone.category.value if hasattr(milestone.category, 'value') else str(milestone.category)
+            baby_data['by_category'][category] += 1
+            timeline_data['by_category'][category] += 1
+
+            # Group by month for timeline visualization
+            month_key = milestone.achieved_date.strftime('%Y-%m')
+            timeline_data['milestones_by_month'][month_key].append(milestone_dict)
+
+        # Get most recent milestone for this baby
+        if baby_data['milestones']:
+            baby_data['recent_milestone'] = baby_data['milestones'][0]  # Already sorted by date desc
+
+    # Convert defaultdicts to regular dicts
+    timeline_data['by_baby'] = dict(timeline_data['by_baby'])
+    timeline_data['by_category'] = dict(timeline_data['by_category'])
+    timeline_data['milestones_by_month'] = dict(timeline_data['milestones_by_month'])
+
+    # Sort milestones by month
+    for month in timeline_data['milestones_by_month']:
+        timeline_data['milestones_by_month'][month].sort(
+            key=lambda x: x['achieved_date'],
+            reverse=True
+        )
+
+    return timeline_data
+
+
+def get_photo_gallery(
+        db: Session,
+        baby_ids: List[int],
+        timeframe: str,
+        custom_start: Optional[datetime] = None,
+        custom_end: Optional[datetime] = None,
+        limit: int = 20
+) -> Dict[str, Any]:
+    """
+    Get photo gallery data for specified babies.
+
+    Args:
+        db: Database session
+        baby_ids: List of baby IDs to get photos for
+        timeframe: Time period to query
+        custom_start: Optional custom start date
+        custom_end: Optional custom end date
+        limit: Maximum number of photos to return per baby
+
+    Returns:
+        Dictionary containing photo gallery data
+    """
+    from app.main.service.photo_service import get_baby_photos
+
+    start_date, end_date = get_timeframe_dates(timeframe, custom_start, custom_end)
+
+    # Initialize gallery structure
+    gallery_data = {
+        'total_photos': 0,
+        'by_baby': defaultdict(lambda: {
+            'photos': [],
+            'by_type': defaultdict(int),
+            'latest_photo': None
+        }),
+        'by_type': defaultdict(int),
+        'recent_photos': []
+    }
+
+    all_photos = []
+
+    # Get photos for each baby
+    for baby_id in baby_ids:
+        # Get the baby to get user_id
+        baby = db.query(Baby).filter(Baby.id == baby_id).first()
+        if not baby:
+            continue
+
+        user_id = baby.parent_id
+
+        # Get photos using the existing service
+        photos = get_baby_photos(db, baby_id, user_id)
+
+        # Skip if error response
+        if isinstance(photos, dict) and 'status' in photos and photos['status'] == 'fail':
+            continue
+
+        baby_data = gallery_data['by_baby'][baby_id]
+
+        # Filter photos by date range
+        for photo in photos:
+            photo_date = photo.get('date_taken') or photo.get('created_at')
+
+            # Apply date filter
+            if photo_date and start_date <= photo_date <= end_date:
+                # Add baby name to photo data
+                photo['baby_name'] = baby.fullname
+
+                baby_data['photos'].append(photo)
+                all_photos.append(photo)
+                gallery_data['total_photos'] += 1
+
+                # Count by type
+                photo_type = photo.get('photo_type', 'other')
+                baby_data['by_type'][photo_type] += 1
+                gallery_data['by_type'][photo_type] += 1
+
+        # Sort photos by date (newest first) and apply limit
+        baby_data['photos'].sort(
+            key=lambda x: x.get('date_taken') or x.get('created_at'),
+            reverse=True
+        )
+        baby_data['photos'] = baby_data['photos'][:limit]
+
+        # Get latest photo for this baby
+        if baby_data['photos']:
+            baby_data['latest_photo'] = baby_data['photos'][0]
+
+    # Get recent photos across all babies
+    all_photos.sort(
+        key=lambda x: x.get('date_taken') or x.get('created_at'),
+        reverse=True
+    )
+    gallery_data['recent_photos'] = all_photos[:limit]
+
+    # Convert defaultdicts to regular dicts
+    gallery_data['by_baby'] = dict(gallery_data['by_baby'])
+    gallery_data['by_type'] = dict(gallery_data['by_type'])
+
+    # Add summary statistics
+    if gallery_data['total_photos'] > 0:
+        gallery_data['summary'] = {
+            'average_per_baby': round(gallery_data['total_photos'] / len(baby_ids), 1) if baby_ids else 0,
+            'most_common_type': max(gallery_data['by_type'], key=gallery_data['by_type'].get) if gallery_data[
+                'by_type'] else None
+        }
+
+    return gallery_data
