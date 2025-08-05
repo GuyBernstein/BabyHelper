@@ -1758,6 +1758,40 @@ def get_milestone_timeline(
     return timeline_data
 
 
+from datetime import datetime, timezone
+from typing import List, Optional, Dict, Any
+from collections import defaultdict
+
+
+def normalize_datetime(dt):
+    """
+    Normalize datetime to timezone-aware UTC.
+    If datetime is naive, assume it's in UTC.
+    """
+    if dt is None:
+        return None
+
+    if isinstance(dt, str):
+        # If it's a string, try to parse it
+        try:
+            dt = datetime.fromisoformat(dt.replace('Z', '+00:00'))
+        except ValueError:
+            # Try other common formats if needed
+            try:
+                dt = datetime.strptime(dt, '%Y-%m-%d %H:%M:%S')
+            except ValueError:
+                return None
+
+    if dt.tzinfo is None:
+        # If naive, assume UTC
+        dt = dt.replace(tzinfo=timezone.utc)
+    else:
+        # Convert to UTC if not already
+        dt = dt.astimezone(timezone.utc)
+
+    return dt
+
+
 def get_photo_gallery(
         db: Session,
         baby_ids: List[int],
@@ -1783,6 +1817,10 @@ def get_photo_gallery(
     from app.main.service.photo_service import get_baby_photos
 
     start_date, end_date = get_timeframe_dates(timeframe, custom_start, custom_end)
+
+    # Normalize the start and end dates
+    start_date = normalize_datetime(start_date)
+    end_date = normalize_datetime(end_date)
 
     # Initialize gallery structure
     gallery_data = {
@@ -1818,25 +1856,38 @@ def get_photo_gallery(
 
         # Filter photos by date range
         for photo in photos:
-            photo_date = photo.get('date_taken') or photo.get('created_at')
+            photo_date_raw = photo.get('date_taken') or photo.get('created_at')
+            photo_date = normalize_datetime(photo_date_raw)
 
-            # Apply date filter
-            if photo_date and start_date <= photo_date <= end_date:
-                # Add baby name to photo data
+            # Apply date filter - only compare if all dates are valid
+            if photo_date and start_date and end_date:
+                if start_date <= photo_date <= end_date:
+                    # Add baby name to photo data
+                    photo['baby_name'] = baby.fullname
+
+                    baby_data['photos'].append(photo)
+                    all_photos.append(photo)
+                    gallery_data['total_photos'] += 1
+
+                    # Count by type
+                    photo_type = photo.get('photo_type', 'other')
+                    baby_data['by_type'][photo_type] += 1
+                    gallery_data['by_type'][photo_type] += 1
+            elif not start_date or not end_date:
+                # If date filtering isn't possible, include all photos
                 photo['baby_name'] = baby.fullname
-
                 baby_data['photos'].append(photo)
                 all_photos.append(photo)
                 gallery_data['total_photos'] += 1
 
-                # Count by type
                 photo_type = photo.get('photo_type', 'other')
                 baby_data['by_type'][photo_type] += 1
                 gallery_data['by_type'][photo_type] += 1
 
         # Sort photos by date (newest first) and apply limit
         baby_data['photos'].sort(
-            key=lambda x: x.get('date_taken') or x.get('created_at'),
+            key=lambda x: normalize_datetime(x.get('date_taken') or x.get('created_at')) or datetime.min.replace(
+                tzinfo=timezone.utc),
             reverse=True
         )
         baby_data['photos'] = baby_data['photos'][:limit]
@@ -1847,7 +1898,8 @@ def get_photo_gallery(
 
     # Get recent photos across all babies
     all_photos.sort(
-        key=lambda x: x.get('date_taken') or x.get('created_at'),
+        key=lambda x: normalize_datetime(x.get('date_taken') or x.get('created_at')) or datetime.min.replace(
+            tzinfo=timezone.utc),
         reverse=True
     )
     gallery_data['recent_photos'] = all_photos[:limit]
